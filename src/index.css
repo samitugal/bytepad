@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Notepad++ Dark Theme Variables */
+  --bg-primary: #1E1E1E;
+  --bg-secondary: #252526;
+  --bg-tertiary: #2D2D30;
+  --bg-hover: #094771;
+  --text-primary: #D4D4D4;
+  --text-secondary: #808080;
+  --border-color: #3C3C3C;
+  --selection-bg: #264F78;
+  --scrollbar-bg: #1E1E1E;
+  --scrollbar-thumb: #424242;
+
+  /* Accent Colors */
+  --accent-blue: #569CD6;
+  --accent-light-blue: #9CDCFE;
+  --accent-green: #6A9955;
+  --accent-orange: #CE9178;
+  --accent-purple: #C586C0;
+  --accent-yellow: #DCDCAA;
+  --accent-cyan: #4EC9B0;
+
+  /* Status Colors */
+  --success: #4EC9B0;
+  --warning: #CE9178;
+  --error: #F14C4C;
+  --info: #3794FF;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar - Notepad++ style */
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border: 3px solid var(--scrollbar-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--scrollbar-bg);
+}
+
+/* Selection */
+::selection {
+  background: var(--selection-bg);
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 1px solid var(--accent-blue);
+  outline-offset: -1px;
+}
+
+/* Utility classes */
+@layer components {
+  .np-btn {
+    @apply bg-np-bg-tertiary border border-np-border text-np-text-primary
+           px-3 py-1 font-mono text-sm cursor-pointer transition-colors;
+  }
+
+  .np-btn:hover {
+    @apply bg-np-bg-hover border-np-bg-hover;
+  }
+
+  .np-btn:active {
+    @apply bg-np-selection;
+  }
+
+  .np-input {
+    @apply bg-np-bg-primary border border-np-border text-np-text-primary
+           font-mono px-2 py-1.5 text-sm;
+  }
+
+  .np-input:focus {
+    @apply border-np-blue outline-none;
+  }
+
+  .np-checkbox {
+    @apply appearance-none w-3.5 h-3.5 border border-np-text-secondary
+           bg-np-bg-primary cursor-pointer;
+  }
+
+  .np-checkbox:checked {
+    @apply bg-np-green border-np-green;
+  }
+}

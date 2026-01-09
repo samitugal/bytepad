@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm run build)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(init\\): setup Vite + React + TypeScript with Notepad++ theme\n\n- Initialize Vite project with React 18 and TypeScript\n- Configure Tailwind CSS with custom Notepad++ dark theme colors\n- Add Zustand for state management\n- Create layout components: MenuBar, Sidebar, TabBar, StatusBar, MainContent\n- Implement keyboard shortcuts: Ctrl+1-5 navigation, Escape to close\n- Define TypeScript types for all modules \\(Note, Habit, Task, Journal, Analysis\\)\n- Setup ESLint and TypeScript strict mode\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}
