@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { exportAllData, downloadAsJson, importData, readFileAsJson, clearAllData, getDataStats } from '../../services/dataService'
+import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider } from '../../stores/settingsStore'
 
 interface SettingsPanelProps {
   isOpen: boolean
@@ -8,8 +9,20 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
   const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [showApiKey, setShowApiKey] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const stats = getDataStats()
+  
+  const {
+    llmProvider,
+    llmModel,
+    apiKeys,
+    ollamaBaseUrl,
+    setLLMProvider,
+    setLLMModel,
+    setApiKey,
+    setOllamaBaseUrl,
+  } = useSettingsStore()
 
   const handleExport = () => {
     const data = exportAllData()
@@ -61,11 +74,11 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
       onClick={onClose}
     >
       <div
-        className="w-[500px] bg-np-bg-secondary border border-np-border shadow-2xl"
+        className="w-[500px] max-h-[85vh] bg-np-bg-secondary border border-np-border shadow-2xl flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-np-border">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-np-border shrink-0">
           <span className="text-np-text-primary">Settings</span>
           <button onClick={onClose} className="text-np-text-secondary hover:text-np-text-primary">
             ×
@@ -73,7 +86,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-6">
+        <div className="p-4 space-y-6 overflow-y-auto">
           {/* Data Stats */}
           <div>
             <h3 className="text-sm text-np-green mb-3">// Your Data</h3>
@@ -138,6 +151,98 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
             <p className="text-xs text-np-text-secondary mt-2">
               This will permanently delete all your notes, habits, tasks, and journal entries.
             </p>
+          </div>
+
+          {/* AI / LLM Settings */}
+          <div>
+            <h3 className="text-sm text-np-green mb-3">// AI Settings</h3>
+            <div className="space-y-3">
+              {/* Provider Selection */}
+              <div>
+                <label className="block text-xs text-np-text-secondary mb-1">Provider</label>
+                <select
+                  value={llmProvider}
+                  onChange={(e) => setLLMProvider(e.target.value as LLMProvider)}
+                  className="w-full bg-np-bg-primary border border-np-border text-np-text-primary 
+                             font-mono text-sm px-2 py-1.5 focus:outline-none focus:border-np-blue"
+                >
+                  {(Object.keys(PROVIDER_INFO) as LLMProvider[]).map((provider) => (
+                    <option key={provider} value={provider}>
+                      {PROVIDER_INFO[provider].name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Model Selection */}
+              <div>
+                <label className="block text-xs text-np-text-secondary mb-1">Model</label>
+                <select
+                  value={llmModel}
+                  onChange={(e) => setLLMModel(e.target.value)}
+                  className="w-full bg-np-bg-primary border border-np-border text-np-text-primary 
+                             font-mono text-sm px-2 py-1.5 focus:outline-none focus:border-np-blue"
+                >
+                  {LLM_MODELS[llmProvider].map((model) => (
+                    <option key={model.id} value={model.id}>
+                      {model.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* API Key Input */}
+              {PROVIDER_INFO[llmProvider].requiresKey && (
+                <div>
+                  <label className="block text-xs text-np-text-secondary mb-1">API Key</label>
+                  <div className="flex gap-2">
+                    <input
+                      type={showApiKey ? 'text' : 'password'}
+                      value={apiKeys[llmProvider]}
+                      onChange={(e) => setApiKey(llmProvider, e.target.value)}
+                      placeholder={`Enter ${PROVIDER_INFO[llmProvider].name} API key...`}
+                      className="flex-1 bg-np-bg-primary border border-np-border text-np-text-primary 
+                                 font-mono text-sm px-2 py-1.5 focus:outline-none focus:border-np-blue"
+                    />
+                    <button
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="np-btn text-xs"
+                      title={showApiKey ? 'Hide' : 'Show'}
+                    >
+                      {showApiKey ? '👁' : '👁‍🗨'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-np-text-secondary mt-1">
+                    Your API key is stored locally and never sent to our servers.
+                  </p>
+                </div>
+              )}
+
+              {/* Ollama Base URL */}
+              {llmProvider === 'ollama' && (
+                <div>
+                  <label className="block text-xs text-np-text-secondary mb-1">Ollama Base URL</label>
+                  <input
+                    type="text"
+                    value={ollamaBaseUrl}
+                    onChange={(e) => setOllamaBaseUrl(e.target.value)}
+                    placeholder="http://localhost:11434"
+                    className="w-full bg-np-bg-primary border border-np-border text-np-text-primary 
+                               font-mono text-sm px-2 py-1.5 focus:outline-none focus:border-np-blue"
+                  />
+                </div>
+              )}
+
+              {/* Status indicator */}
+              <div className="flex items-center gap-2 text-xs">
+                <span className={`w-2 h-2 rounded-full ${apiKeys[llmProvider] || llmProvider === 'ollama' ? 'bg-np-green' : 'bg-np-warning'}`}></span>
+                <span className="text-np-text-secondary">
+                  {apiKeys[llmProvider] || llmProvider === 'ollama' 
+                    ? `Ready to use ${PROVIDER_INFO[llmProvider].name}` 
+                    : 'API key required'}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Keyboard Shortcuts */}
