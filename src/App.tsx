@@ -1,13 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MenuBar, Sidebar, TabBar, StatusBar, MainContent } from './components/layout'
 import { CommandPalette, FocusMode, SettingsPanel } from './components/common'
 import { ChatWindow } from './components/chat'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { initializeNotifications } from './services/notificationService'
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   useKeyboardShortcuts()
+  
+  // Initialize notifications on mount
+  useEffect(() => {
+    initializeNotifications()
+  }, [])
 
   return (
     <div className="h-screen flex flex-col bg-np-bg-primary">

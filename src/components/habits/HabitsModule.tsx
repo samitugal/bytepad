@@ -8,7 +8,13 @@ const getToday = () => new Date().toISOString().split('T')[0]
 export function HabitsModule() {
   const { habits, addHabit, deleteHabit, toggleCompletion, updateHabit } = useHabitStore()
   const [showForm, setShowForm] = useState(false)
-  const [newHabit, setNewHabit] = useState({ name: '', category: 'personal', frequency: 'daily' as const })
+  const [newHabit, setNewHabit] = useState({ 
+    name: '', 
+    category: 'personal', 
+    frequency: 'daily' as const,
+    reminderEnabled: false,
+    reminderTime: '09:00'
+  })
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const today = getToday()
@@ -16,7 +22,7 @@ export function HabitsModule() {
   const handleAdd = () => {
     if (!newHabit.name.trim()) return
     addHabit(newHabit)
-    setNewHabit({ name: '', category: 'personal', frequency: 'daily' })
+    setNewHabit({ name: '', category: 'personal', frequency: 'daily', reminderEnabled: false, reminderTime: '09:00' })
     setShowForm(false)
   }
 
@@ -66,6 +72,26 @@ export function HabitsModule() {
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
+          </div>
+          {/* Reminder settings */}
+          <div className="flex items-center gap-3 mb-2">
+            <label className="flex items-center gap-2 text-sm text-np-text-secondary">
+              <input
+                type="checkbox"
+                checked={newHabit.reminderEnabled}
+                onChange={(e) => setNewHabit({ ...newHabit, reminderEnabled: e.target.checked })}
+                className="w-4 h-4"
+              />
+              <span>🔔 Daily reminder</span>
+            </label>
+            {newHabit.reminderEnabled && (
+              <input
+                type="time"
+                value={newHabit.reminderTime}
+                onChange={(e) => setNewHabit({ ...newHabit, reminderTime: e.target.value })}
+                className="np-input text-sm"
+              />
+            )}
           </div>
           <div className="flex gap-2">
             <button onClick={handleAdd} className="np-btn text-np-green">Add</button>
@@ -131,6 +157,9 @@ export function HabitsModule() {
                       <span className="text-np-purple">#{habit.category}</span>
                       {habit.streak > 0 && (
                         <span className="text-np-orange">🔥 {habit.streak} day streak</span>
+                      )}
+                      {habit.reminderEnabled && habit.reminderTime && (
+                        <span className="text-np-cyan">🔔 {habit.reminderTime}</span>
                       )}
                     </div>
                   </div>

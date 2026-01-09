@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react'
 import { exportAllData, downloadAsJson, importData, readFileAsJson, clearAllData, getDataStats } from '../../services/dataService'
 import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider } from '../../stores/settingsStore'
+import { useNotificationStore } from '../../stores/notificationStore'
+import { requestNotificationPermission, startNotificationChecker, stopNotificationChecker } from '../../services/notificationService'
 
 interface SettingsPanelProps {
   isOpen: boolean
@@ -23,6 +25,25 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     setApiKey,
     setOllamaBaseUrl,
   } = useSettingsStore()
+  
+  const {
+    preferences: notifPrefs,
+    permissionGranted,
+    setPreferences: setNotifPrefs,
+  } = useNotificationStore()
+  
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission()
+    if (granted) {
+      setNotifPrefs({ enabled: true })
+      startNotificationChecker()
+    }
+  }
+  
+  const handleDisableNotifications = () => {
+    setNotifPrefs({ enabled: false })
+    stopNotificationChecker()
+  }
 
   const handleExport = () => {
     const data = exportAllData()
@@ -151,6 +172,99 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
             <p className="text-xs text-np-text-secondary mt-2">
               This will permanently delete all your notes, habits, tasks, and journal entries.
             </p>
+          </div>
+
+          {/* Notification Settings */}
+          <div>
+            <h3 className="text-sm text-np-green mb-3">// Notifications</h3>
+            <div className="space-y-3">
+              {/* Enable/Disable */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-np-text-secondary">Browser Notifications</span>
+                {notifPrefs.enabled ? (
+                  <button onClick={handleDisableNotifications} className="np-btn text-np-error text-xs">
+                    Disable
+                  </button>
+                ) : (
+                  <button onClick={handleEnableNotifications} className="np-btn text-np-green text-xs">
+                    Enable
+                  </button>
+                )}
+              </div>
+              
+              {/* Permission status */}
+              <div className="flex items-center gap-2 text-xs">
+                <span className={`w-2 h-2 rounded-full ${permissionGranted ? 'bg-np-green' : 'bg-np-warning'}`}></span>
+                <span className="text-np-text-secondary">
+                  {permissionGranted ? 'Permission granted' : 'Permission required'}
+                </span>
+              </div>
+              
+              {notifPrefs.enabled && (
+                <>
+                  {/* Notification types */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm text-np-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={notifPrefs.habitReminders}
+                        onChange={(e) => setNotifPrefs({ habitReminders: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <span>🎯 Habit reminders</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-np-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={notifPrefs.taskDeadlines}
+                        onChange={(e) => setNotifPrefs({ taskDeadlines: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <span>⏰ Task deadline alerts</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-np-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={notifPrefs.streakAlerts}
+                        onChange={(e) => setNotifPrefs({ streakAlerts: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <span>🔥 Streak risk alerts</span>
+                    </label>
+                  </div>
+                  
+                  {/* Quiet hours */}
+                  <div className="pt-2 border-t border-np-border">
+                    <label className="flex items-center gap-2 text-sm text-np-text-secondary mb-2">
+                      <input
+                        type="checkbox"
+                        checked={notifPrefs.quietHoursEnabled}
+                        onChange={(e) => setNotifPrefs({ quietHoursEnabled: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <span>🌙 Quiet hours</span>
+                    </label>
+                    {notifPrefs.quietHoursEnabled && (
+                      <div className="flex items-center gap-2 ml-6">
+                        <input
+                          type="time"
+                          value={notifPrefs.quietHoursStart}
+                          onChange={(e) => setNotifPrefs({ quietHoursStart: e.target.value })}
+                          className="np-input text-xs"
+                        />
+                        <span className="text-np-text-secondary">to</span>
+                        <input
+                          type="time"
+                          value={notifPrefs.quietHoursEnd}
+                          onChange={(e) => setNotifPrefs({ quietHoursEnd: e.target.value })}
+                          className="np-input text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* AI / LLM Settings */}
