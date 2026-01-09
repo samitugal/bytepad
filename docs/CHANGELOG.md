@@ -2,6 +2,28 @@
 
 Bu dosya Claude Code tarafından otomatik güncellenir.
 
+## [0.4.0] - 2026-01-09
+
+### Added
+- **Notes Markdown Preview**
+  - Edit / Split / Preview view modes
+  - Notepad++ styled markdown rendering
+  - Syntax highlighting for code blocks
+  - Live preview in split mode
+
+- **LLM Settings Panel**
+  - Provider selection (OpenAI, Anthropic, Google, Groq, Ollama)
+  - Model selection per provider
+  - Secure API key storage (localStorage)
+  - Ollama local URL configuration
+  - Connection status indicator
+
+### Dependencies
+- Added `react-markdown` for markdown rendering
+- Added `@tailwindcss/typography` for prose styling
+
+---
+
 ## [0.3.0] - 2026-01-09
 
 ### Added
