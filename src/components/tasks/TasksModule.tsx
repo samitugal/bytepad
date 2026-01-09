@@ -16,13 +16,29 @@ export function TasksModule() {
   const tasks = getFilteredTasks(store)
 
   const [showForm, setShowForm] = useState(false)
-  const [newTask, setNewTask] = useState({ title: '', priority: 'P2' as Task['priority'], description: '' })
+  const [newTask, setNewTask] = useState({ 
+    title: '', 
+    priority: 'P2' as Task['priority'], 
+    description: '',
+    deadline: '',
+    deadlineTime: '',
+    reminderEnabled: false,
+    reminderMinutesBefore: 30
+  })
   const [expandedTask, setExpandedTask] = useState<string | null>(null)
 
   const handleAdd = () => {
     if (!newTask.title.trim()) return
-    addTask(newTask)
-    setNewTask({ title: '', priority: 'P2', description: '' })
+    addTask({
+      title: newTask.title,
+      priority: newTask.priority,
+      description: newTask.description,
+      deadline: newTask.deadline ? new Date(newTask.deadline) : undefined,
+      deadlineTime: newTask.deadlineTime || undefined,
+      reminderEnabled: newTask.reminderEnabled,
+      reminderMinutesBefore: newTask.reminderMinutesBefore,
+    })
+    setNewTask({ title: '', priority: 'P2', description: '', deadline: '', deadlineTime: '', reminderEnabled: false, reminderMinutesBefore: 30 })
     setShowForm(false)
   }
 
@@ -110,6 +126,48 @@ export function TasksModule() {
             placeholder="Description (optional)..."
             className="w-full np-input mb-2 h-16 resize-none"
           />
+          {/* Deadline with time */}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs text-np-text-secondary">Deadline:</span>
+            <input
+              type="date"
+              value={newTask.deadline}
+              onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })}
+              className="np-input text-sm"
+            />
+            <input
+              type="time"
+              value={newTask.deadlineTime}
+              onChange={(e) => setNewTask({ ...newTask, deadlineTime: e.target.value })}
+              className="np-input text-sm"
+              placeholder="Time"
+            />
+          </div>
+          {/* Reminder settings */}
+          <div className="flex items-center gap-3 mb-2">
+            <label className="flex items-center gap-2 text-sm text-np-text-secondary">
+              <input
+                type="checkbox"
+                checked={newTask.reminderEnabled}
+                onChange={(e) => setNewTask({ ...newTask, reminderEnabled: e.target.checked })}
+                className="w-4 h-4"
+              />
+              <span>🔔 Remind me</span>
+            </label>
+            {newTask.reminderEnabled && (
+              <select
+                value={newTask.reminderMinutesBefore}
+                onChange={(e) => setNewTask({ ...newTask, reminderMinutesBefore: Number(e.target.value) })}
+                className="np-input text-sm"
+              >
+                <option value={15}>15 min before</option>
+                <option value={30}>30 min before</option>
+                <option value={60}>1 hour before</option>
+                <option value={120}>2 hours before</option>
+                <option value={1440}>1 day before</option>
+              </select>
+            )}
+          </div>
           <div className="flex gap-2">
             <button onClick={handleAdd} className="np-btn text-np-green">Add</button>
             <button onClick={() => setShowForm(false)} className="np-btn">Cancel</button>
@@ -178,11 +236,17 @@ export function TasksModule() {
                       </span>
                     )}
 
-                    {/* Deadline */}
+                    {/* Deadline with time */}
                     {task.deadline && (
                       <span className="text-xs text-np-orange">
                         {new Date(task.deadline).toLocaleDateString()}
+                        {task.deadlineTime && ` ${task.deadlineTime}`}
                       </span>
+                    )}
+                    
+                    {/* Reminder indicator */}
+                    {task.reminderEnabled && (
+                      <span className="text-xs text-np-cyan">🔔</span>
                     )}
 
                     {/* Delete */}

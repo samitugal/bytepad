@@ -18,6 +18,9 @@ export interface Habit {
   completions: Record<string, boolean>
   streak: number
   createdAt: Date
+  // Reminder settings
+  reminderEnabled?: boolean
+  reminderTime?: string // HH:mm format
 }
 
 export interface Task {
@@ -26,10 +29,14 @@ export interface Task {
   description?: string
   priority: 'P1' | 'P2' | 'P3' | 'P4'
   deadline?: Date
+  deadlineTime?: string // HH:mm format for specific time
   completed: boolean
   completedAt?: Date
   subtasks: SubTask[]
   createdAt: Date
+  // Reminder settings
+  reminderEnabled?: boolean
+  reminderMinutesBefore?: number // minutes before deadline to remind
 }
 
 export interface SubTask {
