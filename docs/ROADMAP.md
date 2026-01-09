@@ -227,7 +227,7 @@
 
 # Post-MVP: Future Features
 
-## Öncelikli Eklemeler (Tamamlandı ✓)
+## Öncelikli Eklemeler (Tamamlandı )
 - [x] **Habits: Daily Reminder & Saat Desteği**
   - Habit için hatırlatma saati belirleme
   - Browser notification ile hatırlatma
@@ -236,6 +236,36 @@
   - Task için tarih + saat seçimi
   - Deadline ile birlikte saat bilgisi
   - Reminder X dakika önce
+
+## Sonraki Sprint: Advanced Features
+- [ ] **Global Search (Alt+U)**
+  - Tüm modüllerde (Notes, Tasks, Habits, Journal) arama
+  - Fuzzy search desteği
+  - Sonuçları kategorize göster
+  
+- [ ] **Notes Markdown Preview Fix**
+  - react-markdown render düzeltmesi
+  - Kod blokları syntax highlighting
+  
+- [ ] **DateTime Picker Tema Uyumu**
+  - Native date/time picker yerine custom component
+  - Notepad++ temasına uygun styling
+  
+- [ ] **Habits Günlük Reset & Raporlama**
+  - Gün sonunda completion status sıfırlama
+  - Streak hesaplama mantığı güncelleme
+  - Günlük/haftalık tamamlanan/tamamlanmayan raporlama
+  
+- [ ] **Notes Tag-Based Search**
+  - Tag'lere göre filtreleme
+  - Tag cloud görünümü
+  - Multi-tag intersection search
+  
+- [ ] **Knowledge Graph (Obsidian-style)**
+  - [[wikilink]] syntax desteği
+  - Notlar arası bağlantı grafiği
+  - D3.js veya force-graph ile görselleştirme
+  - Backlinks panel
 
 ## Potansiyel Eklemeler
 - [ ] Dark/Light theme toggle
