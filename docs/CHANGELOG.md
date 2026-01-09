@@ -2,6 +2,24 @@
 
 Bu dosya Claude Code tarafından otomatik güncellenir.
 
+## [0.6.0] - 2026-01-10
+
+### Added
+- **Notification System (Sprint 3.2 Complete)**
+  - Browser push notifications
+  - Habit daily reminder with time picker
+  - Task deadline datetime support (date + time)
+  - Task reminder (X minutes before deadline)
+  - Quiet hours support
+  - Notification preferences in Settings
+
+### Changed
+- Habit form: Added reminder time picker
+- Task form: Added deadline time and reminder options
+- Settings: Added Notifications section
+
+---
+
 ## [0.5.0] - 2026-01-09
 
 ### Added

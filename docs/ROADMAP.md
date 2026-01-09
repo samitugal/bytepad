@@ -164,15 +164,15 @@
 
 **Çıktı:** Çalışan AI coach chatbot
 
-## Sprint 3.2: Notification System (4 gün)
-- [ ] NotificationPreferences type/interface
-- [ ] notificationStore (Zustand)
-- [ ] Browser Push Notification permission
-- [ ] NotificationCenter component
-- [ ] NotificationItem component
-- [ ] NotificationSettings component
-- [ ] Notification types (habit reminder, deadline, pomodoro, streak risk)
-- [ ] Quiet hours support
+## Sprint 3.2: Notification System (4 gün) ✓
+- [x] NotificationPreferences type/interface
+- [x] notificationStore (Zustand)
+- [x] Browser Push Notification permission
+- [x] NotificationCenter component
+- [x] NotificationItem component
+- [x] NotificationSettings component
+- [x] Notification types (habit reminder, deadline, pomodoro, streak risk)
+- [x] Quiet hours support
 - [ ] Snooze functionality
 - [ ] Keyboard: Ctrl+Shift+N = notification center
 
@@ -227,15 +227,15 @@
 
 # Post-MVP: Future Features
 
-## Öncelikli Eklemeler
-- [ ] **Habits: Daily Reminder & Saat Desteği**
+## Öncelikli Eklemeler (Tamamlandı ✓)
+- [x] **Habits: Daily Reminder & Saat Desteği**
   - Habit için hatırlatma saati belirleme
   - Browser notification ile hatırlatma
   - Günlük/haftalık reminder schedule
-- [ ] **Tasks: DateTime Desteği**
+- [x] **Tasks: DateTime Desteği**
   - Task için tarih + saat seçimi
   - Deadline ile birlikte saat bilgisi
-  - Time-based sorting ve filtering
+  - Reminder X dakika önce
 
 ## Potansiyel Eklemeler
 - [ ] Dark/Light theme toggle
