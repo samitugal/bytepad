@@ -6,10 +6,10 @@
 ## Proje Durumu
 
 ### Aktif Sprint
-- [ ] Weekly Analysis modülü
-- [ ] Focus Mode
-- [ ] Data export/import
 - [ ] PWA support
+- [ ] Gelişmiş AI insights (API entegrasyonu)
+- [ ] Dark/Light theme toggle
+- [ ] Notifications
 
 ### Tamamlanan
 - [x] Proje setup (Vite + React + TypeScript)
@@ -21,6 +21,10 @@
 - [x] Habits modülü (CRUD, streaks, categories, daily tracking)
 - [x] Tasks modülü (CRUD, P1-P4 priority, filters, sorting, deadlines)
 - [x] Journal modülü (mood/energy tracking, date navigation, tags)
+- [x] Weekly Analysis (stats, charts, insights, recommendations)
+- [x] Focus Mode (Pomodoro timer, task selection, Ctrl+Shift+F)
+- [x] Data export/import (JSON backup/restore)
+- [x] Settings panel (shortcuts, data management)
 
 ---
 
@@ -42,12 +46,13 @@ Notepad++ estetiğinde, keyboard-first, retro görünümlü productivity super a
 
 ## Keyboard Shortcuts
 ```
-Ctrl+K     → Command Palette
-Ctrl+1-5   → Module navigation  
-Ctrl+N     → New item
-Ctrl+S     → Save
-Space      → Toggle complete
-Escape     → Cancel/Close
+Ctrl+K       → Command Palette
+Ctrl+1-5     → Module navigation
+Ctrl+Shift+F → Focus Mode
+Ctrl+N       → New item
+Ctrl+S       → Save
+Space        → Toggle complete
+Escape       → Cancel/Close
 ```
 
 ## Notepad++ Theme
