@@ -2,6 +2,46 @@
 
 Bu dosya Claude Code tarafından otomatik güncellenir.
 
+## [0.3.0] - 2026-01-09
+
+### Added
+- **Weekly Analysis Modülü**
+  - Haftalık habit completion istatistikleri
+  - Task completion rate ve priority breakdown
+  - Mood/Energy trend grafikleri
+  - ADHD-spesifik insight'lar
+  - Kişiselleştirilmiş öneriler
+  - Hafta navigasyonu (önceki/sonraki)
+  - Active streaks gösterimi
+
+- **Focus Mode**
+  - `Ctrl+Shift+F` ile açılır
+  - Task seçimi (priority sıralı)
+  - Pomodoro timer (15/25/45/60 dakika)
+  - Start/Pause/Resume/Stop kontrolleri
+  - Task completion in focus
+  - Desktop notification desteği
+  - Full-screen distraction-free UI
+
+- **Data Export/Import**
+  - Tüm verileri JSON olarak export
+  - Backup dosyasından import
+  - Tarih damgalı dosya isimleri
+  - Settings panelinden erişim
+
+- **Settings Panel**
+  - Data istatistikleri görüntüleme
+  - Export/Import butonları
+  - Tehlikeli bölge: Tüm verileri silme
+  - Keyboard shortcuts referansı
+  - Uygulama versiyonu
+
+### Changed
+- MenuBar'a Focus ve Settings menü öğeleri eklendi
+- Keyboard shortcuts'a Focus Mode (Ctrl+Shift+F) eklendi
+
+---
+
 ## [0.2.0] - 2026-01-09
 
 ### Added
@@ -115,9 +155,15 @@ Bu dosya Claude Code tarafından otomatik güncellenir.
 - [x] Habits modülü
 - [x] Journal modülü
 
-### Sprint 3: AI & Polish
-- [ ] Weekly Analysis
-- [ ] AI integration
-- [ ] Focus Mode
-- [ ] Data export/import
+### Sprint 3: AI & Polish ✓
+- [x] Weekly Analysis
+- [x] Focus Mode
+- [x] Data export/import
+- [x] Settings Panel
+
+### Sprint 4: Advanced Features
 - [ ] PWA support
+- [ ] AI API integration
+- [ ] Dark/Light theme toggle
+- [ ] Desktop notifications
+- [ ] Keyboard shortcuts customization

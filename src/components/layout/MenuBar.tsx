@@ -1,4 +1,12 @@
-export function MenuBar() {
+import { useUIStore } from '../../stores/uiStore'
+
+interface MenuBarProps {
+  onSettingsClick?: () => void
+}
+
+export function MenuBar({ onSettingsClick }: MenuBarProps) {
+  const { toggleFocusMode } = useUIStore()
+
   return (
     <div className="h-6 bg-np-bg-secondary border-b border-np-border flex items-center justify-between px-2 text-sm select-none">
       <div className="flex items-center gap-4">
@@ -7,8 +15,20 @@ export function MenuBar() {
           <span className="hover:text-np-text-primary cursor-pointer">File</span>
           <span className="hover:text-np-text-primary cursor-pointer">Edit</span>
           <span className="hover:text-np-text-primary cursor-pointer">View</span>
-          <span className="hover:text-np-text-primary cursor-pointer">Tools</span>
-          <span className="hover:text-np-text-primary cursor-pointer">Help</span>
+          <span
+            className="hover:text-np-text-primary cursor-pointer"
+            onClick={toggleFocusMode}
+            title="Focus Mode (Ctrl+Shift+F)"
+          >
+            Focus
+          </span>
+          <span
+            className="hover:text-np-text-primary cursor-pointer"
+            onClick={onSettingsClick}
+            title="Settings"
+          >
+            Settings
+          </span>
         </div>
       </div>
       <div className="flex items-center gap-1 text-np-text-secondary">
