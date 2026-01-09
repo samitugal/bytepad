@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { useNoteStore } from '../../stores/noteStore'
 
 export function NoteEditor() {
@@ -8,6 +9,7 @@ export function NoteEditor() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
+  const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('edit')
 
   useEffect(() => {
     if (activeNote) {
@@ -78,7 +80,44 @@ export function NoteEditor() {
                        focus:outline-none w-64"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          {/* View Mode Toggle */}
+          <div className="flex items-center border border-np-border">
+            <button
+              onClick={() => setViewMode('edit')}
+              className={`px-2 py-1 text-xs font-mono ${
+                viewMode === 'edit' 
+                  ? 'bg-np-bg-hover text-np-text-primary' 
+                  : 'text-np-text-secondary hover:text-np-text-primary'
+              }`}
+              title="Edit mode"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => setViewMode('split')}
+              className={`px-2 py-1 text-xs font-mono border-x border-np-border ${
+                viewMode === 'split' 
+                  ? 'bg-np-bg-hover text-np-text-primary' 
+                  : 'text-np-text-secondary hover:text-np-text-primary'
+              }`}
+              title="Split view"
+            >
+              Split
+            </button>
+            <button
+              onClick={() => setViewMode('preview')}
+              className={`px-2 py-1 text-xs font-mono ${
+                viewMode === 'preview' 
+                  ? 'bg-np-bg-hover text-np-text-primary' 
+                  : 'text-np-text-secondary hover:text-np-text-primary'
+              }`}
+              title="Preview mode"
+            >
+              Preview
+            </button>
+          </div>
+          
           <button
             onClick={handleSave}
             className="np-btn text-np-green"
@@ -112,26 +151,57 @@ export function NoteEditor() {
         </div>
       </div>
 
-      {/* Content editor */}
-      <div className="flex-1 relative">
-        {/* Line numbers */}
-        <div className="absolute left-0 top-0 bottom-0 w-12 bg-np-bg-secondary border-r border-np-border
-                        text-np-text-secondary text-sm font-mono text-right pr-2 pt-3 select-none overflow-hidden">
-          {content.split('\n').map((_, i) => (
-            <div key={i} className="leading-6">{i + 1}</div>
-          ))}
-        </div>
+      {/* Content area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Editor Panel */}
+        {(viewMode === 'edit' || viewMode === 'split') && (
+          <div className={`relative ${viewMode === 'split' ? 'w-1/2 border-r border-np-border' : 'flex-1'}`}>
+            {/* Line numbers */}
+            <div className="absolute left-0 top-0 bottom-0 w-12 bg-np-bg-secondary border-r border-np-border
+                            text-np-text-secondary text-sm font-mono text-right pr-2 pt-3 select-none overflow-hidden">
+              {content.split('\n').map((_, i) => (
+                <div key={i} className="leading-6">{i + 1}</div>
+              ))}
+            </div>
 
-        {/* Editor */}
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onBlur={handleSave}
-          placeholder="Start writing..."
-          className="w-full h-full bg-np-bg-primary text-np-text-primary font-mono text-sm
-                     pl-14 pr-4 pt-3 pb-4 resize-none focus:outline-none leading-6"
-          spellCheck={false}
-        />
+            {/* Editor */}
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              onBlur={handleSave}
+              placeholder="Start writing in Markdown..."
+              className="w-full h-full bg-np-bg-primary text-np-text-primary font-mono text-sm
+                         pl-14 pr-4 pt-3 pb-4 resize-none focus:outline-none leading-6"
+              spellCheck={false}
+            />
+          </div>
+        )}
+
+        {/* Preview Panel */}
+        {(viewMode === 'preview' || viewMode === 'split') && (
+          <div className={`overflow-auto ${viewMode === 'split' ? 'w-1/2' : 'flex-1'}`}>
+            <div className="p-4 prose prose-invert prose-sm max-w-none
+                            prose-headings:text-np-blue prose-headings:font-mono prose-headings:border-b prose-headings:border-np-border prose-headings:pb-2
+                            prose-p:text-np-text-primary prose-p:leading-relaxed
+                            prose-a:text-np-cyan prose-a:no-underline hover:prose-a:underline
+                            prose-strong:text-np-orange prose-strong:font-semibold
+                            prose-em:text-np-purple prose-em:italic
+                            prose-code:text-np-green prose-code:bg-np-bg-tertiary prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
+                            prose-pre:bg-np-bg-secondary prose-pre:border prose-pre:border-np-border
+                            prose-blockquote:border-l-np-purple prose-blockquote:text-np-text-secondary prose-blockquote:italic
+                            prose-ul:text-np-text-primary prose-ol:text-np-text-primary
+                            prose-li:marker:text-np-green
+                            prose-hr:border-np-border">
+              {content ? (
+                <ReactMarkdown>{content}</ReactMarkdown>
+              ) : (
+                <div className="text-np-text-secondary italic">
+                  // Preview will appear here...
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
