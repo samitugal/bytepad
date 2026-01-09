@@ -2,6 +2,18 @@
 
 Bu dosya Claude Code tarafından otomatik güncellenir.
 
+## [0.7.0] - 2026-01-10
+
+### Added
+- **PWA Support (Sprint 3.5)**
+  - PWA manifest for installable app
+  - Service worker for offline caching
+  - ErrorBoundary component for graceful error handling
+  - SVG favicon
+  - Apple mobile web app support
+
+---
+
 ## [0.6.0] - 2026-01-10
 
 ### Added
