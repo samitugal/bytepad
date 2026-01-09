@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { MenuBar, Sidebar, TabBar, StatusBar, MainContent } from './components/layout'
 import { CommandPalette, FocusMode, SettingsPanel } from './components/common'
+import { ChatWindow } from './components/chat'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
       <StatusBar />
       <CommandPalette />
       <FocusMode />
+      <ChatWindow />
       <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   )

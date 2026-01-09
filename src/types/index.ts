@@ -71,3 +71,21 @@ export interface TaskStat {
   completed: number
   byPriority: Record<string, { total: number; completed: number }>
 }
+
+// Chat / AI Coach types
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  timestamp: Date
+}
+
+export interface ChatContext {
+  pendingTasks: number
+  completedTasksToday: number
+  habitsCompletedToday: number
+  totalHabitsToday: number
+  currentStreak: number
+  lastMood?: number
+  lastEnergy?: number
+}

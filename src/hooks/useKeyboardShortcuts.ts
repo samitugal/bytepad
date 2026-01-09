@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react'
 import { useUIStore } from '../stores/uiStore'
+import { useChatStore } from '../stores/chatStore'
 import type { ModuleType } from '../types'
 
 const MODULE_MAP: Record<string, ModuleType> = {
@@ -35,6 +36,13 @@ export function useKeyboardShortcuts() {
     if (e.ctrlKey && e.key === 'k') {
       e.preventDefault()
       toggleCommandPalette()
+      return
+    }
+
+    // Ctrl+/ - Toggle Chat (works everywhere)
+    if (e.ctrlKey && e.key === '/') {
+      e.preventDefault()
+      useChatStore.getState().toggleOpen()
       return
     }
 

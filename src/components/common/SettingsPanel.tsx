@@ -262,6 +262,10 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                 <kbd className="bg-np-bg-tertiary px-2 text-np-text-primary">Ctrl+Shift+F</kbd>
               </div>
               <div className="flex justify-between">
+                <span className="text-np-text-secondary">FlowBot Chat</span>
+                <kbd className="bg-np-bg-tertiary px-2 text-np-text-primary">Ctrl+/</kbd>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-np-text-secondary">Save</span>
                 <kbd className="bg-np-bg-tertiary px-2 text-np-text-primary">Ctrl+S</kbd>
               </div>
@@ -274,7 +278,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
           {/* About */}
           <div className="text-center text-xs text-np-text-secondary border-t border-np-border pt-4">
-            <div className="text-np-text-primary">MyFlowSpace v0.4.0</div>
+            <div className="text-np-text-primary">MyFlowSpace v0.5.0</div>
             <div className="mt-1">ADHD Productivity Super App</div>
             <div className="mt-1">Built with Notepad++ aesthetics 💜</div>
           </div>
