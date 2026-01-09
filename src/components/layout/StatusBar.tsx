@@ -1,18 +1,27 @@
 import { useUIStore } from '../../stores/uiStore'
+import { useNoteStore } from '../../stores/noteStore'
+import { useHabitStore } from '../../stores/habitStore'
+import { useTaskStore } from '../../stores/taskStore'
 
 export function StatusBar() {
   const { activeModule } = useUIStore()
+  const { notes } = useNoteStore()
+  const habitStore = useHabitStore()
+  const taskStore = useTaskStore()
 
   const getStatusText = () => {
     switch (activeModule) {
       case 'notes':
-        return 'Ln 1, Col 0 | UTF-8'
+        return `${notes.length} note${notes.length !== 1 ? 's' : ''} | UTF-8`
       case 'habits':
-        return '0/0 habits completed today'
+        const completed = habitStore.getCompletedToday()
+        const total = habitStore.getTotalHabits()
+        return `${completed}/${total} habits completed today`
       case 'tasks':
-        return '0 tasks pending'
+        const pending = taskStore.getPendingCount()
+        return `${pending} task${pending !== 1 ? 's' : ''} pending`
       case 'journal':
-        return new Date().toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+        return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
       case 'analysis':
         return 'Weekly analysis ready'
       default:

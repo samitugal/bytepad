@@ -1,4 +1,8 @@
 import { useUIStore } from '../../stores/uiStore'
+import { NotesModule } from '../notes'
+import { HabitsModule } from '../habits'
+import { TasksModule } from '../tasks'
+import { JournalModule } from '../journal'
 
 export function MainContent() {
   const { activeModule } = useUIStore()
@@ -6,62 +10,21 @@ export function MainContent() {
   const renderContent = () => {
     switch (activeModule) {
       case 'notes':
-        return (
-          <div className="p-4">
-            <div className="text-np-green">// Notes Module</div>
-            <div className="text-np-text-secondary mt-2">
-              <span className="text-np-purple">const</span>{' '}
-              <span className="text-np-light-blue">notes</span>{' '}
-              <span className="text-np-text-primary">=</span>{' '}
-              <span className="text-np-orange">"Coming soon..."</span>
-            </div>
-          </div>
-        )
+        return <NotesModule />
       case 'habits':
-        return (
-          <div className="p-4">
-            <div className="text-np-green">// Habits Module</div>
-            <div className="text-np-text-secondary mt-2">
-              <span className="text-np-purple">const</span>{' '}
-              <span className="text-np-light-blue">habits</span>{' '}
-              <span className="text-np-text-primary">=</span>{' '}
-              <span className="text-np-orange">"Coming soon..."</span>
-            </div>
-          </div>
-        )
+        return <HabitsModule />
       case 'tasks':
-        return (
-          <div className="p-4">
-            <div className="text-np-green">// Tasks Module</div>
-            <div className="text-np-text-secondary mt-2">
-              <span className="text-np-purple">const</span>{' '}
-              <span className="text-np-light-blue">tasks</span>{' '}
-              <span className="text-np-text-primary">=</span>{' '}
-              <span className="text-np-orange">"Coming soon..."</span>
-            </div>
-          </div>
-        )
+        return <TasksModule />
       case 'journal':
-        return (
-          <div className="p-4">
-            <div className="text-np-green">// Journal Module</div>
-            <div className="text-np-text-secondary mt-2">
-              <span className="text-np-purple">const</span>{' '}
-              <span className="text-np-light-blue">journal</span>{' '}
-              <span className="text-np-text-primary">=</span>{' '}
-              <span className="text-np-orange">"Coming soon..."</span>
-            </div>
-          </div>
-        )
+        return <JournalModule />
       case 'analysis':
         return (
-          <div className="p-4">
-            <div className="text-np-green">// Weekly Analysis Module</div>
-            <div className="text-np-text-secondary mt-2">
-              <span className="text-np-purple">const</span>{' '}
-              <span className="text-np-light-blue">analysis</span>{' '}
-              <span className="text-np-text-primary">=</span>{' '}
-              <span className="text-np-orange">"Coming soon..."</span>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-np-green mb-2">// Weekly Analysis</div>
+              <div className="text-np-text-secondary text-sm">
+                <span className="text-np-purple">AI-powered</span> insights coming soon...
+              </div>
             </div>
           </div>
         )
@@ -71,7 +34,7 @@ export function MainContent() {
   }
 
   return (
-    <div className="flex-1 bg-np-bg-primary overflow-auto">
+    <div className="flex-1 bg-np-bg-primary overflow-hidden flex">
       {renderContent()}
     </div>
   )
