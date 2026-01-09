@@ -2,6 +2,24 @@
 
 Bu dosya Claude Code tarafından otomatik güncellenir.
 
+## [0.5.0] - 2026-01-09
+
+### Added
+- **FlowBot AI Coach (Sprint 3.1 Complete)**
+  - ADHD-friendly productivity coach chatbot
+  - Multi-provider support (OpenAI, Anthropic, Google, Groq, Ollama)
+  - Context-aware responses (tasks, habits, mood, energy)
+  - Quick actions: Plan, Motivate, Stuck, Celebrate, Break
+  - Keyboard shortcut: `Ctrl+/` to toggle
+  - Chat history persistence
+  - Turkish language support
+
+### Changed
+- MenuBar'a Chat butonu eklendi
+- Settings'e FlowBot shortcut bilgisi eklendi
+
+---
+
 ## [0.4.0] - 2026-01-09
 
 ### Added

@@ -149,18 +149,18 @@
 **Süre:** 2 hafta
 **Başlangıç:** MVP2 tamamlandıktan sonra
 
-## Sprint 3.1: AI Coach - FlowBot (5 gün)
-- [ ] ChatMessage type/interface
-- [ ] chatStore (Zustand)
-- [ ] ChatWindow component
-- [ ] ChatMessage component
-- [ ] ChatInput component
-- [ ] Anthropic API integration
-- [ ] System prompt (ADHD coach persona)
-- [ ] Context injection (current tasks, mood, energy)
-- [ ] Quick actions (/plan, /motivate, /stuck, /celebrate)
-- [ ] Conversation history (son 10 mesaj)
-- [ ] Keyboard: Ctrl+/ = open chat
+## Sprint 3.1: AI Coach - FlowBot (5 gün) ✓
+- [x] ChatMessage type/interface
+- [x] chatStore (Zustand)
+- [x] ChatWindow component
+- [x] ChatMessage component
+- [x] ChatInput component
+- [x] Multi-provider API integration (OpenAI, Anthropic, Google, Groq, Ollama)
+- [x] System prompt (ADHD coach persona)
+- [x] Context injection (current tasks, mood, energy)
+- [x] Quick actions (/plan, /motivate, /stuck, /celebrate)
+- [x] Conversation history (son 50 mesaj)
+- [x] Keyboard: Ctrl+/ = open chat
 
 **Çıktı:** Çalışan AI coach chatbot
 

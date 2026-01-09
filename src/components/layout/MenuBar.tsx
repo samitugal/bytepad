@@ -1,4 +1,5 @@
 import { useUIStore } from '../../stores/uiStore'
+import { useChatStore } from '../../stores/chatStore'
 
 interface MenuBarProps {
   onSettingsClick?: () => void
@@ -6,6 +7,7 @@ interface MenuBarProps {
 
 export function MenuBar({ onSettingsClick }: MenuBarProps) {
   const { toggleFocusMode } = useUIStore()
+  const { toggleOpen: toggleChat } = useChatStore()
 
   return (
     <div className="h-6 bg-np-bg-secondary border-b border-np-border flex items-center justify-between px-2 text-sm select-none">
@@ -21,6 +23,13 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
             title="Focus Mode (Ctrl+Shift+F)"
           >
             Focus
+          </span>
+          <span
+            className="hover:text-np-text-primary cursor-pointer text-np-green"
+            onClick={toggleChat}
+            title="FlowBot AI Coach (Ctrl+/)"
+          >
+            🤖 Chat
           </span>
           <span
             className="hover:text-np-text-primary cursor-pointer"
