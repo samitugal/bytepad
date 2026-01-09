@@ -1,4 +1,5 @@
 import { MenuBar, Sidebar, TabBar, StatusBar, MainContent } from './components/layout'
+import { CommandPalette } from './components/common'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         </div>
       </div>
       <StatusBar />
+      <CommandPalette />
     </div>
   )
 }

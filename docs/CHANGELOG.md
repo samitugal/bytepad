@@ -2,6 +2,61 @@
 
 Bu dosya Claude Code tarafından otomatik güncellenir.
 
+## [0.2.0] - 2026-01-09
+
+### Added
+- **Command Palette**
+  - `Ctrl+K` ile açılır
+  - Fuzzy search desteği
+  - Keyboard navigation (↑↓ Enter Escape)
+  - Navigation, Action, Settings kategorileri
+
+- **Notes Modülü**
+  - Not oluşturma, düzenleme, silme
+  - Tag sistemi
+  - Arama (fuzzy search)
+  - Line numbers (Notepad++ style)
+  - Auto-save (Ctrl+S ve blur)
+  - LocalStorage persistence
+
+- **Habits Modülü**
+  - Habit oluşturma, düzenleme, silme
+  - Günlük tracking (checkbox toggle)
+  - Streak hesaplama
+  - Kategori sistemi (health, work, personal, learning)
+  - LocalStorage persistence
+
+- **Tasks Modülü**
+  - Task oluşturma, düzenleme, silme
+  - Priority sistemi (P1-P4, color-coded)
+  - Deadline desteği
+  - Filter: all / active / completed
+  - Sort: priority / deadline / created
+  - Expandable task details
+  - LocalStorage persistence
+
+- **Journal Modülü**
+  - Günlük entry oluşturma ve düzenleme
+  - Mood tracking (1-5, emoji picker)
+  - Energy tracking (1-5, emoji picker)
+  - Date navigation (prev/next/today)
+  - Tag sistemi
+  - Entry listesi sidebar
+  - LocalStorage persistence
+
+- **Dynamic Status Bar**
+  - Her modül için dinamik bilgi gösterimi
+  - Notes: toplam not sayısı
+  - Habits: bugün tamamlanan / toplam
+  - Tasks: bekleyen task sayısı
+  - Journal: bugünün tarihi
+
+### Changed
+- MainContent artık gerçek modülleri render ediyor
+- StatusBar store'lardan veri çekiyor
+
+---
+
 ## [0.1.0] - 2026-01-09
 
 ### Added
@@ -18,26 +73,23 @@ Bu dosya Claude Code tarafından otomatik güncellenir.
   - Retro buton ve input stilleri
 
 - **Layout Componentleri**
-  - `MenuBar` - Üst menü çubuğu (File, Edit, View, Tools, Help)
-  - `Sidebar` - Sol navigasyon paneli (modül listesi)
+  - `MenuBar` - Üst menü çubuğu
+  - `Sidebar` - Sol navigasyon paneli
   - `TabBar` - Sekme çubuğu
   - `StatusBar` - Alt durum çubuğu
-  - `MainContent` - Ana içerik alanı (placeholder'lar)
+  - `MainContent` - Ana içerik alanı
 
 - **Keyboard Shortcuts**
-  - `Ctrl+1-5` - Modül navigasyonu (Notes, Habits, Tasks, Journal, Analysis)
-  - `Ctrl+K` - Command Palette (henüz implement edilmedi)
+  - `Ctrl+1-5` - Modül navigasyonu
+  - `Ctrl+K` - Command Palette
   - `Escape` - Modal kapatma
 
 - **State Management**
-  - Zustand store kurulumu (`uiStore`)
-  - `activeModule` state'i
-  - `commandPaletteOpen` state'i
-  - `focusMode` state'i
+  - Zustand store kurulumu
+  - UI state yönetimi
 
 - **Type Definitions**
   - `Note`, `Habit`, `Task`, `JournalEntry`, `WeeklyAnalysis` tipleri
-  - `ModuleType` union tipi
 
 ### Technical
 - React 18.3.1
@@ -50,21 +102,22 @@ Bu dosya Claude Code tarafından otomatik güncellenir.
 
 ## Geliştirme Geçmişi
 
-### Sprint 1: Foundation
+### Sprint 1: Foundation ✓
 - [x] Proje setup
 - [x] Tema sistemi
 - [x] Layout components
 - [x] Keyboard shortcuts
-- [ ] Command Palette
+- [x] Command Palette
 
-### Sprint 2: Core Modules
-- [ ] Notes modülü
-- [ ] Tasks modülü
-- [ ] Habits modülü
-- [ ] Journal modülü
+### Sprint 2: Core Modules ✓
+- [x] Notes modülü
+- [x] Tasks modülü
+- [x] Habits modülü
+- [x] Journal modülü
 
 ### Sprint 3: AI & Polish
 - [ ] Weekly Analysis
 - [ ] AI integration
+- [ ] Focus Mode
 - [ ] Data export/import
 - [ ] PWA support

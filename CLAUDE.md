@@ -6,17 +6,21 @@
 ## Proje Durumu
 
 ### Aktif Sprint
-- [ ] Command Palette
-- [ ] Notes modülü (CRUD)
-- [ ] Habits modülü (CRUD)
-- [ ] Tasks modülü (CRUD)
-- [ ] Journal modülü
+- [ ] Weekly Analysis modülü
+- [ ] Focus Mode
+- [ ] Data export/import
+- [ ] PWA support
 
 ### Tamamlanan
 - [x] Proje setup (Vite + React + TypeScript)
 - [x] Tailwind + Notepad++ tema
 - [x] Layout components (MenuBar, Sidebar, TabBar, StatusBar, MainContent)
 - [x] Keyboard shortcuts (Ctrl+1-5 navigation, Ctrl+K palette, Escape)
+- [x] Command Palette (fuzzy search, keyboard navigation)
+- [x] Notes modülü (CRUD, tags, search, line numbers, auto-save)
+- [x] Habits modülü (CRUD, streaks, categories, daily tracking)
+- [x] Tasks modülü (CRUD, P1-P4 priority, filters, sorting, deadlines)
+- [x] Journal modülü (mood/energy tracking, date navigation, tags)
 
 ---
 
