@@ -1,18 +1,19 @@
 # MyFlowSpace - ADHD Productivity Super App
 
-## Aktif Çalışma: MVP3 - Sprint 3.2 (Notifications)
+## Aktif Çalışma: MVP3 - Sprint 3.5 (PWA & Polish)
 
 ### Tamamlanan Sprint'ler
 - [x] MVP1: Foundation + Notes ✓
 - [x] MVP2: Tasks, Habits, Journal, Pomodoro ✓
 - [x] Sprint 3.1: FlowBot AI Coach ✓
+- [x] Sprint 3.2: Notifications + Reminders ✓
 - [x] Sprint 3.4: Weekly Analysis ✓
 
-### Şu An Yapılacaklar (Sprint 3.2)
-- [ ] Browser Push Notifications
-- [ ] Habit reminder system
-- [ ] Deadline notifications
-- [ ] Quiet hours support
+### Şu An Yapılacaklar (Sprint 3.5)
+- [ ] PWA manifest
+- [ ] Service worker (offline support)
+- [ ] App icon set
+- [ ] Loading states & Error boundaries
 
 > Detaylı görevler için: `docs/ROADMAP.md`
 
