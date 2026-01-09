@@ -201,21 +201,21 @@
 
 **Çıktı:** AI-powered haftalık analiz
 
-## Sprint 3.5: Polish & PWA (3 gün)
-- [ ] PWA manifest
-- [ ] Service worker (offline support)
-- [ ] Install prompt
-- [ ] App icon set
-- [ ] Loading states
-- [ ] Error boundaries
-- [ ] Empty states
-- [ ] Onboarding flow (ilk kullanım)
-- [ ] Performance optimization
-- [ ] Final bug fixes
+## Sprint 3.5: Polish & PWA (3 gün) 
+- [x] PWA manifest
+- [x] Service worker (offline support)
+- [x] Install prompt
+- [x] App icon (SVG favicon)
+- [x] Loading states
+- [x] Error boundaries
+- [x] Empty states
+- [x] Onboarding flow (ilk kullanım)
+- [x] Performance optimization
+- [x] Final bug fixes
 
 **Çıktı:** Production-ready PWA
 
-### MVP3 Tamamlanma Kriterleri
+### MVP3 Tamamlanma Kriterleri 
 - [ ] AI Coach çalışıyor ve context-aware
 - [ ] Browser notifications çalışıyor
 - [ ] Email notifications çalışıyor (opsiyonel)

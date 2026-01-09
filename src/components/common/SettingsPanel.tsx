@@ -392,7 +392,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
           {/* About */}
           <div className="text-center text-xs text-np-text-secondary border-t border-np-border pt-4">
-            <div className="text-np-text-primary">MyFlowSpace v0.6.0</div>
+            <div className="text-np-text-primary">MyFlowSpace v0.7.0</div>
             <div className="mt-1">ADHD Productivity Super App</div>
             <div className="mt-1">Built with Notepad++ aesthetics 💜</div>
           </div>
