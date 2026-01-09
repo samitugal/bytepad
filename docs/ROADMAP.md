@@ -227,6 +227,16 @@
 
 # Post-MVP: Future Features
 
+## Öncelikli Eklemeler
+- [ ] **Habits: Daily Reminder & Saat Desteği**
+  - Habit için hatırlatma saati belirleme
+  - Browser notification ile hatırlatma
+  - Günlük/haftalık reminder schedule
+- [ ] **Tasks: DateTime Desteği**
+  - Task için tarih + saat seçimi
+  - Deadline ile birlikte saat bilgisi
+  - Time-based sorting ve filtering
+
 ## Potansiyel Eklemeler
 - [ ] Dark/Light theme toggle
 - [ ] Multiple workspaces
