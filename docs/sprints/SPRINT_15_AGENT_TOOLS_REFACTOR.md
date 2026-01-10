@@ -21,6 +21,62 @@
 | No time context | "Plan remaining day" fails - agent doesn't know time | 🔧 Fixed |
 | Missing error handling | Tool errors not properly caught and displayed | 🔧 Fixed |
 
+## ⚠️ Architecture Issue: Agent Loop Required
+
+**Current Problem:** Tool results are returned directly to user instead of being processed by the agent.
+
+**Correct Agent Architecture:**
+```
+User Message → Agent → Tool Call → Tool Result → Agent (processes result) → Final Response
+```
+
+**Current (Wrong) Flow:**
+```
+User Message → Agent → Tool Call → Tool Result → Return to User (WRONG!)
+```
+
+### Proper ReAct Agent Loop Implementation
+
+```typescript
+async function runAgent(userMessage: string, context: ChatContext) {
+  const messages = [systemPrompt, ...history, userMessage]
+  
+  // Agent loop - continues until agent decides to respond (no more tool calls)
+  while (true) {
+    const response = await llm.invoke(messages)
+    
+    // If no tool calls, agent is done - return final response
+    if (!response.tool_calls?.length) {
+      return response.content
+    }
+    
+    // Execute tools and add results to message history
+    const toolResults = []
+    for (const toolCall of response.tool_calls) {
+      const result = await executeTool(toolCall)
+      toolResults.push({
+        tool_call_id: toolCall.id,
+        role: 'tool',
+        content: result
+      })
+    }
+    
+    // Add assistant message (with tool calls) and tool results to history
+    messages.push(response)  // AI message with tool_calls
+    messages.push(...toolResults)  // Tool results
+    
+    // Loop continues - agent will process tool results and decide next action
+  }
+}
+```
+
+### Key Principles
+1. **Agent controls the loop** - Agent decides when to call tools and when to respond
+2. **Tool results go back to agent** - Never directly to user
+3. **Agent synthesizes information** - Combines tool results into coherent response
+4. **Multi-step reasoning** - Agent can call multiple tools in sequence
+5. **Final response is agent-generated** - Not raw tool output
+
 ---
 
 ## 15.1: Core Tool Improvements (1 day)

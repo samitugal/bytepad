@@ -220,64 +220,70 @@ export async function sendMessage(
   const llm = getLLM()
   const tools = getToolDefinitions()
   const llmWithTools = llm.bindTools(tools)
-  const messages = convertMessages(chatHistory, buildContext(context))
+  const messages: BaseMessage[] = convertMessages(chatHistory, buildContext(context))
   messages.push(new HumanMessage(userMessage))
   const toolResults: string[] = []
   
+  const MAX_ITERATIONS = 10 // Prevent infinite loops
+  let iterations = 0
+  
   try {
-    console.log('[AI Service] Sending message to LLM...')
-    const response = await llmWithTools.invoke(messages)
-    console.log('[AI Service] Response received, tool_calls:', response.tool_calls?.length || 0)
-    
-    // Handle tool calls
-    if (response.tool_calls?.length) {
-      for (const tc of response.tool_calls) {
-        console.log('[AI Service] Executing tool:', tc.name)
-        const executor = toolExecutors[tc.name]
-        if (executor) {
-          try {
-            const result = await executor(tc.args as Record<string, unknown>)
-            toolResults.push(result)
-          } catch (toolError) {
-            console.error('[AI Service] Tool error:', tc.name, toolError)
-            toolResults.push(`❌ Error in ${tc.name}`)
-          }
+    // Agent loop - continues until agent decides to respond (no more tool calls)
+    while (iterations < MAX_ITERATIONS) {
+      iterations++
+      console.log(`[Agent] Iteration ${iterations}, sending to LLM...`)
+      
+      const response = await llmWithTools.invoke(messages)
+      
+      // If no tool calls, agent is done - return final response
+      if (!response.tool_calls?.length) {
+        const content = typeof response.content === 'string' ? response.content : ''
+        console.log('[Agent] No tool calls, returning final response')
+        return { 
+          content: content || 'İşlem tamamlandı!', 
+          toolResults 
         }
       }
       
-      // After tool execution, get a natural language response
-      if (toolResults.length) {
-        console.log('[AI Service] Getting follow-up response after tools...')
-        try {
-          const followUpMessages = [
-            ...messages,
-            new AIMessage({ content: '', tool_calls: response.tool_calls }),
-            new HumanMessage(`Tool results:\n${toolResults.join('\n')}\n\nPlease summarize what was done in a friendly, brief way in Turkish.`)
-          ]
-          const followUp = await llm.invoke(followUpMessages)
-          const followUpContent = typeof followUp.content === 'string' ? followUp.content : ''
-          console.log('[AI Service] Follow-up response received')
-          return { 
-            content: followUpContent || toolResults.join('\n'), 
-            toolResults 
+      console.log(`[Agent] Tool calls: ${response.tool_calls.map(tc => tc.name).join(', ')}`)
+      
+      // Add assistant message with tool calls to history
+      messages.push(response)
+      
+      // Execute each tool and add results to message history
+      for (const toolCall of response.tool_calls) {
+        const executor = toolExecutors[toolCall.name]
+        let result: string
+        
+        if (executor) {
+          try {
+            result = await executor(toolCall.args as Record<string, unknown>)
+            toolResults.push(result)
+            console.log(`[Agent] Tool ${toolCall.name} executed:`, result.substring(0, 100))
+          } catch (toolError) {
+            result = `Error executing ${toolCall.name}: ${toolError}`
+            console.error(`[Agent] Tool error:`, toolError)
           }
-        } catch (followUpError) {
-          console.error('[AI Service] Follow-up error:', followUpError)
-          return { content: toolResults.join('\n'), toolResults }
+        } else {
+          result = `Unknown tool: ${toolCall.name}`
         }
+        
+        // Add tool result as ToolMessage back to agent
+        messages.push(new HumanMessage({
+          content: `Tool "${toolCall.name}" result: ${result}`,
+        }))
       }
+      
+      // Loop continues - agent will process tool results and decide next action
     }
     
-    // No tool calls - return direct response
-    const content = typeof response.content === 'string' ? response.content : ''
-    if (!content) {
-      console.warn('[AI Service] Empty response from LLM')
-      return { content: 'Bir sorun oluştu, tekrar dener misin?', toolResults }
+    console.warn('[Agent] Max iterations reached')
+    return { 
+      content: 'Çok fazla işlem yapıldı, lütfen daha basit bir istek dene.', 
+      toolResults 
     }
-    
-    return { content, toolResults }
   } catch (error) {
-    console.error('[AI Service Error]', error)
+    console.error('[Agent Error]', error)
     throw error
   }
 }
