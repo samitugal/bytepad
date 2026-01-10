@@ -1,5 +1,6 @@
 import { useUIStore } from '../../stores/uiStore'
 import { useChatStore } from '../../stores/chatStore'
+import { useSettingsStore, PROVIDER_INFO } from '../../stores/settingsStore'
 
 interface MenuBarProps {
   onSettingsClick?: () => void
@@ -8,6 +9,11 @@ interface MenuBarProps {
 export function MenuBar({ onSettingsClick }: MenuBarProps) {
   const { toggleFocusMode } = useUIStore()
   const { toggleOpen: toggleChat } = useChatStore()
+  const { llmProvider, apiKeys } = useSettingsStore()
+
+  // Check if API key is configured
+  const hasApiKey = llmProvider === 'ollama' || !!apiKeys[llmProvider]
+  const requiresKey = PROVIDER_INFO[llmProvider].requiresKey
 
   return (
     <div className="h-6 bg-np-bg-secondary border-b border-np-border flex items-center justify-between px-2 text-sm select-none">
@@ -25,11 +31,18 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
             Focus
           </span>
           <span
-            className="hover:text-np-text-primary cursor-pointer text-np-green"
-            onClick={toggleChat}
-            title="FlowBot AI Coach (Ctrl+/)"
+            className={`cursor-pointer ${hasApiKey || !requiresKey
+                ? 'hover:text-np-text-primary text-np-green'
+                : 'text-np-text-secondary/50 cursor-not-allowed'
+              }`}
+            onClick={hasApiKey || !requiresKey ? toggleChat : undefined}
+            title={
+              hasApiKey || !requiresKey
+                ? 'FlowBot AI Coach (Ctrl+/)'
+                : 'Configure API key in Settings → AI'
+            }
           >
-            🤖 Chat
+            🤖 Chat {!hasApiKey && requiresKey && <span className="text-np-error text-xs">!</span>}
           </span>
           <span
             className="hover:text-np-text-primary cursor-pointer"

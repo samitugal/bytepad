@@ -2,35 +2,36 @@
 
 Bu dosya Claude Code tarafından otomatik güncellenir.
 
-## [0.11.0] - 2026-01-10 (Planned)
+## [0.11.0] - 2026-01-10
 
-### Planned Features
+### Added
+- **Tabbed Settings Interface**
+  - General: Language selection, font size, keyboard shortcuts
+  - AI: Provider, model, API keys with validation status
+  - Integrations: Tavily, Email notifications, Browser notifications
+  - Sync: GitHub Gist, Google Account
+  - Data: Stats, Export/Import, Clear data
 
-#### Settings Panel Redesign
-- [ ] **Tabbed Settings Interface**
-  - General: Font size, font type, language selection
-  - AI: Provider, model, API keys
-  - Integrations: Tavily, Email notifications
-  - Sync: GitHub Gist, Firebase
-  - Data: Export/Import, Clear data, Stats
-
-#### UX Improvements
-- [ ] **API Key Validation**
+- **API Key Validation**
   - Chat button disabled when no API key configured
-  - Visual indicator for missing configuration
+  - Visual indicator (!) for missing configuration
   - Tooltip explaining why chat is disabled
 
-#### Internationalization (i18n)
-- [ ] **Language Support**
-  - English (default)
-  - Turkish
-  - Language selector in General settings
-  - All UI text externalized to translation files
+- **Internationalization (i18n)**
+  - Language support: English (default), Turkish
+  - Language selector in Settings → General
+  - Translation files: en.json, tr.json
+  - useTranslation hook for components
 
-#### Code Cleanup
-- [ ] **Consistent English UI**
-  - Remove Turkish text from codebase
-  - Use i18n keys for all user-facing text
+- **GitHub Gist Sync**
+  - Cross-device sync via private GitHub Gist
+  - Auto-sync with configurable intervals
+  - Force push/pull options
+
+### Changed
+- Settings panel completely redesigned with 5 tabs
+- MenuBar chat button shows disabled state when API key missing
+- Improved UX with better organization of settings
 
 ---
 
@@ -376,8 +377,31 @@ Bu dosya Claude Code tarafından otomatik güncellenir.
 - [x] Resizable sidebar
 - [x] Cross-tab sync
 
-### Sprint 6: Future Features
+### Sprint 6: Calendar ✓
+- [x] Calendar module (Month/Week/Day views)
+- [x] Task visualization on calendar
+- [x] Multi-day task support
+
+### Sprint 7: Cloud & Bookmarks ✓
+- [x] Bookmarks module
+- [x] Google Authentication
+- [x] Firebase Firestore sync
+
+### Sprint 8: FlowBot Agent Mode ✓
+- [x] Agent tools (bookmark, web search, planning)
+- [x] Native LLM function calling
+- [x] Email notifications (EmailJS)
+- [x] AI Insights for Weekly Analysis
+- [x] GitHub Gist Sync
+
+### Sprint 9: Settings Redesign & i18n (Planned)
+- [ ] Tabbed Settings interface (General, AI, Integrations, Sync, Data)
+- [ ] Chat button disabled when no API key
+- [ ] Language support (English/Turkish)
+- [ ] i18n infrastructure
+- [ ] Remove hardcoded Turkish text
+
+### Future Features
 - [ ] Dark/Light theme toggle
-- [ ] Calendar integration
 - [ ] Multiple workspaces
 - [ ] Collaboration features

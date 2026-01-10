@@ -1,0 +1,167 @@
+{
+    "common": {
+        "save": "Kaydet",
+        "cancel": "İptal",
+        "delete": "Sil",
+        "edit": "Düzenle",
+        "add": "Ekle",
+        "close": "Kapat",
+        "search": "Ara",
+        "loading": "Yükleniyor...",
+        "error": "Hata",
+        "success": "Başarılı",
+        "confirm": "Onayla",
+        "yes": "Evet",
+        "no": "Hayır"
+    },
+    "nav": {
+        "notes": "Notlar",
+        "habits": "Alışkanlıklar",
+        "tasks": "Görevler",
+        "journal": "Günlük",
+        "bookmarks": "Yer İmleri",
+        "calendar": "Takvim",
+        "analysis": "Analiz"
+    },
+    "menu": {
+        "file": "Dosya",
+        "edit": "Düzenle",
+        "view": "Görünüm",
+        "focus": "Odak",
+        "chat": "Sohbet",
+        "settings": "Ayarlar"
+    },
+    "settings": {
+        "title": "Ayarlar",
+        "tabs": {
+            "general": "Genel",
+            "ai": "Yapay Zeka",
+            "integrations": "Entegrasyonlar",
+            "sync": "Senkronizasyon",
+            "data": "Veri"
+        },
+        "general": {
+            "display": "Görünüm",
+            "fontSize": "Yazı Boyutu",
+            "fontSizeHint": "Değişiklikler anında tüm uygulamaya uygulanır.",
+            "language": "Dil",
+            "languageHint": "Tercih ettiğiniz dili seçin.",
+            "shortcuts": "Klavye Kısayolları",
+            "commandPalette": "Komut Paleti",
+            "toggleChat": "Sohbeti Aç/Kapat",
+            "globalSearch": "Genel Arama",
+            "focusMode": "Odak Modu",
+            "notifications": "Bildirimler"
+        },
+        "ai": {
+            "provider": "Yapay Zeka Sağlayıcı",
+            "model": "Model",
+            "apiKey": "API Anahtarı",
+            "apiKeyRequired": "gerekli",
+            "apiKeyHint": "API anahtarınız yerel olarak saklanır ve sunucularımıza gönderilmez.",
+            "ollamaUrl": "Ollama Base URL",
+            "configured": "yapılandırıldı - Sohbet hazır",
+            "notConfigured": "API anahtarı gerekli - Sohbet devre dışı"
+        },
+        "integrations": {
+            "tavily": "Web Araması (Tavily)",
+            "tavilyKey": "Tavily API Anahtarı",
+            "tavilyHint": "API anahtarınızı şuradan alın:",
+            "browserNotifications": "Tarayıcı Bildirimleri",
+            "pushNotifications": "Push Bildirimleri",
+            "quietHours": "Sessiz Saatler",
+            "emailNotifications": "E-posta Bildirimleri",
+            "yourEmail": "E-posta Adresiniz",
+            "emailjsConfig": "EmailJS Yapılandırması",
+            "dailySummary": "Günlük özet e-postası",
+            "weeklyReport": "Haftalık rapor e-postası",
+            "streakAlerts": "Seri risk uyarıları"
+        },
+        "sync": {
+            "googleAccount": "Google Hesabı",
+            "notConfigured": "Google girişi yapılandırılmamış.",
+            "addFirebaseConfig": "Firebase yapılandırmasını ekleyin:",
+            "signOut": "Çıkış Yap",
+            "signInWithGoogle": "Google ile Giriş Yap",
+            "signingIn": "Giriş yapılıyor...",
+            "gistSync": "GitHub Gist Senkronizasyonu",
+            "gistSyncDesc": "Verilerinizi özel bir GitHub Gist kullanarak cihazlar arasında senkronize edin.",
+            "enableGistSync": "Gist Sync'i Etkinleştir",
+            "githubToken": "GitHub Token",
+            "createToken": "Token oluştur",
+            "withGistScope": "\"gist\" kapsamıyla",
+            "gistId": "Gist ID",
+            "createNew": "Yeni Oluştur",
+            "autoSync": "Otomatik senkronizasyon",
+            "syncNow": "Şimdi Senkronize Et",
+            "syncing": "Senkronize ediliyor...",
+            "push": "Gönder",
+            "pull": "Çek",
+            "lastSync": "Son senkronizasyon"
+        },
+        "data": {
+            "yourData": "Verileriniz",
+            "notes": "Notlar",
+            "habits": "Alışkanlıklar",
+            "tasks": "Görevler",
+            "journal": "Günlük",
+            "backupRestore": "Yedekleme ve Geri Yükleme",
+            "exportAll": "Tüm Verileri Dışa Aktar (JSON)",
+            "importBackup": "Yedekten İçe Aktar",
+            "dangerZone": "Tehlikeli Bölge",
+            "deleteAll": "Tüm Verileri Sil",
+            "deleteWarning": "Bu işlem tüm notlarınızı, görevlerinizi, alışkanlıklarınızı ve günlük girişlerinizi kalıcı olarak silecektir."
+        }
+    },
+    "chat": {
+        "placeholder": "FlowBot'a bir şey sor...",
+        "send": "Gönder",
+        "apiKeyRequired": "Ayarlar → Yapay Zeka'dan API anahtarını yapılandırın"
+    },
+    "notes": {
+        "newNote": "Yeni Not",
+        "searchNotes": "Notlarda ara...",
+        "untitled": "Başlıksız",
+        "emptyNote": "Boş not",
+        "noNotes": "Henüz not yok",
+        "noNotesFound": "Not bulunamadı",
+        "tags": "Etiketler"
+    },
+    "tasks": {
+        "newTask": "Yeni Görev",
+        "searchTasks": "Görevlerde ara...",
+        "noTasks": "Henüz görev yok",
+        "completed": "Tamamlandı",
+        "pending": "Bekliyor",
+        "priority": "Öncelik",
+        "deadline": "Son Tarih",
+        "all": "Tümü",
+        "active": "Aktif"
+    },
+    "habits": {
+        "newHabit": "Yeni Alışkanlık",
+        "streak": "Seri",
+        "days": "gün",
+        "today": "Bugün",
+        "completed": "Tamamlandı",
+        "category": "Kategori"
+    },
+    "journal": {
+        "newEntry": "Yeni Giriş",
+        "mood": "Ruh Hali",
+        "energy": "Enerji",
+        "todayEntry": "Bugünün Girişi",
+        "noEntry": "Bu gün için giriş yok"
+    },
+    "analysis": {
+        "weeklyStats": "Haftalık İstatistikler",
+        "habitCompletion": "Alışkanlık Tamamlama",
+        "taskCompletion": "Görev Tamamlama",
+        "avgMood": "Ort. Ruh Hali",
+        "avgEnergy": "Ort. Enerji",
+        "insights": "İçgörüler",
+        "recommendations": "Öneriler",
+        "generateAI": "AI İçgörüleri Oluştur",
+        "analyzing": "Analiz ediliyor..."
+    }
+}
