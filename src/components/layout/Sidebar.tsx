@@ -4,12 +4,13 @@ import type { ModuleType } from '../../types'
 
 const MODULES: { id: ModuleType; label: string; shortcut: string }[] = [
   { id: 'notes', label: 'Notes', shortcut: '1' },
-  { id: 'habits', label: 'Habits', shortcut: '2' },
-  { id: 'tasks', label: 'Tasks', shortcut: '3' },
-  { id: 'journal', label: 'Journal', shortcut: '4' },
-  { id: 'bookmarks', label: 'Bookmarks', shortcut: '5' },
-  { id: 'calendar', label: 'Calendar', shortcut: '6' },
-  { id: 'analysis', label: 'Analyze', shortcut: '7' },
+  { id: 'dailynotes', label: 'Daily Notes', shortcut: '2' },
+  { id: 'habits', label: 'Habits', shortcut: '3' },
+  { id: 'tasks', label: 'Tasks', shortcut: '4' },
+  { id: 'journal', label: 'Journal', shortcut: '5' },
+  { id: 'bookmarks', label: 'Bookmarks', shortcut: '6' },
+  { id: 'calendar', label: 'Calendar', shortcut: '7' },
+  { id: 'analysis', label: 'Analyze', shortcut: '8' },
 ]
 
 const MIN_WIDTH = 80

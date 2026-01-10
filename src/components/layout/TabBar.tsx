@@ -9,6 +9,7 @@ const MODULE_NAMES: Record<ModuleType, string> = {
   bookmarks: 'Bookmarks',
   calendar: 'Calendar',
   analysis: 'Analysis',
+  dailynotes: 'Daily Notes',
 }
 
 export function TabBar() {
