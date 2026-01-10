@@ -17,9 +17,9 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     title: 'MyFlowSpace',
-    icon: path.join(__dirname, '../resources/icon.png'),
+    icon: path.join(__dirname, '../../resources/icon.png'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -37,7 +37,7 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:5173')
     mainWindow.webContents.openDevTools()
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
 
   // Handle window close - minimize to tray instead
