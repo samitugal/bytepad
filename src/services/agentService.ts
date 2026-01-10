@@ -505,7 +505,7 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
         }
 
         // Build rich message for LLM
-        let message = '📋 **Günlük Plan Özeti**\n\n'
+        let message = `📋 **Günlük Plan Özeti** (${availableHours} saat)\n\n`
 
         if (priorityTasks.length > 0) {
           message += '**Öncelikli Task\'lar:**\n'

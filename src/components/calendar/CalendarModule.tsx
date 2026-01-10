@@ -51,63 +51,6 @@ export function CalendarModule() {
   const [newTaskEndDate, setNewTaskEndDate] = useState<string>('')
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
-  // Keyboard shortcuts handler
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Don't trigger if typing in input
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-    // Don't trigger if modal is open
-    if (showTaskForm || selectedTask) return
-
-    switch (e.key) {
-      case 'ArrowLeft':
-        e.preventDefault()
-        goToPrevious()
-        break
-      case 'ArrowRight':
-        e.preventDefault()
-        goToNext()
-        break
-      case 't':
-      case 'T':
-        e.preventDefault()
-        goToToday()
-        break
-      case 'm':
-      case 'M':
-        e.preventDefault()
-        setView('month')
-        break
-      case 'w':
-      case 'W':
-        e.preventDefault()
-        setView('week')
-        break
-      case 'd':
-      case 'D':
-        e.preventDefault()
-        setView('day')
-        break
-      case 'n':
-      case 'N':
-        e.preventDefault()
-        // Open new task form for today or selected date
-        const targetDate = selectedDate || new Date()
-        setSelectedDate(targetDate)
-        setShowTaskForm(true)
-        break
-      case 'Escape':
-        setSelectedTask(null)
-        setShowTaskForm(false)
-        break
-    }
-  }, [showTaskForm, selectedTask, selectedDate, goToPrevious, goToNext, goToToday, setView, setSelectedDate])
-
-  // Register keyboard shortcuts
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleKeyDown])
-
   // Handle task click (show detail popup)
   const handleTaskClick = (task: Task, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -132,12 +75,20 @@ export function CalendarModule() {
 
   // Keyboard shortcuts handler
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Skip if user is typing in an input or modal is open
+    // Handle Escape to close modals
+    if (e.key === 'Escape') {
+      setSelectedTask(null)
+      setShowTaskForm(false)
+      return
+    }
+
+    // Skip other shortcuts if user is typing in an input or modal is open
     if (
       e.target instanceof HTMLInputElement ||
       e.target instanceof HTMLTextAreaElement ||
       e.target instanceof HTMLSelectElement ||
-      showTaskForm
+      showTaskForm ||
+      selectedTask
     ) {
       return
     }
@@ -175,7 +126,7 @@ export function CalendarModule() {
         setShowTaskForm(true)
         break
     }
-  }, [showTaskForm, goToPrevious, goToNext, goToToday, setView, selectedDate, currentDate, setSelectedDate])
+  }, [showTaskForm, selectedTask, goToPrevious, goToNext, goToToday, setView, selectedDate, currentDate, setSelectedDate])
 
   // Register keyboard shortcuts
   useEffect(() => {
