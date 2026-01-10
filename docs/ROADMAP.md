@@ -565,13 +565,13 @@ interface Task {
 - [ ] Quick complete (checkbox)
 - [ ] Task'ı sil/düzenle
 
-## 7.7: Visual Design & Polish 
+## 7.7: Visual Design & Polish ✓
 - [x] Notepad++ tema uyumu
 - [x] Priority renk kodları (P1=kırmızı, P2=turuncu, vb.)
 - [x] Completed task'lar için strikethrough
 - [x] Today highlight
 - [x] Weekend farklı arka plan
-- [ ] Keyboard shortcuts
+- [x] Keyboard shortcuts
   - `←/→` = prev/next period
   - `T` = today
   - `M/W/D` = month/week/day view
