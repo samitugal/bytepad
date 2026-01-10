@@ -471,7 +471,7 @@ VITE_FIREBASE_PROJECT_ID=...`}
 
           {/* About */}
           <div className="text-center text-xs text-np-text-secondary border-t border-np-border pt-4">
-            <div className="text-np-text-primary">MyFlowSpace v0.8.0</div>
+            <div className="text-np-text-primary">MyFlowSpace v0.9.0</div>
             <div className="mt-1">ADHD Productivity Super App</div>
             <div className="mt-1">Built with Notepad++ aesthetics 💜</div>
           </div>

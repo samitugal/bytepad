@@ -2,6 +2,40 @@
 
 Bu dosya Claude Code tarafından otomatik güncellenir.
 
+## [0.9.0] - 2026-01-10
+
+### Added
+- **Cloud Sync & Authentication**
+  - **Google Sign-in**: Firebase Authentication ile Google hesabı girişi
+  - **Firebase Firestore Sync**: Farklı tarayıcılar/cihazlar arası real-time senkronizasyon
+  - **User Data Isolation**: Her kullanıcının verisi kendi UID'si altında saklanır
+  - **Offline-first**: İnternet olmadan çalışır, bağlanınca otomatik sync
+
+- **Bookmarks Module (Raindrop.io benzeri)**
+  - URL, title, description, tags desteği
+  - Collections: Gold 🥇, Silver 🥈, Bronze 🥉, Unsorted
+  - Sol sidebar'da en çok kullanılan 5 tag filtreleme
+  - Sıralama: tarih, başlık, domain
+  - Okundu/okunmadı işaretleme
+  - Keyboard shortcut: Ctrl+5
+
+- **UI/UX İyileştirmeleri**
+  - **Resizable Sidebar**: Drag handle ile genişlik ayarı (80-250px)
+  - **Font Size Settings**: Display bölümü Settings'in en üstüne taşındı
+  - **Cross-Tab Sync**: BroadcastChannel API ile aynı tarayıcıda sekmeler arası sync
+
+### Changed
+- Sidebar modül listesi: Bookmarks (^5), Analyze (^6) olarak güncellendi
+- Settings paneline Account bölümü eklendi
+- Keyboard shortcuts: Ctrl+1-6 modül navigasyonu
+
+### Technical
+- Firebase SDK entegrasyonu
+- Firestore real-time listeners
+- Debounced cloud writes (1 saniye)
+
+---
+
 ## [0.8.0] - 2026-01-10
 
 ### Added
@@ -272,8 +306,21 @@ Bu dosya Claude Code tarafından otomatik güncellenir.
 - [x] Onboarding flow
 - [x] Loading states & Error boundaries
 
-### Sprint 4: Future Features
+### Sprint 4: Advanced Features ✓
+- [x] Global search (Alt+U)
+- [x] Knowledge graph (wikilinks)
+- [x] Custom DateTimePicker
+- [x] Tag-based filtering
+
+### Sprint 5: Cloud & Bookmarks ✓
+- [x] Bookmarks module
+- [x] Google Authentication
+- [x] Firebase Firestore sync
+- [x] Resizable sidebar
+- [x] Cross-tab sync
+
+### Sprint 6: Future Features
 - [ ] Dark/Light theme toggle
-- [ ] Global search (Alt+U)
-- [ ] Knowledge graph (wikilinks)
-- [ ] Cloud sync
+- [ ] Calendar integration
+- [ ] Multiple workspaces
+- [ ] Collaboration features
