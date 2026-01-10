@@ -15,7 +15,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
   const [showApiKey, setShowApiKey] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const stats = getDataStats()
-  
+
   const {
     llmProvider,
     llmModel,
@@ -28,7 +28,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     setOllamaBaseUrl,
     setFontSize,
   } = useSettingsStore()
-  
+
   const {
     preferences: notifPrefs,
     permissionGranted,
@@ -36,7 +36,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
   } = useNotificationStore()
 
   const { user, isLoading: authLoading, isConfigured: authConfigured, signIn, signOut } = useAuthStore()
-  
+
   const handleEnableNotifications = async () => {
     const granted = await requestNotificationPermission()
     if (granted) {
@@ -44,7 +44,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
       startNotificationChecker()
     }
   }
-  
+
   const handleDisableNotifications = () => {
     setNotifPrefs({ enabled: false })
     stopNotificationChecker()
@@ -146,7 +146,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                 <p className="mb-2">Google Sign-in is not configured.</p>
                 <p>Add Firebase config to <code className="text-np-cyan">.env</code> file:</p>
                 <pre className="mt-2 text-np-purple text-xs">
-{`VITE_FIREBASE_API_KEY=...
+                  {`VITE_FIREBASE_API_KEY=...
 VITE_FIREBASE_AUTH_DOMAIN=...
 VITE_FIREBASE_PROJECT_ID=...`}
                 </pre>
@@ -177,10 +177,10 @@ VITE_FIREBASE_PROJECT_ID=...`}
                 className="w-full np-btn flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                 </svg>
                 {authLoading ? 'Signing in...' : 'Sign in with Google'}
               </button>
@@ -230,9 +230,8 @@ VITE_FIREBASE_PROJECT_ID=...`}
               />
 
               {importStatus && (
-                <div className={`p-2 text-sm ${
-                  importStatus.type === 'success' ? 'text-np-green bg-np-green/10' : 'text-np-error bg-np-error/10'
-                }`}>
+                <div className={`p-2 text-sm ${importStatus.type === 'success' ? 'text-np-green bg-np-green/10' : 'text-np-error bg-np-error/10'
+                  }`}>
                   {importStatus.message}
                 </div>
               )}
@@ -270,7 +269,7 @@ VITE_FIREBASE_PROJECT_ID=...`}
                   </button>
                 )}
               </div>
-              
+
               {/* Permission status */}
               <div className="flex items-center gap-2 text-xs">
                 <span className={`w-2 h-2 rounded-full ${permissionGranted ? 'bg-np-green' : 'bg-np-warning'}`}></span>
@@ -278,7 +277,7 @@ VITE_FIREBASE_PROJECT_ID=...`}
                   {permissionGranted ? 'Permission granted' : 'Permission required'}
                 </span>
               </div>
-              
+
               {notifPrefs.enabled && (
                 <>
                   {/* Notification types */}
@@ -311,7 +310,7 @@ VITE_FIREBASE_PROJECT_ID=...`}
                       <span>🔥 Streak risk alerts</span>
                     </label>
                   </div>
-                  
+
                   {/* Quiet hours */}
                   <div className="pt-2 border-t border-np-border">
                     <label className="flex items-center gap-2 text-sm text-np-text-secondary mb-2">
@@ -430,10 +429,31 @@ VITE_FIREBASE_PROJECT_ID=...`}
               <div className="flex items-center gap-2 text-xs">
                 <span className={`w-2 h-2 rounded-full ${apiKeys[llmProvider] || llmProvider === 'ollama' ? 'bg-np-green' : 'bg-np-warning'}`}></span>
                 <span className="text-np-text-secondary">
-                  {apiKeys[llmProvider] || llmProvider === 'ollama' 
-                    ? `Ready to use ${PROVIDER_INFO[llmProvider].name}` 
+                  {apiKeys[llmProvider] || llmProvider === 'ollama'
+                    ? `Ready to use ${PROVIDER_INFO[llmProvider].name}`
                     : 'API key required'}
                 </span>
+              </div>
+
+              {/* Tavily API Key for Web Search */}
+              <div className="pt-3 border-t border-np-border">
+                <label className="block text-xs text-np-text-secondary mb-1">
+                  Tavily API Key <span className="text-np-purple">(Web Search)</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={apiKeys.tavily || ''}
+                    onChange={(e) => setApiKey('tavily', e.target.value)}
+                    placeholder="Enter Tavily API key for web search..."
+                    className="flex-1 bg-np-bg-primary border border-np-border text-np-text-primary 
+                               font-mono text-sm px-2 py-1.5 focus:outline-none focus:border-np-blue"
+                  />
+                </div>
+                <p className="text-xs text-np-text-secondary mt-1">
+                  Optional. Enables FlowBot to search the web and save bookmarks.
+                  Get a free key at <a href="https://tavily.com" target="_blank" rel="noopener" className="text-np-blue hover:underline">tavily.com</a>
+                </p>
               </div>
             </div>
           </div>

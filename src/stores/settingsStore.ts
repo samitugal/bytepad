@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'groq' | 'ollama'
+export type ApiKeyType = LLMProvider | 'tavily'
 
 export interface LLMModel {
   id: string
@@ -61,7 +62,7 @@ interface SettingsState {
   // LLM Settings
   llmProvider: LLMProvider
   llmModel: string
-  apiKeys: Record<LLMProvider, string>
+  apiKeys: Record<ApiKeyType, string>
   ollamaBaseUrl: string
 
   // Display Settings
@@ -76,7 +77,7 @@ interface SettingsState {
   // Actions
   setLLMProvider: (provider: LLMProvider) => void
   setLLMModel: (model: string) => void
-  setApiKey: (provider: LLMProvider, key: string) => void
+  setApiKey: (provider: ApiKeyType, key: string) => void
   setOllamaBaseUrl: (url: string) => void
   setFontSize: (size: FontSize) => void
   setNoteMarkdownPreview: (enabled: boolean) => void
@@ -99,6 +100,7 @@ export const useSettingsStore = create<SettingsState>()(
         google: '',
         groq: '',
         ollama: '',
+        tavily: '',
       },
       ollamaBaseUrl: 'http://localhost:11434',
       fontSize: 'base',
@@ -108,18 +110,18 @@ export const useSettingsStore = create<SettingsState>()(
       // Actions
       setLLMProvider: (provider) => {
         const models = LLM_MODELS[provider]
-        set({ 
+        set({
           llmProvider: provider,
           llmModel: models[0]?.id || ''
         })
       },
-      
+
       setLLMModel: (model) => set({ llmModel: model }),
-      
+
       setApiKey: (provider, key) => set((state) => ({
         apiKeys: { ...state.apiKeys, [provider]: key }
       })),
-      
+
       setOllamaBaseUrl: (url) => set({ ollamaBaseUrl: url }),
 
       setFontSize: (size) => set({ fontSize: size }),
@@ -133,7 +135,7 @@ export const useSettingsStore = create<SettingsState>()(
         const state = get()
         return state.apiKeys[state.llmProvider]
       },
-      
+
       getCurrentModel: () => {
         const state = get()
         return LLM_MODELS[state.llmProvider].find(m => m.id === state.llmModel)
