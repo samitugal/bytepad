@@ -48,14 +48,17 @@ export const PROVIDER_INFO: Record<LLMProvider, { name: string; baseUrl: string;
 }
 
 // Font Size Options
-export type FontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
+export type FontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl'
 
 export const FONT_SIZES: Record<FontSize, { label: string; value: string }> = {
   xs: { label: 'Extra Small (11px)', value: '11px' },
   sm: { label: 'Small (12px)', value: '12px' },
-  base: { label: 'Default (13px)', value: '13px' },
-  lg: { label: 'Large (14px)', value: '14px' },
-  xl: { label: 'Extra Large (16px)', value: '16px' },
+  base: { label: 'Default (14px)', value: '14px' },
+  lg: { label: 'Large (16px)', value: '16px' },
+  xl: { label: 'Extra Large (18px)', value: '18px' },
+  '2xl': { label: 'Huge (20px)', value: '20px' },
+  '3xl': { label: 'Giant (22px)', value: '22px' },
+  '4xl': { label: 'Maximum (24px)', value: '24px' },
 }
 
 // GitHub Gist Sync Preferences
