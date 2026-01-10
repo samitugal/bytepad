@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { JournalEntry } from '../types'
 
+// Cross-tab sync channel
+const syncChannel = new BroadcastChannel('myflowspace-journal')
+
 interface JournalState {
   entries: JournalEntry[]
   addEntry: (entry: Omit<JournalEntry, 'id'>) => string
@@ -61,3 +64,14 @@ export const useJournalStore = create<JournalState>()(
     }
   )
 )
+
+// Cross-tab synchronization
+syncChannel.onmessage = (event) => {
+  if (event.data?.type === 'SYNC') {
+    useJournalStore.setState({ entries: event.data.entries })
+  }
+}
+
+useJournalStore.subscribe((state) => {
+  syncChannel.postMessage({ type: 'SYNC', entries: state.entries })
+})

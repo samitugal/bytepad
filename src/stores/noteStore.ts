@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Note } from '../types'
 
+// Cross-tab sync channel
+const syncChannel = new BroadcastChannel('myflowspace-notes')
+
 interface NoteState {
   notes: Note[]
   activeNoteId: string | null
@@ -74,3 +77,15 @@ export const useNoteStore = create<NoteState>()(
     }
   )
 )
+
+// Cross-tab synchronization
+syncChannel.onmessage = (event) => {
+  if (event.data?.type === 'SYNC') {
+    useNoteStore.setState({ notes: event.data.notes })
+  }
+}
+
+// Subscribe to store changes and broadcast to other tabs
+useNoteStore.subscribe((state) => {
+  syncChannel.postMessage({ type: 'SYNC', notes: state.notes })
+})

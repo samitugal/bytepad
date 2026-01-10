@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Habit } from '../types'
 
+// Cross-tab sync channel
+const syncChannel = new BroadcastChannel('myflowspace-habits')
+
 interface HabitStats {
   date: string
   completed: number
@@ -160,3 +163,21 @@ export const useHabitStore = create<HabitState>()(
     }
   )
 )
+
+// Cross-tab synchronization
+syncChannel.onmessage = (event) => {
+  if (event.data?.type === 'SYNC') {
+    useHabitStore.setState({ 
+      habits: event.data.habits,
+      dailyStats: event.data.dailyStats 
+    })
+  }
+}
+
+useHabitStore.subscribe((state) => {
+  syncChannel.postMessage({ 
+    type: 'SYNC', 
+    habits: state.habits,
+    dailyStats: state.dailyStats 
+  })
+})
