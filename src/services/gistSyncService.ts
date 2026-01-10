@@ -7,6 +7,7 @@ import { useTaskStore } from '../stores/taskStore'
 import { useHabitStore } from '../stores/habitStore'
 import { useJournalStore } from '../stores/journalStore'
 import { useBookmarkStore } from '../stores/bookmarkStore'
+import { useDailyNotesStore } from '../stores/dailyNotesStore'
 
 const GIST_FILENAME = 'myflowspace-data.json'
 
@@ -19,6 +20,7 @@ interface SyncData {
         habits: unknown[]
         journal: unknown[]
         bookmarks: unknown[]
+        dailyNotes: unknown[]
     }
 }
 
@@ -29,6 +31,7 @@ function collectAllData(): SyncData {
     const habits = useHabitStore.getState().habits
     const journal = useJournalStore.getState().entries
     const bookmarks = useBookmarkStore.getState().bookmarks
+    const dailyNotes = useDailyNotesStore.getState().dailyNotes
 
     return {
         version: 1,
@@ -39,6 +42,7 @@ function collectAllData(): SyncData {
             habits,
             journal,
             bookmarks,
+            dailyNotes,
         },
     }
 }
@@ -61,6 +65,9 @@ function applyData(syncData: SyncData): void {
     }
     if (data.bookmarks) {
         useBookmarkStore.setState({ bookmarks: data.bookmarks as never[] })
+    }
+    if (data.dailyNotes) {
+        useDailyNotesStore.setState({ dailyNotes: data.dailyNotes as never[] })
     }
 }
 
