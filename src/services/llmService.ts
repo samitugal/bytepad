@@ -4,7 +4,7 @@ import { executeToolCall, type ToolCall, type ToolResult } from './agentService'
 import type { ChatMessage, ChatContext } from '../types'
 
 // Debug mode - set to true for development
-const DEBUG_MODE = false
+const DEBUG_MODE = true
 
 function debugLog(label: string, data: unknown) {
   if (DEBUG_MODE) {
@@ -141,6 +141,7 @@ async function callOpenAIWithTools(
       messages,
       tools,
       tool_choice: 'auto',
+      parallel_tool_calls: true,
       ...tokenParam,
       ...tempParam,
     }),
