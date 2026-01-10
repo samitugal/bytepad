@@ -718,16 +718,23 @@ export async function sendMessageStreaming(
   onToolCall?: (toolName: string, result: string) => void
 ): Promise<AgentResponse> {
   const settings = useSettingsStore.getState()
-  const { llmProvider, llmModel, apiKeys } = settings
+  const { llmProvider, llmModel } = settings
 
-  // Only OpenAI supports streaming with tools currently
-  if (llmProvider !== 'openai') {
-    // Fallback to non-streaming
+  // GPT-5 and non-OpenAI providers use non-streaming (more reliable)
+  const isGPT5 = llmModel.startsWith('gpt-5')
+  if (llmProvider !== 'openai' || isGPT5) {
+    debugLog('Using non-streaming mode', { llmProvider, llmModel, isGPT5 })
     const result = await sendMessageWithTools(userMessage, chatHistory, context)
     onChunk(result.content)
+    if (onToolCall && result.toolResults) {
+      for (const tr of result.toolResults) {
+        onToolCall(tr.success ? 'tool' : 'error', tr.message)
+      }
+    }
     return result
   }
 
+  // Streaming for GPT-4 models
   const contextSuffix = buildContextMessage(context)
   const messages: { role: string; content: string }[] = [
     { role: 'system', content: ADHD_COACH_SYSTEM_PROMPT + contextSuffix },
@@ -736,22 +743,16 @@ export async function sendMessageStreaming(
   ]
 
   const tools = formatToolsForOpenAI()
-  const isGPT5 = llmModel.startsWith('gpt-5')
+  const apiKeys = settings.apiKeys
 
-  // GPT-5 uses max_completion_tokens instead of max_tokens, and no temperature
   const requestBody: Record<string, unknown> = {
     model: llmModel,
     messages,
     tools,
     tool_choice: 'auto',
     stream: true,
-  }
-
-  if (isGPT5) {
-    requestBody.max_completion_tokens = 1000
-  } else {
-    requestBody.max_tokens = 1000
-    requestBody.temperature = 0.7
+    max_tokens: 1000,
+    temperature: 0.7,
   }
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -791,13 +792,11 @@ export async function sendMessageStreaming(
         const parsed = JSON.parse(data)
         const delta = parsed.choices?.[0]?.delta
 
-        // Handle text content
         if (delta?.content) {
           fullContent += delta.content
           onChunk(delta.content)
         }
 
-        // Handle tool calls
         if (delta?.tool_calls) {
           for (const tc of delta.tool_calls) {
             const idx = tc.index
