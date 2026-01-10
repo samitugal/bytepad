@@ -141,9 +141,10 @@ async function callOpenAIWithTools(
 ): Promise<LLMResponse> {
   const tools = formatToolsForOpenAI()
 
-  // GPT-5 uses max_completion_tokens instead of max_tokens
+  // GPT-5 uses max_completion_tokens and doesn't support custom temperature
   const isGPT5 = model.startsWith('gpt-5')
   const tokenParam = isGPT5 ? { max_completion_tokens: 1000 } : { max_tokens: 1000 }
+  const tempParam = isGPT5 ? {} : { temperature: 0.7 }
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -157,7 +158,7 @@ async function callOpenAIWithTools(
       tools,
       tool_choice: 'auto',
       ...tokenParam,
-      temperature: 0.7,
+      ...tempParam,
     }),
   })
 
@@ -248,9 +249,10 @@ async function callOpenAI(
   apiKey: string,
   model: string
 ): Promise<LLMResponse> {
-  // GPT-5 uses max_completion_tokens instead of max_tokens
+  // GPT-5 uses max_completion_tokens and doesn't support custom temperature
   const isGPT5 = model.startsWith('gpt-5')
   const tokenParam = isGPT5 ? { max_completion_tokens: 500 } : { max_tokens: 500 }
+  const tempParam = isGPT5 ? {} : { temperature: 0.7 }
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -262,7 +264,7 @@ async function callOpenAI(
       model,
       messages,
       ...tokenParam,
-      temperature: 0.7,
+      ...tempParam,
     }),
   })
 
