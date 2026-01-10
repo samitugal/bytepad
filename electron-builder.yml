@@ -1,0 +1,44 @@
+appId: com.myflowspace.app
+productName: MyFlowSpace
+copyright: Copyright © 2026 MyFlowSpace
+
+directories:
+  output: dist-electron
+  buildResources: resources
+
+files:
+  - out/**/*
+  - resources/**/*
+
+win:
+  target:
+    - nsis
+    - portable
+  icon: resources/icon.ico
+  artifactName: ${productName}-${version}-${arch}.${ext}
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: MyFlowSpace
+
+mac:
+  target:
+    - dmg
+    - zip
+  icon: resources/icon.icns
+  category: public.app-category.productivity
+
+linux:
+  target:
+    - AppImage
+    - deb
+  icon: resources/icon.png
+  category: Office
+
+publish:
+  provider: github
+  owner: samitugal
+  repo: myflowspace
