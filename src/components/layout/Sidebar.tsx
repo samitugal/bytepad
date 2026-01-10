@@ -7,7 +7,8 @@ const MODULES: { id: ModuleType; label: string; shortcut: string }[] = [
   { id: 'habits', label: 'Habits', shortcut: '2' },
   { id: 'tasks', label: 'Tasks', shortcut: '3' },
   { id: 'journal', label: 'Journal', shortcut: '4' },
-  { id: 'analysis', label: 'Analyze', shortcut: '5' },
+  { id: 'bookmarks', label: 'Bookmarks', shortcut: '5' },
+  { id: 'analysis', label: 'Analyze', shortcut: '6' },
 ]
 
 const MIN_WIDTH = 80

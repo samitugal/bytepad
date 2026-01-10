@@ -8,7 +8,8 @@ const MODULE_MAP: Record<string, ModuleType> = {
   '2': 'habits',
   '3': 'tasks',
   '4': 'journal',
-  '5': 'analysis',
+  '5': 'bookmarks',
+  '6': 'analysis',
 }
 
 export function useKeyboardShortcuts() {
