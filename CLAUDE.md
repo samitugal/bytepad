@@ -74,3 +74,29 @@ fix(module): description
 - TypeScript strict mode
 - Components max 150 lines
 - Keyboard-first design
+
+## Sprint Dokümantasyon Kuralları
+Yeni bir sprint veya özellik planlandığında:
+
+1. **Ayrı MD dosyası oluştur:** `docs/sprints/SPRINT_XX_FEATURE_NAME.md`
+2. **Dosya formatı:**
+   ```markdown
+   # Sprint XX: Feature Name
+   **Goal:** Kısa açıklama
+   **Duration:** X gün
+   **Priority:** HIGH/MEDIUM/LOW
+   **Status:** PLANNED/IN_PROGRESS/COMPLETED
+   
+   ---
+   
+   ## XX.1: Alt görev başlığı (süre)
+   - [ ] Task 1
+   - [ ] Task 2
+   
+   ## Completion Criteria
+   - [ ] Kriter 1
+   - [ ] Kriter 2
+   ```
+
+3. **ROADMAP.md'yi güncelle:** Sprint tablosuna yeni satır ekle
+4. **Dosya isimlendirme:** `SPRINT_XX_UPPERCASE_NAME.md` (örn: `SPRINT_12_MOBILE_APP.md`)
