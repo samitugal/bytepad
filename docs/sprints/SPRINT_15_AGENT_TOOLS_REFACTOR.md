@@ -20,6 +20,14 @@
 | Empty follow-up | After tool execution, no natural language response | 🔧 Fixed |
 | No time context | "Plan remaining day" fails - agent doesn't know time | 🔧 Fixed |
 | Missing error handling | Tool errors not properly caught and displayed | 🔧 Fixed |
+| Wrong tool result format | LangChain requires ToolMessage with tool_call_id | 🔧 Fixed |
+| HumanMessage instead of ToolMessage | Tool results must use ToolMessage class | 🔧 Fixed |
+
+## Testing Notes
+- **CRITICAL:** Always test after changes - agent has many failure modes
+- **LangChain specifics:** Tool results MUST use `ToolMessage` with `tool_call_id`
+- **GPT-5 quirks:** Does not support `temperature` parameter
+- **API key validation:** Check console for `[Agent]` logs to debug
 
 ## ⚠️ Architecture Issue: Agent Loop Required
 
