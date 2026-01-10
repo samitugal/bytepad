@@ -108,7 +108,21 @@ export function ChatWindow() {
 
       addMessage({ role: 'assistant', content: finalContent })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu')
+      console.error('[FlowBot Error]', err)
+      const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu'
+
+      // Provide more specific error messages
+      if (errorMessage.includes('API key')) {
+        setError('API key geçersiz veya eksik. Settings → AI bölümünden kontrol et.')
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        setError('Bağlantı hatası. İnternet bağlantını kontrol et.')
+      } else if (errorMessage.includes('rate limit') || errorMessage.includes('429')) {
+        setError('Çok fazla istek gönderildi. Biraz bekle ve tekrar dene.')
+      } else if (errorMessage.includes('timeout')) {
+        setError('İstek zaman aşımına uğradı. Tekrar dene.')
+      } else {
+        setError(errorMessage)
+      }
     } finally {
       setLoading(false)
     }
