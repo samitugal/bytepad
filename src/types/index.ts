@@ -1,4 +1,4 @@
-export type ModuleType = 'notes' | 'habits' | 'tasks' | 'journal' | 'analysis' | 'bookmarks' | 'calendar'
+export type ModuleType = 'notes' | 'habits' | 'tasks' | 'journal' | 'analysis' | 'bookmarks' | 'calendar' | 'dailynotes'
 
 export interface Note {
   id: string
@@ -100,6 +100,26 @@ export interface ChatContext {
   // Rich context for better AI responses
   taskList?: Array<{ title: string; priority: string; deadline?: string }>
   habitList?: Array<{ name: string; completed: boolean }>
+}
+
+// Daily Notes types
+export interface DailyNote {
+  id: string
+  date: string // YYYY-MM-DD
+  cards: DailyNoteCard[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface DailyNoteCard {
+  id: string
+  title: string
+  content: string
+  icon?: string // emoji
+  pinned: boolean
+  tags: string[]
+  createdAt: Date
+  updatedAt: Date
 }
 
 // Bookmark types

@@ -6,6 +6,7 @@ import { JournalModule } from '../journal'
 import { AnalysisModule } from '../analysis'
 import { BookmarksModule } from '../bookmarks'
 import { CalendarModule } from '../calendar'
+import { DailyNotesModule } from '../dailynotes/DailyNotesModule'
 
 export function MainContent() {
   const { activeModule } = useUIStore()
@@ -26,6 +27,8 @@ export function MainContent() {
         return <CalendarModule />
       case 'analysis':
         return <AnalysisModule />
+      case 'dailynotes':
+        return <DailyNotesModule />
       default:
         return null
     }

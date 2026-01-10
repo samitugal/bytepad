@@ -5,11 +5,13 @@ import type { ModuleType } from '../types'
 
 const MODULE_MAP: Record<string, ModuleType> = {
   '1': 'notes',
-  '2': 'habits',
-  '3': 'tasks',
-  '4': 'journal',
-  '5': 'bookmarks',
-  '6': 'analysis',
+  '2': 'dailynotes',
+  '3': 'habits',
+  '4': 'tasks',
+  '5': 'journal',
+  '6': 'bookmarks',
+  '7': 'calendar',
+  '8': 'analysis',
 }
 
 export function useKeyboardShortcuts() {
