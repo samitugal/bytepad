@@ -7,8 +7,8 @@ import { sendMessageWithTools, getQuickActions } from '../../services/llmService
 import type { ToolResult } from '../../services/agentService'
 import type { ChatContext } from '../../types'
 
-// Destructive tools that require confirmation
-const DESTRUCTIVE_TOOLS = ['delete_task', 'delete_habit', 'delete_note', 'delete_bookmark']
+// Destructive tools that require confirmation (for future use)
+// const DESTRUCTIVE_TOOLS = ['delete_task', 'delete_habit', 'delete_note', 'delete_bookmark']
 
 function getContext(): ChatContext {
   const tasks = useTaskStore.getState().tasks

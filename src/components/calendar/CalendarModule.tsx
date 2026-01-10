@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { 
-  useCalendarStore, 
-  getMonthDays, 
+import { useState, useEffect, useCallback } from 'react'
+import {
+  useCalendarStore,
+  getMonthDays,
   getWeekDays,
-  isSameDay, 
-  isToday, 
+  isSameDay,
+  isToday,
   isWeekend,
   formatMonthYear,
   formatWeekRange,
@@ -14,6 +14,12 @@ import { useTaskStore } from '../../stores/taskStore'
 import type { Task } from '../../types'
 
 const WEEKDAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
+const PRIORITY_LABELS: Record<string, string> = {
+  P1: 'Kritik',
+  P2: 'Yüksek',
+  P3: 'Normal',
+  P4: 'Düşük'
+}
 
 const PRIORITY_COLORS: Record<string, string> = {
   P1: 'bg-np-error',
@@ -36,11 +42,93 @@ export function CalendarModule() {
   
   const tasks = useTaskStore((state) => state.tasks)
   const addTask = useTaskStore((state) => state.addTask)
-  
+  const toggleTask = useTaskStore((state) => state.toggleTask)
+  const deleteTask = useTaskStore((state) => state.deleteTask)
+
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskPriority, setNewTaskPriority] = useState<'P1' | 'P2' | 'P3' | 'P4'>('P3')
   const [newTaskEndDate, setNewTaskEndDate] = useState<string>('')
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+
+  // Keyboard shortcuts handler
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Don't trigger if typing in input
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+    // Don't trigger if modal is open
+    if (showTaskForm || selectedTask) return
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        e.preventDefault()
+        goToPrevious()
+        break
+      case 'ArrowRight':
+        e.preventDefault()
+        goToNext()
+        break
+      case 't':
+      case 'T':
+        e.preventDefault()
+        goToToday()
+        break
+      case 'm':
+      case 'M':
+        e.preventDefault()
+        setView('month')
+        break
+      case 'w':
+      case 'W':
+        e.preventDefault()
+        setView('week')
+        break
+      case 'd':
+      case 'D':
+        e.preventDefault()
+        setView('day')
+        break
+      case 'n':
+      case 'N':
+        e.preventDefault()
+        // Open new task form for today or selected date
+        const targetDate = selectedDate || new Date()
+        setSelectedDate(targetDate)
+        setShowTaskForm(true)
+        break
+      case 'Escape':
+        setSelectedTask(null)
+        setShowTaskForm(false)
+        break
+    }
+  }, [showTaskForm, selectedTask, selectedDate, goToPrevious, goToNext, goToToday, setView, setSelectedDate])
+
+  // Register keyboard shortcuts
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
+
+  // Handle task click (show detail popup)
+  const handleTaskClick = (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setSelectedTask(task)
+  }
+
+  // Handle task complete toggle
+  const handleToggleTask = () => {
+    if (selectedTask) {
+      toggleTask(selectedTask.id)
+      setSelectedTask(null)
+    }
+  }
+
+  // Handle task delete
+  const handleDeleteTask = () => {
+    if (selectedTask && confirm(`"${selectedTask.title}" silinsin mi?`)) {
+      deleteTask(selectedTask.id)
+      setSelectedTask(null)
+    }
+  }
 
   // Get tasks for a specific date
   const getTasksForDate = (date: Date): Task[] => {
@@ -151,28 +239,36 @@ export function CalendarModule() {
       {/* Calendar Content */}
       <div className="flex-1 overflow-auto p-4">
         {currentView === 'month' && (
-          <MonthView 
+          <MonthView
             currentDate={currentDate}
             selectedDate={selectedDate}
             getTasksForDate={getTasksForDate}
             onDateClick={handleDateClick}
+            onTaskClick={handleTaskClick}
           />
         )}
         {currentView === 'week' && (
-          <WeekView 
+          <WeekView
             currentDate={currentDate}
             selectedDate={selectedDate}
             getTasksForDate={getTasksForDate}
             onDateClick={handleDateClick}
+            onTaskClick={handleTaskClick}
           />
         )}
         {currentView === 'day' && (
-          <DayView 
+          <DayView
             currentDate={currentDate}
             tasks={getTasksForDate(currentDate)}
             onDateClick={() => handleDateClick(currentDate)}
+            onTaskClick={handleTaskClick}
           />
         )}
+      </div>
+
+      {/* Keyboard Shortcuts Help */}
+      <div className="absolute bottom-4 right-4 text-[10px] text-np-text-secondary opacity-60">
+        ←→ nav | T today | M/W/D view | N new task
       </div>
 
       {/* Task Creation Modal */}
@@ -238,6 +334,74 @@ export function CalendarModule() {
           </div>
         </div>
       )}
+
+      {/* Task Detail Popup */}
+      {selectedTask && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setSelectedTask(null)}
+        >
+          <div
+            className="bg-np-bg-secondary border border-np-border p-4 w-96 max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <h3 className={`text-np-text-primary font-semibold flex-1 ${selectedTask.completed ? 'line-through opacity-60' : ''}`}>
+                {selectedTask.title}
+              </h3>
+              <span className={`text-xs px-2 py-0.5 rounded ${PRIORITY_COLORS[selectedTask.priority]} text-white ml-2`}>
+                {selectedTask.priority} - {PRIORITY_LABELS[selectedTask.priority]}
+              </span>
+            </div>
+
+            {selectedTask.description && (
+              <p className="text-sm text-np-text-secondary mb-3">
+                {selectedTask.description}
+              </p>
+            )}
+
+            <div className="text-xs text-np-text-secondary space-y-1 mb-4">
+              {selectedTask.deadline && (
+                <div>
+                  📅 Başlangıç: {new Date(selectedTask.deadline).toLocaleDateString('tr-TR')}
+                  {selectedTask.deadlineTime && ` ${selectedTask.deadlineTime}`}
+                </div>
+              )}
+              {selectedTask.endDate && (
+                <div>
+                  📅 Bitiş: {new Date(selectedTask.endDate).toLocaleDateString('tr-TR')}
+                </div>
+              )}
+              <div>
+                {selectedTask.completed ? '✅ Tamamlandı' : '⏳ Bekliyor'}
+              </div>
+            </div>
+
+            <div className="flex justify-between">
+              <button
+                onClick={handleDeleteTask}
+                className="np-btn text-np-error hover:bg-np-error/20"
+              >
+                Sil
+              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSelectedTask(null)}
+                  className="np-btn"
+                >
+                  Kapat
+                </button>
+                <button
+                  onClick={handleToggleTask}
+                  className={`np-btn ${selectedTask.completed ? 'bg-np-warning' : 'bg-np-green'} text-white`}
+                >
+                  {selectedTask.completed ? 'Geri Al' : 'Tamamla'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -248,9 +412,10 @@ interface MonthViewProps {
   selectedDate: Date | null
   getTasksForDate: (date: Date) => Task[]
   onDateClick: (date: Date) => void
+  onTaskClick: (task: Task, e: React.MouseEvent) => void
 }
 
-function MonthView({ currentDate, selectedDate, getTasksForDate, onDateClick }: MonthViewProps) {
+function MonthView({ currentDate, selectedDate, getTasksForDate, onDateClick, onTaskClick }: MonthViewProps) {
   const days = getMonthDays(currentDate.getFullYear(), currentDate.getMonth())
 
   return (
@@ -301,10 +466,12 @@ function MonthView({ currentDate, selectedDate, getTasksForDate, onDateClick }: 
                 {tasks.slice(0, 3).map((task) => (
                   <div
                     key={task.id}
+                    onClick={(e) => onTaskClick(task, e)}
                     className={`
-                      text-[10px] px-1 py-0.5 truncate rounded-sm
+                      text-[10px] px-1 py-0.5 truncate rounded-sm cursor-pointer
                       ${PRIORITY_COLORS[task.priority]} text-white
                       ${task.completed ? 'opacity-50 line-through' : ''}
+                      hover:ring-1 hover:ring-white/50
                     `}
                     title={task.title}
                   >
@@ -331,9 +498,10 @@ interface WeekViewProps {
   selectedDate: Date | null
   getTasksForDate: (date: Date) => Task[]
   onDateClick: (date: Date) => void
+  onTaskClick: (task: Task, e: React.MouseEvent) => void
 }
 
-function WeekView({ currentDate, selectedDate, getTasksForDate, onDateClick }: WeekViewProps) {
+function WeekView({ currentDate, selectedDate, getTasksForDate, onDateClick, onTaskClick }: WeekViewProps) {
   const days = getWeekDays(currentDate)
   const hours = Array.from({ length: 24 }, (_, i) => i)
 
@@ -393,10 +561,12 @@ function WeekView({ currentDate, selectedDate, getTasksForDate, onDateClick }: W
                   {tasks.map((task) => (
                     <div
                       key={task.id}
+                      onClick={(e) => onTaskClick(task, e)}
                       className={`
-                        text-[10px] px-1 py-0.5 mb-0.5 truncate rounded-sm
+                        text-[10px] px-1 py-0.5 mb-0.5 truncate rounded-sm cursor-pointer
                         ${PRIORITY_COLORS[task.priority]} text-white
                         ${task.completed ? 'opacity-50 line-through' : ''}
+                        hover:ring-1 hover:ring-white/50
                       `}
                       title={task.title}
                     >
@@ -418,9 +588,10 @@ interface DayViewProps {
   currentDate: Date
   tasks: Task[]
   onDateClick: () => void
+  onTaskClick: (task: Task, e: React.MouseEvent) => void
 }
 
-function DayView({ tasks, onDateClick }: DayViewProps) {
+function DayView({ tasks, onDateClick, onTaskClick }: DayViewProps) {
   const hours = Array.from({ length: 24 }, (_, i) => i)
   const allDayTasks = tasks.filter(t => t.allDay)
   const timedTasks = tasks.filter(t => !t.allDay && t.deadlineTime)
@@ -435,10 +606,12 @@ function DayView({ tasks, onDateClick }: DayViewProps) {
             {allDayTasks.map((task) => (
               <div
                 key={task.id}
+                onClick={(e) => onTaskClick(task, e)}
                 className={`
-                  text-sm px-2 py-1 rounded
+                  text-sm px-2 py-1 rounded cursor-pointer
                   ${PRIORITY_COLORS[task.priority]} text-white
                   ${task.completed ? 'opacity-50 line-through' : ''}
+                  hover:ring-1 hover:ring-white/50
                 `}
               >
                 {task.title}
@@ -472,10 +645,12 @@ function DayView({ tasks, onDateClick }: DayViewProps) {
                 {hourTasks.map((task) => (
                   <div
                     key={task.id}
+                    onClick={(e) => onTaskClick(task, e)}
                     className={`
-                      text-sm px-2 py-1 mb-1 rounded
+                      text-sm px-2 py-1 mb-1 rounded cursor-pointer
                       ${PRIORITY_COLORS[task.priority]} text-white
                       ${task.completed ? 'opacity-50 line-through' : ''}
+                      hover:ring-1 hover:ring-white/50
                     `}
                   >
                     {task.deadlineTime && (

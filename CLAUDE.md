@@ -22,6 +22,7 @@
 
 ## Proje Özeti
 Notepad++ estetiğinde, keyboard-first, ADHD-friendly productivity app.
+Tüm promptlar ve teknik kodlar ingilizce olmalıdır.
 
 **Platform:** PWA | **Stack:** React + TypeScript + Tailwind + Zustand
 
