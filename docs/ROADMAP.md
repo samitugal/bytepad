@@ -479,16 +479,16 @@
 
 ---
 
-# Sprint 7: Calendar Module ⭐
+# Sprint 7: Calendar Module 
 **Hedef:** Task'ları takvim üzerinde görselleştirme ve takvimden task oluşturma
 **Süre:** 5-7 gün
-**Öncelik:** YÜKSEK
+**Durum:** TAMAMLANDI
 
-## 7.1: Task Model Güncellemesi (1 gün)
-- [ ] Task type'a `endDate` field ekle (opsiyonel)
-- [ ] Task type'a `allDay` boolean ekle
-- [ ] Task'ın tarih aralığı hesaplama (startDate → endDate)
-- [ ] Migration: Mevcut task'lar için endDate = deadline
+## 7.1: Task Model Güncellemesi (1 gün) 
+- [x] Task type'a `endDate` field ekle (opsiyonel)
+- [x] Task type'a `allDay` boolean ekle
+- [x] Task'ın tarih aralığı hesaplama (startDate → endDate)
+- [x] Migration: Mevcut task'lar için endDate = deadline
 
 ```typescript
 interface Task {
@@ -499,49 +499,49 @@ interface Task {
 }
 ```
 
-## 7.2: Calendar Store & Logic (1 gün)
-- [ ] calendarStore (Zustand)
+## 7.2: Calendar Store & Logic (1 gün) 
+- [x] calendarStore (Zustand)
   - currentView: 'month' | 'week' | 'day'
   - currentDate: Date
   - selectedDate: Date | null
-- [ ] View navigation (prev/next month/week/day)
-- [ ] Task'ları tarihe göre gruplama
-- [ ] Tarih aralığına göre task filtreleme
+- [x] View navigation (prev/next month/week/day)
+- [x] Task'ları tarihe göre gruplama
+- [x] Tarih aralığına göre task filtreleme
 
-## 7.3: Calendar UI - Month View (2 gün)
-- [ ] CalendarModule component
-- [ ] MonthView component
+## 7.3: Calendar UI - Month View (2 gün) 
+- [x] CalendarModule component
+- [x] MonthView component
   - 7 sütun (Pzt-Paz)
   - 5-6 satır (haftalar)
   - Her hücrede o günün task'ları
-- [ ] CalendarCell component
+- [x] CalendarCell component
   - Tarih numarası
   - Task bar'ları (renk = priority)
   - Çok günlü task'lar için spanning bar
-- [ ] CalendarHeader component
+- [x] CalendarHeader component
   - Ay/Yıl gösterimi
   - Prev/Next navigasyon
   - View switcher (Month/Week/Day)
   - Today butonu
 
-## 7.4: Calendar UI - Week & Day View (1 gün)
-- [ ] WeekView component
+## 7.4: Calendar UI - Week & Day View (1 gün) 
+- [x] WeekView component
   - 7 sütun, saatlik satırlar
   - Task'lar zaman bloğu olarak
-- [ ] DayView component
+- [x] DayView component
   - Tek gün, saatlik detay
   - Task'lar zaman bloğu olarak
-- [ ] Responsive tasarım
+- [x] Responsive tasarım
 
-## 7.5: Task Creation from Calendar (1 gün)
-- [ ] Takvim hücresine tıklayınca task oluşturma modal
+## 7.5: Task Creation from Calendar (1 gün) 
+- [x] Takvim hücresine tıklayınca task oluşturma modal
   - Seçilen tarih otomatik doldurulur
   - End date picker
   - Priority seçimi
 - [ ] Drag to create (opsiyonel)
   - Başlangıç hücresinden bitiş hücresine sürükle
   - Tarih aralığı otomatik belirlenir
-- [ ] Task oluşturulunca taskStore'a eklenir
+- [x] Task oluşturulunca taskStore'a eklenir
 
 ## 7.6: Task Interaction on Calendar (1 gün)
 - [ ] Task'a tıklayınca detay popup
@@ -550,12 +550,12 @@ interface Task {
 - [ ] Quick complete (checkbox)
 - [ ] Task'ı sil/düzenle
 
-## 7.7: Visual Design & Polish
-- [ ] Notepad++ tema uyumu
-- [ ] Priority renk kodları (P1=kırmızı, P2=turuncu, vb.)
-- [ ] Completed task'lar için strikethrough
-- [ ] Today highlight
-- [ ] Weekend farklı arka plan
+## 7.7: Visual Design & Polish 
+- [x] Notepad++ tema uyumu
+- [x] Priority renk kodları (P1=kırmızı, P2=turuncu, vb.)
+- [x] Completed task'lar için strikethrough
+- [x] Today highlight
+- [x] Weekend farklı arka plan
 - [ ] Keyboard shortcuts
   - `←/→` = prev/next period
   - `T` = today
@@ -587,13 +587,13 @@ Task Drag      → taskStore.updateTask() → Calendar re-render
 - Native drag & drop API
 
 ## Tamamlanma Kriterleri
-- [ ] Month/Week/Day view'lar çalışıyor
-- [ ] Task'lar takvimde doğru tarihlerde görünüyor
-- [ ] Çok günlü task'lar spanning bar olarak görünüyor
-- [ ] Takvimden yeni task oluşturulabiliyor
-- [ ] Drag & drop ile tarih değiştirilebiliyor
-- [ ] Keyboard navigation çalışıyor
-- [ ] Cloud sync ile senkronize
+- [x] Month/Week/Day view'lar çalışıyor
+- [x] Task'lar takvimde doğru tarihlerde görünüyor
+- [x] Çok günlü task'lar spanning bar olarak görünüyor
+- [x] Takvimden yeni task oluşturulabiliyor
+- [ ] Drag & drop ile tarih değiştirilebiliyor (sonraki iterasyon)
+- [ ] Keyboard navigation çalışıyor (sonraki iterasyon)
+- [x] Cloud sync ile senkronize
 
 ---
 
