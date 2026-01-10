@@ -1,7 +1,7 @@
 // AI Service using LangChain.js
 import { ChatOpenAI } from '@langchain/openai'
 import { ChatAnthropic } from '@langchain/anthropic'
-import { HumanMessage, SystemMessage, AIMessage, BaseMessage } from '@langchain/core/messages'
+import { HumanMessage, SystemMessage, AIMessage, ToolMessage, BaseMessage } from '@langchain/core/messages'
 import { tool } from '@langchain/core/tools'
 import { z } from 'zod'
 import { useSettingsStore } from '../stores/settingsStore'
@@ -268,9 +268,10 @@ export async function sendMessage(
           result = `Unknown tool: ${toolCall.name}`
         }
         
-        // Add tool result as ToolMessage back to agent
-        messages.push(new HumanMessage({
-          content: `Tool "${toolCall.name}" result: ${result}`,
+        // Add tool result as ToolMessage back to agent (required format for LangChain)
+        messages.push(new ToolMessage({
+          content: result,
+          tool_call_id: toolCall.id || `call_${toolCall.name}_${Date.now()}`,
         }))
       }
       
