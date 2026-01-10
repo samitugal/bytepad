@@ -1,13 +1,21 @@
 {
   "name": "myflowspace",
   "private": true,
-  "version": "0.12.0",
+  "version": "0.13.0",
   "type": "module",
+  "main": "out/main/index.js",
   "scripts": {
     "dev": "vite",
+    "dev:electron": "electron-vite dev",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "build:electron": "electron-vite build",
+    "preview": "vite preview",
+    "preview:electron": "electron-vite preview",
+    "package": "electron-vite build && electron-builder",
+    "package:win": "electron-vite build && electron-builder --win",
+    "package:mac": "electron-vite build && electron-builder --mac",
+    "package:linux": "electron-vite build && electron-builder --linux",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.9",
@@ -31,6 +39,10 @@
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.4.0",
+    "electron-store": "^11.0.2",
+    "electron-vite": "^5.0.0",
     "eslint": "^9.17.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",

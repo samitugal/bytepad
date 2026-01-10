@@ -28,4 +28,8 @@ dist-ssr
 .env.local
 .env.*.local
 
-.memory/    
+.memory/
+
+# Electron build output
+out/
+dist-electron/
