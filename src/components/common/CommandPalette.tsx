@@ -18,17 +18,24 @@ export function CommandPalette() {
   const commands: Command[] = useMemo(() => [
     // Navigation
     { id: 'goto-notes', title: 'Go to Notes', shortcut: 'Ctrl+1', category: 'navigation', action: () => setActiveModule('notes') },
-    { id: 'goto-habits', title: 'Go to Habits', shortcut: 'Ctrl+2', category: 'navigation', action: () => setActiveModule('habits') },
-    { id: 'goto-tasks', title: 'Go to Tasks', shortcut: 'Ctrl+3', category: 'navigation', action: () => setActiveModule('tasks') },
-    { id: 'goto-journal', title: 'Go to Journal', shortcut: 'Ctrl+4', category: 'navigation', action: () => setActiveModule('journal') },
-    { id: 'goto-analysis', title: 'Go to Analysis', shortcut: 'Ctrl+5', category: 'navigation', action: () => setActiveModule('analysis') },
+    { id: 'goto-dailynotes', title: 'Go to Daily Notes', shortcut: 'Ctrl+2', category: 'navigation', action: () => setActiveModule('dailynotes') },
+    { id: 'goto-habits', title: 'Go to Habits', shortcut: 'Ctrl+3', category: 'navigation', action: () => setActiveModule('habits') },
+    { id: 'goto-tasks', title: 'Go to Tasks', shortcut: 'Ctrl+4', category: 'navigation', action: () => setActiveModule('tasks') },
+    { id: 'goto-journal', title: 'Go to Journal', shortcut: 'Ctrl+5', category: 'navigation', action: () => setActiveModule('journal') },
+    { id: 'goto-bookmarks', title: 'Go to Bookmarks', shortcut: 'Ctrl+6', category: 'navigation', action: () => setActiveModule('bookmarks') },
+    { id: 'goto-calendar', title: 'Go to Calendar', shortcut: 'Ctrl+7', category: 'navigation', action: () => setActiveModule('calendar') },
+    { id: 'goto-analysis', title: 'Go to Analysis', shortcut: 'Ctrl+8', category: 'navigation', action: () => setActiveModule('analysis') },
     // Actions
-    { id: 'new-note', title: 'New Note', shortcut: 'Ctrl+N', category: 'action', action: () => { setActiveModule('notes'); /* TODO: open new note */ } },
-    { id: 'new-task', title: 'New Task', category: 'action', action: () => { setActiveModule('tasks'); /* TODO: open new task */ } },
-    { id: 'new-habit', title: 'New Habit', category: 'action', action: () => { setActiveModule('habits'); /* TODO: open new habit */ } },
-    { id: 'new-journal', title: 'New Journal Entry', category: 'action', action: () => { setActiveModule('journal'); /* TODO: open new entry */ } },
+    { id: 'new-note', title: 'New Note', shortcut: 'Ctrl+N', category: 'action', action: () => { setActiveModule('notes'); } },
+    { id: 'new-dailynote', title: 'New Daily Note Card', category: 'action', action: () => { setActiveModule('dailynotes'); } },
+    { id: 'new-task', title: 'New Task', category: 'action', action: () => { setActiveModule('tasks'); } },
+    { id: 'new-habit', title: 'New Habit', category: 'action', action: () => { setActiveModule('habits'); } },
+    { id: 'new-journal', title: 'New Journal Entry', category: 'action', action: () => { setActiveModule('journal'); } },
+    { id: 'new-bookmark', title: 'New Bookmark', category: 'action', action: () => { setActiveModule('bookmarks'); } },
     // Settings
     { id: 'toggle-focus', title: 'Toggle Focus Mode', shortcut: 'Ctrl+Shift+F', category: 'settings', action: () => useUIStore.getState().toggleFocusMode() },
+    { id: 'open-settings', title: 'Open Settings', category: 'settings', action: () => { /* Settings handled by SettingsPanel */ } },
+    { id: 'open-flowbot', title: 'Open FlowBot', shortcut: 'Ctrl+/', category: 'settings', action: () => { /* FlowBot handled by ChatWindow */ } },
   ], [setActiveModule])
 
   const filteredCommands = useMemo(() => {
