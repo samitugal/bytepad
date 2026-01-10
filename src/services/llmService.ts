@@ -3,6 +3,15 @@ import { formatToolsForOpenAI, formatToolsForAnthropic } from './toolRegistry'
 import { executeToolCall, type ToolCall, type ToolResult } from './agentService'
 import type { ChatMessage, ChatContext } from '../types'
 
+// Debug mode - set to true for development
+const DEBUG_MODE = false
+
+function debugLog(label: string, data: unknown) {
+  if (DEBUG_MODE) {
+    console.log(`[FlowBot Debug] ${label}:`, data)
+  }
+}
+
 // Agent response with potential tool calls
 export interface AgentResponse {
   content: string
@@ -376,9 +385,13 @@ export async function sendMessageWithTools(
   const settings = useSettingsStore.getState()
   const { llmProvider, llmModel, apiKeys, ollamaBaseUrl } = settings
 
+  debugLog('User Message', userMessage)
+  debugLog('Context', context)
+  debugLog('Provider', { llmProvider, llmModel })
+
   // Check API key
   if (PROVIDER_INFO[llmProvider].requiresKey && !apiKeys[llmProvider]) {
-    throw new Error(`${PROVIDER_INFO[llmProvider].name} API key gerekli. Settings'den ekleyebilirsin.`)
+    throw new Error(`${PROVIDER_INFO[llmProvider].name} API key gerekli. Settings → AI bölümünden ekleyebilirsin.`)
   }
 
   // Build messages array
@@ -392,73 +405,54 @@ export async function sendMessageWithTools(
     { role: 'user', content: userMessage },
   ]
 
+  debugLog('System Prompt Length', ADHD_COACH_SYSTEM_PROMPT.length + contextSuffix.length)
+
   // Use native tool calling for OpenAI and Anthropic
   let result: LLMResponse
 
-  if (llmProvider === 'openai') {
-    result = await callOpenAIWithTools(messages, apiKeys.openai, llmModel)
-  } else if (llmProvider === 'anthropic') {
-    result = await callAnthropicWithTools(messages, apiKeys.anthropic, llmModel)
-  } else {
-    // Fallback for other providers (no native tool support)
-    const providerCalls: Record<string, () => Promise<LLMResponse>> = {
-      google: () => callGoogle(messages, apiKeys.google, llmModel),
-      groq: () => callGroq(messages, apiKeys.groq, llmModel),
-      ollama: () => callOllama(messages, ollamaBaseUrl, llmModel),
+  try {
+    if (llmProvider === 'openai') {
+      result = await callOpenAIWithTools(messages, apiKeys.openai, llmModel)
+    } else if (llmProvider === 'anthropic') {
+      result = await callAnthropicWithTools(messages, apiKeys.anthropic, llmModel)
+    } else {
+      // Fallback for other providers (no native tool support)
+      const providerCalls: Record<string, () => Promise<LLMResponse>> = {
+        google: () => callGoogle(messages, apiKeys.google, llmModel),
+        groq: () => callGroq(messages, apiKeys.groq, llmModel),
+        ollama: () => callOllama(messages, ollamaBaseUrl, llmModel),
+      }
+      result = await providerCalls[llmProvider]()
     }
-    result = await providerCalls[llmProvider]()
+  } catch (error) {
+    debugLog('LLM API Error', error)
+    throw error
   }
+
+  debugLog('LLM Response', { content: result.content?.slice(0, 100), toolCalls: result.toolCalls })
 
   // Execute tool calls if present
   const toolResults: ToolResult[] = []
   if (result.toolCalls && result.toolCalls.length > 0) {
     for (const toolCall of result.toolCalls) {
+      debugLog('Executing Tool', toolCall.name)
       const toolResult = await executeToolCall(toolCall)
       toolResults.push(toolResult)
+      debugLog('Tool Result', { name: toolCall.name, success: toolResult.success, message: toolResult.message.slice(0, 100) })
     }
 
-    // If we executed tools but have no content, get a follow-up response
-    if (!result.content && toolResults.length > 0) {
-      // Build rich tool results summary including DATA
-      const toolResultsSummary = toolResults
-        .map(r => {
-          let summary = `${r.success ? 'Başarılı' : 'Hata'}: ${r.message}`
-          // Include data details for LLM to use
-          if (r.data && typeof r.data === 'object') {
-            const data = r.data as Record<string, unknown>
-            // For plan_day, include task details
-            if (data.suggestedTasks && Array.isArray(data.suggestedTasks)) {
-              const tasks = data.suggestedTasks as Array<{title: string; priority: string; deadline?: string}>
-              if (tasks.length > 0) {
-                summary += '\n\nÖncelikli Task\'lar:'
-                tasks.forEach((t, i) => {
-                  summary += `\n${i + 1}. [${t.priority}] ${t.title}${t.deadline ? ` (deadline: ${t.deadline})` : ''}`
-                })
-              }
-            }
-            // For get_pending_tasks, include task list
-            if (Array.isArray(r.data)) {
-              const tasks = r.data as Array<{title: string; priority: string; deadline?: string | null}>
-              if (tasks.length > 0) {
-                summary += '\n\nBekleyen Task\'lar:'
-                tasks.forEach((t, i) => {
-                  summary += `\n${i + 1}. [${t.priority}] ${t.title}${t.deadline ? ` (deadline: ${t.deadline})` : ''}`
-                })
-              }
-            }
-            // For habits
-            if (data.habits && typeof data.habits === 'object') {
-              const habits = data.habits as {total: number; completed: number; pending: string[]}
-              if (habits.pending && habits.pending.length > 0) {
-                summary += `\n\nBekleyen Habit'ler: ${habits.pending.join(', ')}`
-              }
-            }
-          }
-          return summary
-        })
-        .join('\n\n')
+    // If we executed tools but have no content OR content is too short, get a follow-up response
+    const needsFollowUp = !result.content || result.content.trim().length < 20
 
-      // Add tool results to messages and get a natural response
+    if (needsFollowUp && toolResults.length > 0) {
+      debugLog('Needs Follow-up', true)
+
+      // Build rich tool results summary - use the message directly since we enriched it
+      const toolResultsSummary = toolResults
+        .map(r => r.message)
+        .join('\n\n---\n\n')
+
+      // More directive follow-up prompt
       const followUpMessages = [
         ...messages,
         { role: 'assistant', content: `[Tool sonuçları]\n\n${toolResultsSummary}` },
@@ -491,13 +485,22 @@ DON'T:
           }
           followUpResult = await providerCalls[llmProvider]()
         }
+        debugLog('Follow-up Response', followUpResult.content?.slice(0, 100))
         result.content = followUpResult.content
-      } catch {
-        // If follow-up fails, generate a simple response based on tool results
-        result.content = generateSimpleResponse(toolResults)
+      } catch (followUpError) {
+        debugLog('Follow-up Error', followUpError)
+        // If follow-up fails, use the tool result messages directly
+        result.content = toolResults.map(r => r.message).join('\n\n')
       }
     }
   }
+
+  // If still no content, generate from tool results
+  if (!result.content && toolResults.length > 0) {
+    result.content = generateSimpleResponse(toolResults)
+  }
+
+  debugLog('Final Response', result.content?.slice(0, 100))
 
   return {
     content: result.content,

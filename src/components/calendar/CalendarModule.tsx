@@ -130,6 +130,59 @@ export function CalendarModule() {
     }
   }
 
+  // Keyboard shortcuts handler
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Skip if user is typing in an input or modal is open
+    if (
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement ||
+      e.target instanceof HTMLSelectElement ||
+      showTaskForm
+    ) {
+      return
+    }
+
+    switch (e.key.toLowerCase()) {
+      case 'arrowleft':
+        e.preventDefault()
+        goToPrevious()
+        break
+      case 'arrowright':
+        e.preventDefault()
+        goToNext()
+        break
+      case 't':
+        e.preventDefault()
+        goToToday()
+        break
+      case 'm':
+        e.preventDefault()
+        setView('month')
+        break
+      case 'w':
+        e.preventDefault()
+        setView('week')
+        break
+      case 'd':
+        e.preventDefault()
+        setView('day')
+        break
+      case 'n':
+        e.preventDefault()
+        // Open task form for current date or selected date
+        const targetDate = selectedDate || currentDate
+        setSelectedDate(targetDate)
+        setShowTaskForm(true)
+        break
+    }
+  }, [showTaskForm, goToPrevious, goToNext, goToToday, setView, selectedDate, currentDate, setSelectedDate])
+
+  // Register keyboard shortcuts
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
+
   // Get tasks for a specific date
   const getTasksForDate = (date: Date): Task[] => {
     return tasks.filter(task => {
@@ -228,10 +281,16 @@ export function CalendarModule() {
                     ? 'bg-np-blue text-white'
                     : 'bg-np-bg-primary text-np-text-secondary hover:bg-np-bg-tertiary'
                 }`}
+                title={`${view === 'month' ? 'Ay (M)' : view === 'week' ? 'Hafta (W)' : 'Gün (D)'}`}
               >
                 {view === 'month' ? 'Ay' : view === 'week' ? 'Hafta' : 'Gün'}
               </button>
             ))}
+          </div>
+
+          {/* Keyboard shortcuts hint */}
+          <div className="text-[10px] text-np-text-secondary ml-2 hidden lg:block" title="Klavye kısayolları: ←/→ gezinti, T bugün, M/W/D görünüm, N yeni task">
+            ⌨ ←→ T M W D N
           </div>
         </div>
       </div>
