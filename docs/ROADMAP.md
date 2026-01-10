@@ -307,11 +307,8 @@
   - Sistem temasına uyum
   - Notepad++ Light theme variant
 
-- [ ] **Calendar Integration**
-  - Tasks ve Habits için takvim görünümü
-  - Deadline'ları takvimde göster
-  - Drag & drop ile tarih değiştirme
-  - iCal/Google Calendar export
+- [ ] **Calendar Module** ⭐ ÖNCELİKLİ
+  - Detaylı analiz aşağıda (Sprint 7)
 
 - [ ] **Multiple Workspaces**
   - Farklı projeler için ayrı workspace'ler
@@ -478,6 +475,124 @@
 - [ ] Team/Enterprise version
 - [ ] Plugin/Extension system
 - [ ] Self-hosted option
+
+---
+
+# Sprint 7: Calendar Module ⭐
+**Hedef:** Task'ları takvim üzerinde görselleştirme ve takvimden task oluşturma
+**Süre:** 5-7 gün
+**Öncelik:** YÜKSEK
+
+## 7.1: Task Model Güncellemesi (1 gün)
+- [ ] Task type'a `endDate` field ekle (opsiyonel)
+- [ ] Task type'a `allDay` boolean ekle
+- [ ] Task'ın tarih aralığı hesaplama (startDate → endDate)
+- [ ] Migration: Mevcut task'lar için endDate = deadline
+
+```typescript
+interface Task {
+  // ... mevcut alanlar
+  deadline?: Date        // Başlangıç tarihi (mevcut)
+  endDate?: Date         // Bitiş tarihi (YENİ)
+  allDay?: boolean       // Tüm gün mü? (YENİ)
+}
+```
+
+## 7.2: Calendar Store & Logic (1 gün)
+- [ ] calendarStore (Zustand)
+  - currentView: 'month' | 'week' | 'day'
+  - currentDate: Date
+  - selectedDate: Date | null
+- [ ] View navigation (prev/next month/week/day)
+- [ ] Task'ları tarihe göre gruplama
+- [ ] Tarih aralığına göre task filtreleme
+
+## 7.3: Calendar UI - Month View (2 gün)
+- [ ] CalendarModule component
+- [ ] MonthView component
+  - 7 sütun (Pzt-Paz)
+  - 5-6 satır (haftalar)
+  - Her hücrede o günün task'ları
+- [ ] CalendarCell component
+  - Tarih numarası
+  - Task bar'ları (renk = priority)
+  - Çok günlü task'lar için spanning bar
+- [ ] CalendarHeader component
+  - Ay/Yıl gösterimi
+  - Prev/Next navigasyon
+  - View switcher (Month/Week/Day)
+  - Today butonu
+
+## 7.4: Calendar UI - Week & Day View (1 gün)
+- [ ] WeekView component
+  - 7 sütun, saatlik satırlar
+  - Task'lar zaman bloğu olarak
+- [ ] DayView component
+  - Tek gün, saatlik detay
+  - Task'lar zaman bloğu olarak
+- [ ] Responsive tasarım
+
+## 7.5: Task Creation from Calendar (1 gün)
+- [ ] Takvim hücresine tıklayınca task oluşturma modal
+  - Seçilen tarih otomatik doldurulur
+  - End date picker
+  - Priority seçimi
+- [ ] Drag to create (opsiyonel)
+  - Başlangıç hücresinden bitiş hücresine sürükle
+  - Tarih aralığı otomatik belirlenir
+- [ ] Task oluşturulunca taskStore'a eklenir
+
+## 7.6: Task Interaction on Calendar (1 gün)
+- [ ] Task'a tıklayınca detay popup
+- [ ] Drag & drop ile tarih değiştirme
+- [ ] Resize ile süre değiştirme (week/day view)
+- [ ] Quick complete (checkbox)
+- [ ] Task'ı sil/düzenle
+
+## 7.7: Visual Design & Polish
+- [ ] Notepad++ tema uyumu
+- [ ] Priority renk kodları (P1=kırmızı, P2=turuncu, vb.)
+- [ ] Completed task'lar için strikethrough
+- [ ] Today highlight
+- [ ] Weekend farklı arka plan
+- [ ] Keyboard shortcuts
+  - `←/→` = prev/next period
+  - `T` = today
+  - `M/W/D` = month/week/day view
+  - `N` = new task on selected date
+
+## Teknik Notlar
+
+### Çok Günlü Task Gösterimi
+```
+Pazartesi  Salı     Çarşamba  Perşembe  Cuma
+┌─────────────────────────────────────────┐
+│ ████████ Project X (P1) ████████████████│  ← 5 günlük task
+└─────────────────────────────────────────┘
+         ┌──────────────────┐
+         │ Meeting (P2) ████│              ← 2 günlük task
+         └──────────────────┘
+```
+
+### Veri Akışı
+```
+Calendar Click → TaskForm (with date) → taskStore.addTask() → Calendar re-render
+Task Drag      → taskStore.updateTask() → Calendar re-render
+```
+
+### Önerilen Kütüphaneler
+- `date-fns` - Tarih manipülasyonu (zaten mevcut)
+- Custom CSS Grid - Takvim layout
+- Native drag & drop API
+
+## Tamamlanma Kriterleri
+- [ ] Month/Week/Day view'lar çalışıyor
+- [ ] Task'lar takvimde doğru tarihlerde görünüyor
+- [ ] Çok günlü task'lar spanning bar olarak görünüyor
+- [ ] Takvimden yeni task oluşturulabiliyor
+- [ ] Drag & drop ile tarih değiştirilebiliyor
+- [ ] Keyboard navigation çalışıyor
+- [ ] Cloud sync ile senkronize
 
 ---
 
