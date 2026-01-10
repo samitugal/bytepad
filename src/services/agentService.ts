@@ -4,6 +4,8 @@ import { useTaskStore } from '../stores/taskStore'
 import { useHabitStore } from '../stores/habitStore'
 import { useNoteStore } from '../stores/noteStore'
 import { useJournalStore } from '../stores/journalStore'
+import { useBookmarkStore } from '../stores/bookmarkStore'
+import { useSettingsStore } from '../stores/settingsStore'
 
 export interface ToolCall {
   name: string
@@ -358,33 +360,198 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
       // ============ PLANNING OPERATIONS ============
       case 'plan_day': {
         const taskStore = useTaskStore.getState()
+        const habitStore = useHabitStore.getState()
+        const journalStore = useJournalStore.getState()
         const pendingTasks = taskStore.tasks.filter(t => !t.completed)
         const today = new Date().toISOString().split('T')[0]
 
         // Get P1 and P2 tasks first
         const priorityTasks = pendingTasks
           .filter(t => t.priority === 'P1' || t.priority === 'P2')
-          .slice(0, 3)
+          .slice(0, 5)
 
-        // Suggest a day plan based on available time
+        // Get today's habits
+        const todayHabits = habitStore.habits.filter(h => h.frequency === 'daily')
+        const completedHabits = todayHabits.filter(h => h.completions[today])
+
+        // Get today's mood/energy from journal
+        const todayEntry = journalStore.entries.find(e => e.date === today)
+
+        // Suggest a day plan based on available time and energy
         const availableHours = (args.availableHours as number) || 8
         const focusArea = args.focus as string | undefined
+        const energyLevel = todayEntry?.energy || 3
+
+        // Adjust recommendations based on energy
+        let taskRecommendation = ''
+        if (energyLevel <= 2) {
+          taskRecommendation = 'Düşük enerji - hafif işlerle başla, P1 taskları öğleden sonraya bırak'
+        } else if (energyLevel >= 4) {
+          taskRecommendation = 'Yüksek enerji - P1 taskları şimdi halletmek için ideal zaman!'
+        } else {
+          taskRecommendation = 'Normal enerji - önce en önemli 2 task, sonra molalar'
+        }
 
         const plan = {
           focusArea: focusArea || 'General productivity',
+          energyLevel,
+          taskRecommendation,
           suggestedTasks: priorityTasks.map(t => ({
             id: t.id,
             title: t.title,
             priority: t.priority,
+            deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : null,
           })),
+          habits: {
+            total: todayHabits.length,
+            completed: completedHabits.length,
+            pending: todayHabits.filter(h => !h.completions[today]).map(h => h.name),
+          },
           totalPending: pendingTasks.length,
           message: `Focus on ${priorityTasks.length} high-priority tasks today. You have ${availableHours} hours available.`,
         }
 
         return {
           success: true,
-          message: `Day plan created: ${priorityTasks.length} priority tasks to focus on`,
+          message: `Day plan created: ${priorityTasks.length} priority tasks, ${todayHabits.length - completedHabits.length} habits remaining`,
           data: plan,
+        }
+      }
+
+      // ============ BOOKMARK OPERATIONS ============
+      case 'create_bookmark': {
+        const bookmarkStore = useBookmarkStore.getState()
+        const id = bookmarkStore.addBookmark({
+          url: args.url as string,
+          title: args.title as string,
+          description: args.description as string | undefined,
+          collection: (args.collection as string) || 'Unsorted',
+          tags: (args.tags as string[]) || [],
+        })
+        return {
+          success: true,
+          message: `Bookmark "${args.title}" saved to ${args.collection || 'Unsorted'}`,
+          data: { id, url: args.url, title: args.title },
+        }
+      }
+
+      case 'search_bookmarks': {
+        const bookmarks = useBookmarkStore.getState().bookmarks
+        const query = (args.query as string).toLowerCase()
+        const matches = bookmarks.filter(b =>
+          b.title.toLowerCase().includes(query) ||
+          b.url.toLowerCase().includes(query) ||
+          b.description?.toLowerCase().includes(query) ||
+          b.tags.some(t => t.toLowerCase().includes(query))
+        )
+        return {
+          success: true,
+          message: `Found ${matches.length} bookmark${matches.length !== 1 ? 's' : ''} matching "${args.query}"`,
+          data: matches.slice(0, 10).map(b => ({
+            id: b.id,
+            title: b.title,
+            url: b.url,
+            collection: b.collection,
+          })),
+        }
+      }
+
+      case 'list_bookmarks': {
+        const bookmarkStore = useBookmarkStore.getState()
+        let bookmarks = bookmarkStore.bookmarks
+
+        if (args.collection) {
+          bookmarks = bookmarks.filter(b => b.collection === args.collection)
+        }
+
+        const limit = (args.limit as number) || 10
+        return {
+          success: true,
+          message: `${bookmarks.length} bookmark${bookmarks.length !== 1 ? 's' : ''}${args.collection ? ` in ${args.collection}` : ''}`,
+          data: bookmarks.slice(0, limit).map(b => ({
+            id: b.id,
+            title: b.title,
+            url: b.url,
+            collection: b.collection,
+          })),
+        }
+      }
+
+      // ============ WEB SEARCH OPERATIONS ============
+      case 'web_search': {
+        const settings = useSettingsStore.getState()
+        const tavilyKey = settings.apiKeys.tavily
+
+        if (!tavilyKey) {
+          return {
+            success: false,
+            message: 'Web search requires Tavily API key. Please add it in Settings → AI Coach → Tavily API Key',
+          }
+        }
+
+        try {
+          const numResults = Math.min((args.numResults as number) || 5, 10)
+          const response = await fetch('https://api.tavily.com/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              api_key: tavilyKey,
+              query: args.query as string,
+              search_depth: 'basic',
+              max_results: numResults,
+              include_answer: true,
+            }),
+          })
+
+          if (!response.ok) {
+            throw new Error('Tavily API error')
+          }
+
+          const data = await response.json()
+          const results = data.results?.map((r: { url: string; title: string; content: string }) => ({
+            url: r.url,
+            title: r.title,
+            description: r.content?.slice(0, 200),
+          })) || []
+
+          return {
+            success: true,
+            message: `Found ${results.length} results for "${args.query}"`,
+            data: {
+              answer: data.answer,
+              results,
+            },
+          }
+        } catch (error) {
+          return {
+            success: false,
+            message: `Web search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          }
+        }
+      }
+
+      case 'save_search_results_as_bookmarks': {
+        const bookmarkStore = useBookmarkStore.getState()
+        const results = args.results as Array<{ url: string; title: string; description?: string }>
+        const collection = (args.collection as string) || 'Unsorted'
+        const tags = (args.tags as string[]) || []
+
+        const savedIds: string[] = []
+        for (const result of results) {
+          const id = bookmarkStore.addBookmark({
+            url: result.url,
+            title: result.title,
+            description: result.description,
+            collection,
+            tags,
+          })
+          savedIds.push(id)
+        }
+
+        return {
+          success: true,
+          message: `Saved ${savedIds.length} bookmarks to ${collection}`,
+          data: { savedCount: savedIds.length, collection },
         }
       }
 

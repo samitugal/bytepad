@@ -224,6 +224,73 @@ export const FLOWBOT_TOOLS: ToolDefinition[] = [
       required: [],
     },
   },
+
+  // ============ BOOKMARK TOOLS ============
+  {
+    name: 'create_bookmark',
+    description: 'Create a new bookmark. Use when user wants to save a URL or web resource.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'URL of the bookmark' },
+        title: { type: 'string', description: 'Title of the bookmark' },
+        description: { type: 'string', description: 'Optional description' },
+        collection: { type: 'string', description: 'Collection name (Gold, Silver, Bronze, or custom)', enum: ['Gold', 'Silver', 'Bronze', 'Unsorted'] },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Tags for organization' },
+      },
+      required: ['url', 'title'],
+    },
+  },
+  {
+    name: 'search_bookmarks',
+    description: 'Search existing bookmarks by title, URL, or tags.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'list_bookmarks',
+    description: 'List all bookmarks, optionally filtered by collection.',
+    parameters: {
+      type: 'object',
+      properties: {
+        collection: { type: 'string', description: 'Filter by collection (optional)' },
+        limit: { type: 'number', description: 'Max number of bookmarks to return (default 10)' },
+      },
+      required: [],
+    },
+  },
+
+  // ============ WEB SEARCH TOOLS ============
+  {
+    name: 'web_search',
+    description: 'Search the web for information. Use this to find resources, articles, or answers. Returns search results that can be saved as bookmarks.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query' },
+        numResults: { type: 'number', description: 'Number of results to return (default 5, max 10)' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'save_search_results_as_bookmarks',
+    description: 'Save web search results as bookmarks. Use after web_search to save useful results.',
+    parameters: {
+      type: 'object',
+      properties: {
+        results: { type: 'array', items: { type: 'object' }, description: 'Array of search results with url, title, description' },
+        collection: { type: 'string', description: 'Collection to save to', enum: ['Gold', 'Silver', 'Bronze', 'Unsorted'] },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Tags to apply to all bookmarks' },
+      },
+      required: ['results'],
+    },
+  },
 ]
 
 // Helper to format tools for different LLM providers
