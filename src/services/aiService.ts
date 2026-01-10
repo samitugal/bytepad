@@ -90,6 +90,17 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
     const pending = tasks.filter(t => !t.completed).length
     return `📊 Özet: ${pending} bekleyen task, ${habits.length} habit`
   },
+  get_current_datetime: async () => {
+    const now = new Date()
+    const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
+    return JSON.stringify({
+      date: now.toISOString().split('T')[0],
+      time: now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+      dayOfWeek: days[now.getDay()],
+      hour: now.getHours(),
+      remainingHours: 24 - now.getHours(),
+    })
+  },
 }
 
 function getToolDefinitions() {
@@ -153,7 +164,12 @@ function getToolDefinitions() {
     }),
     tool(async () => toolExecutors.get_daily_summary({}), {
       name: 'get_daily_summary',
-      description: 'Günlük özet al',
+      description: 'Get daily productivity summary with pending tasks and habits count',
+      schema: z.object({}),
+    }),
+    tool(async () => toolExecutors.get_current_datetime({}), {
+      name: 'get_current_datetime',
+      description: 'Get current date, time, day of week, and remaining hours in the day. Use this when user asks about time-based planning or scheduling.',
       schema: z.object({}),
     }),
   ]
@@ -209,20 +225,57 @@ export async function sendMessage(
   const toolResults: string[] = []
   
   try {
+    console.log('[AI Service] Sending message to LLM...')
     const response = await llmWithTools.invoke(messages)
+    console.log('[AI Service] Response received, tool_calls:', response.tool_calls?.length || 0)
+    
+    // Handle tool calls
     if (response.tool_calls?.length) {
       for (const tc of response.tool_calls) {
+        console.log('[AI Service] Executing tool:', tc.name)
         const executor = toolExecutors[tc.name]
         if (executor) {
-          const result = await executor(tc.args as Record<string, unknown>)
-          toolResults.push(result)
+          try {
+            const result = await executor(tc.args as Record<string, unknown>)
+            toolResults.push(result)
+          } catch (toolError) {
+            console.error('[AI Service] Tool error:', tc.name, toolError)
+            toolResults.push(`❌ Error in ${tc.name}`)
+          }
         }
       }
+      
+      // After tool execution, get a natural language response
       if (toolResults.length) {
-        return { content: toolResults.join('\n'), toolResults }
+        console.log('[AI Service] Getting follow-up response after tools...')
+        try {
+          const followUpMessages = [
+            ...messages,
+            new AIMessage({ content: '', tool_calls: response.tool_calls }),
+            new HumanMessage(`Tool results:\n${toolResults.join('\n')}\n\nPlease summarize what was done in a friendly, brief way in Turkish.`)
+          ]
+          const followUp = await llm.invoke(followUpMessages)
+          const followUpContent = typeof followUp.content === 'string' ? followUp.content : ''
+          console.log('[AI Service] Follow-up response received')
+          return { 
+            content: followUpContent || toolResults.join('\n'), 
+            toolResults 
+          }
+        } catch (followUpError) {
+          console.error('[AI Service] Follow-up error:', followUpError)
+          return { content: toolResults.join('\n'), toolResults }
+        }
       }
     }
-    return { content: typeof response.content === 'string' ? response.content : 'Islem tamamlandi!', toolResults }
+    
+    // No tool calls - return direct response
+    const content = typeof response.content === 'string' ? response.content : ''
+    if (!content) {
+      console.warn('[AI Service] Empty response from LLM')
+      return { content: 'Bir sorun oluştu, tekrar dener misin?', toolResults }
+    }
+    
+    return { content, toolResults }
   } catch (error) {
     console.error('[AI Service Error]', error)
     throw error
