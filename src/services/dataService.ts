@@ -86,7 +86,7 @@ export function readFileAsJson(file: File): Promise<ExportData> {
       try {
         const data = JSON.parse(e.target?.result as string)
         resolve(data)
-      } catch (error) {
+      } catch {
         reject(new Error('Invalid JSON file'))
       }
     }

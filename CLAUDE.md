@@ -1,6 +1,6 @@
 # MyFlowSpace - ADHD Productivity Super App
 
-## Aktif Çalışma: MVP3 - Sprint 3.5 (PWA & Polish)
+## MVP3 Tamamlandı! Production-Ready PWA
 
 ### Tamamlanan Sprint'ler
 - [x] MVP1: Foundation + Notes ✓
@@ -8,12 +8,13 @@
 - [x] Sprint 3.1: FlowBot AI Coach ✓
 - [x] Sprint 3.2: Notifications + Reminders ✓
 - [x] Sprint 3.4: Weekly Analysis ✓
+- [x] Sprint 3.5: PWA & Polish ✓
 
-### Şu An Yapılacaklar (Sprint 3.5)
-- [ ] PWA manifest
-- [ ] Service worker (offline support)
-- [ ] App icon set
-- [ ] Loading states & Error boundaries
+### Sonraki Adımlar (Post-MVP)
+- [ ] Global Search (Alt+U)
+- [ ] Dark/Light theme toggle
+- [ ] Knowledge graph (wikilinks)
+- [ ] Cloud sync
 
 > Detaylı görevler için: `docs/ROADMAP.md`
 
@@ -27,9 +28,9 @@ Notepad++ estetiğinde, keyboard-first, ADHD-friendly productivity app.
 ## MVP'ler
 | MVP | İçerik | Durum |
 |-----|--------|-------|
-| MVP1 | Foundation + Notes | 🔄 Aktif |
-| MVP2 | Tasks, Habits, Journal, Pomodoro | ⏳ |
-| MVP3 | AI Coach, Notifications, Analysis | ⏳ |
+| MVP1 | Foundation + Notes | ✅ Tamamlandı |
+| MVP2 | Tasks, Habits, Journal, Pomodoro | ✅ Tamamlandı |
+| MVP3 | AI Coach, Notifications, Analysis, PWA | ✅ Tamamlandı |
 
 ## Tema
 ```css
@@ -43,11 +44,12 @@ Notepad++ estetiğinde, keyboard-first, ADHD-friendly productivity app.
 
 ## Temel Shortcuts
 ```
-Ctrl+K  → Command Palette
-Ctrl+1  → Notes
-Ctrl+N  → New item
-Ctrl+S  → Save
-Escape  → Close
+Ctrl+K        → Command Palette
+Ctrl+1-5      → Module navigation
+Ctrl+/        → FlowBot AI Coach
+Ctrl+Shift+F  → Focus Mode
+Ctrl+Shift+N  → Notification Center
+Escape        → Close modals
 ```
 
 ## Dokümanlar

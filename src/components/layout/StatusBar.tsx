@@ -13,13 +13,15 @@ export function StatusBar() {
     switch (activeModule) {
       case 'notes':
         return `${notes.length} note${notes.length !== 1 ? 's' : ''} | UTF-8`
-      case 'habits':
+      case 'habits': {
         const completed = habitStore.getCompletedToday()
         const total = habitStore.getTotalHabits()
         return `${completed}/${total} habits completed today`
-      case 'tasks':
+      }
+      case 'tasks': {
         const pending = taskStore.getPendingCount()
         return `${pending} task${pending !== 1 ? 's' : ''} pending`
+      }
       case 'journal':
         return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
       case 'analysis':
