@@ -46,12 +46,26 @@ export const PROVIDER_INFO: Record<LLMProvider, { name: string; baseUrl: string;
   ollama: { name: 'Ollama (Local)', baseUrl: 'http://localhost:11434', requiresKey: false },
 }
 
+// Font Size Options
+export type FontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
+
+export const FONT_SIZES: Record<FontSize, { label: string; value: string }> = {
+  xs: { label: 'Extra Small (11px)', value: '11px' },
+  sm: { label: 'Small (12px)', value: '12px' },
+  base: { label: 'Default (13px)', value: '13px' },
+  lg: { label: 'Large (14px)', value: '14px' },
+  xl: { label: 'Extra Large (16px)', value: '16px' },
+}
+
 interface SettingsState {
   // LLM Settings
   llmProvider: LLMProvider
   llmModel: string
   apiKeys: Record<LLMProvider, string>
   ollamaBaseUrl: string
+
+  // Display Settings
+  fontSize: FontSize
 
   // Editor Settings
   noteMarkdownPreview: boolean
@@ -64,6 +78,7 @@ interface SettingsState {
   setLLMModel: (model: string) => void
   setApiKey: (provider: LLMProvider, key: string) => void
   setOllamaBaseUrl: (url: string) => void
+  setFontSize: (size: FontSize) => void
   setNoteMarkdownPreview: (enabled: boolean) => void
   completeOnboarding: () => void
 
@@ -86,6 +101,7 @@ export const useSettingsStore = create<SettingsState>()(
         ollama: '',
       },
       ollamaBaseUrl: 'http://localhost:11434',
+      fontSize: 'base',
       noteMarkdownPreview: false,
       onboardingCompleted: false,
 
@@ -105,7 +121,9 @@ export const useSettingsStore = create<SettingsState>()(
       })),
       
       setOllamaBaseUrl: (url) => set({ ollamaBaseUrl: url }),
-      
+
+      setFontSize: (size) => set({ fontSize: size }),
+
       setNoteMarkdownPreview: (enabled) => set({ noteMarkdownPreview: enabled }),
 
       completeOnboarding: () => set({ onboardingCompleted: true }),

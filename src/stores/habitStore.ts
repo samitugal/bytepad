@@ -2,14 +2,25 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Habit } from '../types'
 
+interface HabitStats {
+  date: string
+  completed: number
+  total: number
+  completionRate: number
+}
+
 interface HabitState {
   habits: Habit[]
+  dailyStats: HabitStats[]
   addHabit: (habit: Omit<Habit, 'id' | 'completions' | 'streak' | 'createdAt'>) => string
   updateHabit: (id: string, updates: Partial<Habit>) => void
   deleteHabit: (id: string) => void
   toggleCompletion: (id: string, date: string) => void
   getCompletedToday: () => number
   getTotalHabits: () => number
+  recordDailyStats: () => void
+  getWeeklyStats: () => HabitStats[]
+  getMonthlyStats: () => HabitStats[]
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 15)
@@ -48,6 +59,7 @@ export const useHabitStore = create<HabitState>()(
   persist(
     (set, get) => ({
       habits: [],
+      dailyStats: [],
 
       addHabit: (habitData) => {
         const id = generateId()
@@ -99,10 +111,52 @@ export const useHabitStore = create<HabitState>()(
       },
 
       getTotalHabits: () => get().habits.length,
+
+      recordDailyStats: () => {
+        const today = getToday()
+        const { habits, dailyStats } = get()
+        
+        // Check if already recorded today
+        if (dailyStats.some(s => s.date === today)) return
+        
+        const completed = habits.filter(h => h.completions[today]).length
+        const total = habits.length
+        
+        if (total === 0) return
+        
+        const newStats: HabitStats = {
+          date: today,
+          completed,
+          total,
+          completionRate: Math.round((completed / total) * 100),
+        }
+        
+        set((state) => ({
+          dailyStats: [...state.dailyStats.slice(-90), newStats], // Keep last 90 days
+        }))
+      },
+
+      getWeeklyStats: () => {
+        const { dailyStats } = get()
+        const weekAgo = new Date()
+        weekAgo.setDate(weekAgo.getDate() - 7)
+        const weekAgoStr = weekAgo.toISOString().split('T')[0]
+        
+        return dailyStats.filter(s => s.date >= weekAgoStr)
+      },
+
+      getMonthlyStats: () => {
+        const { dailyStats } = get()
+        const monthAgo = new Date()
+        monthAgo.setDate(monthAgo.getDate() - 30)
+        const monthAgoStr = monthAgo.toISOString().split('T')[0]
+        
+        return dailyStats.filter(s => s.date >= monthAgoStr)
+      },
     }),
     {
       name: 'myflowspace-habits',
-      partialize: (state) => ({ habits: state.habits }),
+      partialize: (state) => ({ habits: state.habits, dailyStats: state.dailyStats }),
     }
   )
 )

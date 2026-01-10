@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useNoteStore } from '../../stores/noteStore'
+import { BacklinksPanel } from './BacklinksPanel'
 
 export function NoteEditor() {
   const { activeNoteId, notes, updateNote, deleteNote } = useNoteStore()
@@ -181,16 +182,19 @@ export function NoteEditor() {
         {(viewMode === 'preview' || viewMode === 'split') && (
           <div className={`overflow-auto ${viewMode === 'split' ? 'w-1/2' : 'flex-1'}`}>
             <div className="p-4 prose prose-invert prose-sm max-w-none
-                            prose-headings:text-np-blue prose-headings:font-mono prose-headings:border-b prose-headings:border-np-border prose-headings:pb-2
-                            prose-p:text-np-text-primary prose-p:leading-relaxed
+                            prose-headings:text-np-blue prose-headings:font-mono prose-headings:border-b prose-headings:border-np-border prose-headings:pb-2 prose-headings:mb-4 prose-headings:mt-6
+                            prose-h1:text-xl prose-h1:text-np-cyan
+                            prose-h2:text-lg prose-h2:text-np-blue
+                            prose-h3:text-base prose-h3:text-np-purple prose-h3:border-none
+                            prose-p:text-np-text-primary prose-p:leading-relaxed prose-p:my-3
                             prose-a:text-np-cyan prose-a:no-underline hover:prose-a:underline
                             prose-strong:text-np-orange prose-strong:font-semibold
                             prose-em:text-np-purple prose-em:italic
                             prose-code:text-np-green prose-code:bg-np-bg-tertiary prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
-                            prose-pre:bg-np-bg-secondary prose-pre:border prose-pre:border-np-border
-                            prose-blockquote:border-l-np-purple prose-blockquote:text-np-text-secondary prose-blockquote:italic
-                            prose-ul:text-np-text-primary prose-ol:text-np-text-primary
-                            prose-li:marker:text-np-green
+                            prose-pre:bg-np-bg-secondary prose-pre:border prose-pre:border-np-border prose-pre:my-4
+                            prose-blockquote:border-l-np-purple prose-blockquote:text-np-text-secondary prose-blockquote:italic prose-blockquote:pl-4
+                            prose-ul:text-np-text-primary prose-ol:text-np-text-primary prose-ul:my-3 prose-ol:my-3
+                            prose-li:marker:text-np-green prose-li:my-1
                             prose-hr:border-np-border">
               {content ? (
                 <ReactMarkdown>{content}</ReactMarkdown>
@@ -203,6 +207,11 @@ export function NoteEditor() {
           </div>
         )}
       </div>
+
+      {/* Backlinks Panel */}
+      {activeNote && (
+        <BacklinksPanel noteId={activeNote.id} noteTitle={activeNote.title} />
+      )}
     </div>
   )
 }

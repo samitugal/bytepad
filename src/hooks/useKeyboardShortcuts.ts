@@ -53,6 +53,13 @@ export function useKeyboardShortcuts() {
       return
     }
 
+    // Alt+U - Global Search (works everywhere)
+    if (e.altKey && e.key === 'u') {
+      e.preventDefault()
+      useUIStore.getState().toggleGlobalSearch()
+      return
+    }
+
     // Skip remaining shortcuts if in input
     if (isInput) return
 

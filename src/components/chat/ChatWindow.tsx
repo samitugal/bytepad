@@ -4,6 +4,7 @@ import { useTaskStore } from '../../stores/taskStore'
 import { useHabitStore } from '../../stores/habitStore'
 import { useJournalStore } from '../../stores/journalStore'
 import { sendMessage, getQuickActions } from '../../services/llmService'
+import { parseToolCallsFromText, executeToolCalls, ToolResult } from '../../services/agentService'
 import type { ChatContext } from '../../types'
 
 function getContext(): ChatContext {
@@ -56,18 +57,39 @@ export function ChatWindow() {
   
   const handleSend = async (text: string) => {
     if (!text.trim() || isLoading) return
-    
+
     const userMessage = text.trim()
     setInput('')
     setError(null)
-    
+
     addMessage({ role: 'user', content: userMessage })
     setLoading(true)
-    
+
     try {
       const context = getContext()
       const response = await sendMessage(userMessage, messages, context)
-      addMessage({ role: 'assistant', content: response })
+
+      // Parse and execute any tool calls in the response
+      const toolCalls = parseToolCallsFromText(response)
+
+      if (toolCalls.length > 0) {
+        // Execute all tool calls
+        const results = await executeToolCalls(toolCalls)
+        setToolResults(results)
+
+        // Clean the response by removing tool call syntax for display
+        const cleanedResponse = response.replace(/\[TOOL:[^\]]+\]/g, '').trim()
+
+        // Add assistant message with tool results
+        const toolSummary = results.map(r => `${r.success ? '✓' : '✗'} ${r.message}`).join('\n')
+        const fullResponse = cleanedResponse
+          ? `${cleanedResponse}\n\n---\n${toolSummary}`
+          : toolSummary
+
+        addMessage({ role: 'assistant', content: fullResponse })
+      } else {
+        addMessage({ role: 'assistant', content: response })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu')
     } finally {

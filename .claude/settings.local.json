@@ -7,7 +7,11 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(init\\): setup Vite + React + TypeScript with Notepad++ theme\n\n- Initialize Vite project with React 18 and TypeScript\n- Configure Tailwind CSS with custom Notepad++ dark theme colors\n- Add Zustand for state management\n- Create layout components: MenuBar, Sidebar, TabBar, StatusBar, MainContent\n- Implement keyboard shortcuts: Ctrl+1-5 navigation, Escape to close\n- Define TypeScript types for all modules \\(Note, Habit, Task, Journal, Analysis\\)\n- Setup ESLint and TypeScript strict mode\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(modules\\): implement all core modules with persistence\n\nCommand Palette:\n- Ctrl+K to open, fuzzy search, keyboard navigation\n- Navigation, Action, and Settings categories\n\nNotes Module:\n- CRUD operations with auto-save\n- Tag system and fuzzy search\n- Line numbers \\(Notepad++ style\\)\n- LocalStorage persistence\n\nHabits Module:\n- Daily habit tracking with streaks\n- Category system \\(health, work, personal, learning\\)\n- Checkbox toggle and streak calculation\n\nTasks Module:\n- Priority system \\(P1-P4, color-coded\\)\n- Filter \\(all/active/completed\\) and sorting\n- Deadline support with date picker\n- Expandable task details\n\nJournal Module:\n- Mood and energy tracking \\(1-5 scale, emoji picker\\)\n- Date navigation with entry list sidebar\n- Tag system for entries\n\nAll modules use Zustand stores with LocalStorage persistence.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm run lint)",
+      "Bash(git push)",
+      "Bash(npm run dev:*)",
+      "Bash(tree:*)"
     ]
   }
 }

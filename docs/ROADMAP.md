@@ -194,7 +194,7 @@
 - [x] HabitChart component (completion rate)
 - [x] MoodChart component (trend line)
 - [x] TaskStats component
-- [ ] AI Insights integration (Anthropic API)
+- [ ] AI Insights integration
 - [x] ADHD pattern detection (hyperfocus, energy dips, etc.)
 - [x] Recommendations generation
 - [ ] PDF/Image export (opsiyonel)

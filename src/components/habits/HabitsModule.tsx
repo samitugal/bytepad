@@ -1,13 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useHabitStore } from '../../stores/habitStore'
+import { DateTimePicker } from '../common'
 
 const CATEGORIES = ['health', 'work', 'personal', 'learning']
 
 const getToday = () => new Date().toISOString().split('T')[0]
 
 export function HabitsModule() {
-  const { habits, addHabit, deleteHabit, toggleCompletion, updateHabit } = useHabitStore()
+  const { habits, addHabit, deleteHabit, toggleCompletion, updateHabit, getWeeklyStats, recordDailyStats } = useHabitStore()
   const [showForm, setShowForm] = useState(false)
+  const [showStats, setShowStats] = useState(false)
+  
+  // Record daily stats at end of day (or when component mounts after midnight)
+  useEffect(() => {
+    recordDailyStats()
+  }, [])
   const [newHabit, setNewHabit] = useState({ 
     name: '', 
     category: 'personal', 
@@ -85,11 +92,10 @@ export function HabitsModule() {
               <span>🔔 Daily reminder</span>
             </label>
             {newHabit.reminderEnabled && (
-              <input
+              <DateTimePicker
                 type="time"
                 value={newHabit.reminderTime}
-                onChange={(e) => setNewHabit({ ...newHabit, reminderTime: e.target.value })}
-                className="np-input text-sm"
+                onChange={(val) => setNewHabit({ ...newHabit, reminderTime: val })}
               />
             )}
           </div>
@@ -177,6 +183,41 @@ export function HabitsModule() {
           </div>
         )}
       </div>
+
+      {/* Weekly Stats Toggle */}
+      <button 
+        onClick={() => setShowStats(!showStats)}
+        className="mt-4 pt-3 border-t border-np-border text-xs text-np-text-secondary w-full text-left hover:text-np-text-primary"
+      >
+        {showStats ? '▼' : '▶'} Weekly Stats
+      </button>
+      
+      {/* Weekly Stats Panel */}
+      {showStats && (
+        <div className="mt-2 p-3 bg-np-bg-secondary border border-np-border">
+          <div className="text-sm text-np-green mb-2">// Last 7 Days</div>
+          {getWeeklyStats().length === 0 ? (
+            <div className="text-xs text-np-text-secondary">No data yet. Complete habits to see stats.</div>
+          ) : (
+            <div className="space-y-1">
+              {getWeeklyStats().map((stat) => (
+                <div key={stat.date} className="flex items-center gap-2 text-xs">
+                  <span className="text-np-text-secondary w-20">{stat.date}</span>
+                  <div className="flex-1 h-2 bg-np-bg-tertiary rounded overflow-hidden">
+                    <div 
+                      className="h-full bg-np-green transition-all"
+                      style={{ width: `${stat.completionRate}%` }}
+                    />
+                  </div>
+                  <span className={`w-16 text-right ${stat.completionRate === 100 ? 'text-np-green' : 'text-np-text-secondary'}`}>
+                    {stat.completed}/{stat.total} ({stat.completionRate}%)
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Keyboard hints */}
       <div className="mt-4 pt-3 border-t border-np-border text-xs text-np-text-secondary">
