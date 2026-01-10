@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useUIStore } from '../../stores/uiStore'
 import { useNoteStore } from '../../stores/noteStore'
 import { useHabitStore } from '../../stores/habitStore'
@@ -8,6 +9,18 @@ export function StatusBar() {
   const { notes } = useNoteStore()
   const habitStore = useHabitStore()
   const taskStore = useTaskStore()
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
 
   const getStatusText = () => {
     switch (activeModule) {
@@ -37,6 +50,11 @@ export function StatusBar() {
         <span>{getStatusText()}</span>
       </div>
       <div className="flex items-center gap-4">
+        {!isOnline && (
+          <span className="text-np-orange flex items-center gap-1">
+            <span>⚡</span> Offline
+          </span>
+        )}
         <span>MyFlowSpace v0.1.0</span>
       </div>
     </div>
