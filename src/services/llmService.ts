@@ -708,3 +708,126 @@ export function getQuickActions(): { id: string; label: string; prompt: string }
     { id: 'break', label: '☕ Mola', prompt: 'Mola vermeli miyim? Ne kadar süre önerirsin?' },
   ]
 }
+
+// Streaming version of sendMessageWithTools
+export async function sendMessageStreaming(
+  userMessage: string,
+  chatHistory: ChatMessage[],
+  context: ChatContext,
+  onChunk: (chunk: string) => void,
+  onToolCall?: (toolName: string, result: string) => void
+): Promise<AgentResponse> {
+  const settings = useSettingsStore.getState()
+  const { llmProvider, llmModel, apiKeys } = settings
+
+  // Only OpenAI supports streaming with tools currently
+  if (llmProvider !== 'openai') {
+    // Fallback to non-streaming
+    const result = await sendMessageWithTools(userMessage, chatHistory, context)
+    onChunk(result.content)
+    return result
+  }
+
+  const contextSuffix = buildContextMessage(context)
+  const messages: { role: string; content: string }[] = [
+    { role: 'system', content: ADHD_COACH_SYSTEM_PROMPT + contextSuffix },
+    ...chatHistory.slice(-10).map(m => ({ role: m.role, content: m.content })),
+    { role: 'user', content: userMessage },
+  ]
+
+  const tools = formatToolsForOpenAI()
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKeys.openai}`,
+    },
+    body: JSON.stringify({
+      model: llmModel,
+      messages,
+      tools,
+      tool_choice: 'auto',
+      stream: true,
+      max_tokens: 1000,
+      temperature: 0.7,
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error?.message || 'OpenAI API error')
+  }
+
+  const reader = response.body?.getReader()
+  if (!reader) throw new Error('No response body')
+
+  const decoder = new TextDecoder()
+  let fullContent = ''
+  const toolCalls: ToolCall[] = []
+  const toolCallsInProgress: Map<number, { name: string; arguments: string }> = new Map()
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    const chunk = decoder.decode(value)
+    const lines = chunk.split('\n').filter(line => line.startsWith('data: '))
+
+    for (const line of lines) {
+      const data = line.slice(6)
+      if (data === '[DONE]') continue
+
+      try {
+        const parsed = JSON.parse(data)
+        const delta = parsed.choices?.[0]?.delta
+
+        // Handle text content
+        if (delta?.content) {
+          fullContent += delta.content
+          onChunk(delta.content)
+        }
+
+        // Handle tool calls
+        if (delta?.tool_calls) {
+          for (const tc of delta.tool_calls) {
+            const idx = tc.index
+            if (!toolCallsInProgress.has(idx)) {
+              toolCallsInProgress.set(idx, { name: '', arguments: '' })
+            }
+            const current = toolCallsInProgress.get(idx)!
+            if (tc.function?.name) current.name = tc.function.name
+            if (tc.function?.arguments) current.arguments += tc.function.arguments
+          }
+        }
+      } catch {
+        // Skip invalid JSON
+      }
+    }
+  }
+
+  // Process completed tool calls
+  const toolResults: ToolResult[] = []
+  for (const [, tc] of toolCallsInProgress) {
+    if (tc.name) {
+      try {
+        const args = tc.arguments ? JSON.parse(tc.arguments) : {}
+        toolCalls.push({ name: tc.name, arguments: args })
+        const result = await executeToolCall({ name: tc.name, arguments: args })
+        toolResults.push(result)
+        if (onToolCall) onToolCall(tc.name, result.message)
+      } catch (e) {
+        debugLog('Tool call error', e)
+      }
+    }
+  }
+
+  // If we have tool results but no content, generate follow-up
+  if (toolResults.length > 0 && !fullContent.trim()) {
+    const toolSummary = toolResults.map(r => r.message).join('\n')
+    onChunk(toolSummary)
+    fullContent = toolSummary
+  }
+
+  return { content: fullContent, toolCalls, toolResults }
+}
