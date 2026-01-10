@@ -2,7 +2,7 @@
 **Goal:** Quick daily notes with card-based grid layout (Notion/Obsidian style)
 **Duration:** 2-3 days
 **Priority:** MEDIUM
-**Status:** PLANNED
+**Status:** ✅ COMPLETED (2026-01-10)
 
 ## Konsept
 Günlük hızlı notlar için ayrı bir tab. Her gün için bir "sayfa" açılır, içinde kartlar halinde notlar tutulur.
@@ -11,38 +11,39 @@ Günlük hızlı notlar için ayrı bir tab. Her gün için bir "sayfa" açılı
 - Pinned/Newest/By Tags filtreleme
 - Tarih bazlı organizasyon
 
-## 11.1: Data Model & Store (0.5 gün)
-- [ ] `DailyNote` ve `DailyNoteCard` interface tanımla
-- [ ] `useDailyNotesStore` Zustand store oluştur
-- [ ] LocalStorage persistence
-- [ ] CRUD operations (add/update/delete card)
+## 11.1: Data Model & Store (0.5 gün) ✓
+- [x] `DailyNote` ve `DailyNoteCard` interface tanımla
+- [x] `useDailyNotesStore` Zustand store oluştur
+- [x] LocalStorage persistence
+- [x] CRUD operations (add/update/delete card)
 
-## 11.2: Daily Notes Tab UI (1 gün)
-- [ ] Sidebar'a "Daily Notes" tab ekle (^8 shortcut)
-- [ ] Ana görünüm: Tarih seçici + Grid layout
-- [ ] "Daily Note Ekle" butonu → O gün için boş sayfa oluştur
-- [ ] Tarih navigasyonu (← Dün | Bugün | Yarın →)
-- [ ] Boş state: "Bugün için not yok, ekle!"
+## 11.2: Daily Notes Tab UI (1 gün) ✓
+- [x] Sidebar'a "Daily Notes" tab ekle (^2 shortcut - 2. sırada)
+- [x] Ana görünüm: Tarih seçici + Grid layout
+- [x] "Daily Note Ekle" butonu → O gün için boş sayfa oluştur
+- [x] Tarih navigasyonu (← Dün | Bugün | Yarın →)
+- [x] Boş state: "Bugün için not yok, ekle!"
 
-## 11.3: Card Component (0.5 gün)
-- [ ] Card UI: Icon + Title + Content + Tags
-- [ ] Yeni kart ekleme (+ butonu)
-- [ ] Kart düzenleme (click to edit, inline)
-- [ ] Kart silme (× butonu, confirm)
-- [ ] Kart pinleme (📌 toggle)
+## 11.3: Card Component (0.5 gün) ✓
+- [x] Card UI: Icon + Title + Content + Tags
+- [x] Yeni kart ekleme (+ butonu)
+- [x] Kart düzenleme (click to edit, inline)
+- [x] Kart silme (× butonu, confirm)
+- [x] Kart pinleme (📌 toggle)
+- [x] Default title: Tarih formatı (10.01.2026 - Saturday)
 
-## 11.4: Filtering & Toolbar (0.5 gün)
-- [ ] Filter tabs: Pinned | Newest | By Tags
-- [ ] Sort options
-- [ ] Search (kart içeriğinde)
+## 11.4: Filtering & Toolbar (0.5 gün) ✓
+- [x] Filter tabs: Pinned | Newest | All
+- [x] Search (kart içeriğinde)
+- [x] Keyboard shortcuts: N=new, T=today, ←→=navigate
 - [ ] Expand/collapse all
 
-## 11.5: Styling & Polish (0.5 gün)
-- [ ] Notepad++ tema uyumu
-- [ ] Icon seçici (emoji picker)
-- [ ] Tag renkleri
-- [ ] Responsive grid (1/2/3 sütun)
-- [ ] Hover/focus states
+## 11.5: Styling & Polish (0.5 gün) ✓
+- [x] Notepad++ tema uyumu
+- [x] Icon seçici (emoji picker - 15 emoji)
+- [x] Tag renkleri (cyan)
+- [x] Responsive grid (1/2/3 sütun)
+- [x] Hover/focus states
 
 ## Data Model
 ```typescript
