@@ -58,6 +58,36 @@ export const FONT_SIZES: Record<FontSize, { label: string; value: string }> = {
   xl: { label: 'Extra Large (16px)', value: '16px' },
 }
 
+// GitHub Gist Sync Preferences
+export interface GistSyncPreferences {
+  enabled: boolean
+  githubToken: string
+  gistId: string
+  autoSync: boolean
+  syncInterval: number // minutes, 0 = only manual
+  lastSyncAt: string | null
+  lastSyncStatus: 'success' | 'error' | 'pending' | null
+  lastSyncError: string | null
+}
+
+// Email Notification Preferences
+export interface EmailPreferences {
+  enabled: boolean
+  userEmail: string
+  emailjsServiceId: string
+  emailjsPublicKey: string
+  emailjsTemplateDaily: string
+  emailjsTemplateWeekly: string
+  emailjsTemplateStreak: string
+  dailySummaryEnabled: boolean
+  dailySummaryTime: string // HH:mm format
+  weeklySummaryEnabled: boolean
+  weeklySummaryDay: number // 0=Sunday, 1=Monday, etc.
+  streakAlertsEnabled: boolean
+  lastDailySent: string | null
+  lastWeeklySent: string | null
+}
+
 interface SettingsState {
   // LLM Settings
   llmProvider: LLMProvider
@@ -71,6 +101,12 @@ interface SettingsState {
   // Editor Settings
   noteMarkdownPreview: boolean
 
+  // Email Notifications
+  emailPreferences: EmailPreferences
+
+  // GitHub Gist Sync
+  gistSync: GistSyncPreferences
+
   // Onboarding
   onboardingCompleted: boolean
 
@@ -81,6 +117,8 @@ interface SettingsState {
   setOllamaBaseUrl: (url: string) => void
   setFontSize: (size: FontSize) => void
   setNoteMarkdownPreview: (enabled: boolean) => void
+  setEmailPreferences: (prefs: Partial<EmailPreferences>) => void
+  setGistSync: (prefs: Partial<GistSyncPreferences>) => void
   completeOnboarding: () => void
 
   // Helpers
@@ -105,6 +143,32 @@ export const useSettingsStore = create<SettingsState>()(
       ollamaBaseUrl: 'http://localhost:11434',
       fontSize: 'base',
       noteMarkdownPreview: false,
+      emailPreferences: {
+        enabled: false,
+        userEmail: '',
+        emailjsServiceId: '',
+        emailjsPublicKey: '',
+        emailjsTemplateDaily: '',
+        emailjsTemplateWeekly: '',
+        emailjsTemplateStreak: '',
+        dailySummaryEnabled: false,
+        dailySummaryTime: '20:00',
+        weeklySummaryEnabled: false,
+        weeklySummaryDay: 0, // Sunday
+        streakAlertsEnabled: true,
+        lastDailySent: null,
+        lastWeeklySent: null,
+      },
+      gistSync: {
+        enabled: false,
+        githubToken: '',
+        gistId: '',
+        autoSync: true,
+        syncInterval: 5, // 5 minutes
+        lastSyncAt: null,
+        lastSyncStatus: null,
+        lastSyncError: null,
+      },
       onboardingCompleted: false,
 
       // Actions
@@ -127,6 +191,14 @@ export const useSettingsStore = create<SettingsState>()(
       setFontSize: (size) => set({ fontSize: size }),
 
       setNoteMarkdownPreview: (enabled) => set({ noteMarkdownPreview: enabled }),
+
+      setEmailPreferences: (prefs) => set((state) => ({
+        emailPreferences: { ...state.emailPreferences, ...prefs }
+      })),
+
+      setGistSync: (prefs) => set((state) => ({
+        gistSync: { ...state.gistSync, ...prefs }
+      })),
 
       completeOnboarding: () => set({ onboardingCompleted: true }),
 

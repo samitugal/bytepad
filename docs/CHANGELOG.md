@@ -2,6 +2,38 @@
 
 Bu dosya Claude Code tarafından otomatik güncellenir.
 
+## [0.11.0] - 2026-01-10 (Planned)
+
+### Planned Features
+
+#### Settings Panel Redesign
+- [ ] **Tabbed Settings Interface**
+  - General: Font size, font type, language selection
+  - AI: Provider, model, API keys
+  - Integrations: Tavily, Email notifications
+  - Sync: GitHub Gist, Firebase
+  - Data: Export/Import, Clear data, Stats
+
+#### UX Improvements
+- [ ] **API Key Validation**
+  - Chat button disabled when no API key configured
+  - Visual indicator for missing configuration
+  - Tooltip explaining why chat is disabled
+
+#### Internationalization (i18n)
+- [ ] **Language Support**
+  - English (default)
+  - Turkish
+  - Language selector in General settings
+  - All UI text externalized to translation files
+
+#### Code Cleanup
+- [ ] **Consistent English UI**
+  - Remove Turkish text from codebase
+  - Use i18n keys for all user-facing text
+
+---
+
 ## [0.10.0] - 2026-01-10
 
 ### Added

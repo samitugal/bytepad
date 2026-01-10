@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNoteStore } from '../../stores/noteStore'
+import { ResizablePanel } from '../common/ResizablePanel'
 
 export function NoteList() {
   const { notes, activeNoteId, searchQuery, setActiveNote, setSearchQuery, addNote } = useNoteStore()
@@ -65,7 +66,14 @@ export function NoteList() {
   }
 
   return (
-    <div className="w-56 border-r border-np-border flex flex-col bg-np-bg-secondary">
+    <ResizablePanel
+      storageKey="notes-list"
+      defaultWidth={224}
+      minWidth={180}
+      maxWidth={400}
+      side="right"
+      className="border-r border-np-border flex flex-col bg-np-bg-secondary"
+    >
       {/* Search */}
       <div className="p-2 border-b border-np-border">
         <input
@@ -101,7 +109,7 @@ export function NoteList() {
               <span className="ml-auto text-np-purple">{selectedTags.length} selected</span>
             )}
           </button>
-          
+
           {/* Tag Cloud */}
           {showTagCloud && (
             <div className="px-2 pb-2 flex flex-wrap gap-1">
@@ -109,11 +117,10 @@ export function NoteList() {
                 <button
                   key={tag}
                   onClick={() => toggleTag(tag)}
-                  className={`text-xs px-1.5 py-0.5 transition-colors ${
-                    selectedTags.includes(tag)
-                      ? 'bg-np-purple text-white'
-                      : 'bg-np-bg-tertiary text-np-purple hover:bg-np-bg-hover'
-                  }`}
+                  className={`text-xs px-1.5 py-0.5 transition-colors ${selectedTags.includes(tag)
+                    ? 'bg-np-purple text-white'
+                    : 'bg-np-bg-tertiary text-np-purple hover:bg-np-bg-hover'
+                    }`}
                 >
                   #{tag} <span className="text-np-text-secondary">({count})</span>
                 </button>
@@ -178,6 +185,6 @@ export function NoteList() {
       <div className="p-2 border-t border-np-border text-xs text-np-text-secondary">
         {notes.length} note{notes.length !== 1 ? 's' : ''}
       </div>
-    </div>
+    </ResizablePanel>
   )
 }

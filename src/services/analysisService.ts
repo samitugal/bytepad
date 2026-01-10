@@ -1,4 +1,5 @@
 import type { Habit, Task, JournalEntry } from '../types'
+import { useSettingsStore, PROVIDER_INFO } from '../stores/settingsStore'
 
 export interface WeeklyStats {
   weekStart: string
@@ -286,4 +287,212 @@ function generateRecommendations(data: RecommendationData): string[] {
   }
 
   return recommendations.slice(0, 4)
+}
+
+// AI-powered insights generation
+export async function generateAIInsights(stats: WeeklyStats): Promise<{
+  insights: string[]
+  recommendations: string[]
+  summary: string
+}> {
+  const settings = useSettingsStore.getState()
+  const { llmProvider, llmModel, apiKeys, ollamaBaseUrl } = settings
+
+  // Check if API key is available
+  if (PROVIDER_INFO[llmProvider].requiresKey && !apiKeys[llmProvider]) {
+    return {
+      insights: stats.insights,
+      recommendations: stats.recommendations,
+      summary: 'AI insights require an API key. Configure in Settings.',
+    }
+  }
+
+  const prompt = buildAIInsightsPrompt(stats)
+
+  try {
+    const response = await callLLMForInsights(
+      prompt,
+      llmProvider,
+      llmModel,
+      apiKeys[llmProvider],
+      ollamaBaseUrl
+    )
+
+    return parseAIInsightsResponse(response, stats)
+  } catch (error) {
+    console.error('AI Insights error:', error)
+    return {
+      insights: stats.insights,
+      recommendations: stats.recommendations,
+      summary: 'Could not generate AI insights. Using default analysis.',
+    }
+  }
+}
+
+function buildAIInsightsPrompt(stats: WeeklyStats): string {
+  return `Sen bir ADHD koçusun. Aşağıdaki haftalık verileri analiz et ve kişiselleştirilmiş öneriler sun.
+
+## Haftalık Veriler (${stats.weekStart} - ${stats.weekEnd})
+
+### Habits
+- Toplam habit: ${stats.habits.total}
+- Ortalama tamamlama: %${Math.round(stats.habits.avgCompletion)}
+- En iyi gün: ${stats.habits.bestDay || 'N/A'}
+- En kötü gün: ${stats.habits.worstDay || 'N/A'}
+- Aktif streak'ler: ${stats.habits.streaks.map(s => `${s.name} (${s.streak} gün)`).join(', ') || 'Yok'}
+
+### Tasks
+- Toplam task: ${stats.tasks.total}
+- Tamamlanan: ${stats.tasks.completed}
+- Tamamlama oranı: %${Math.round(stats.tasks.completionRate)}
+- P1 (Kritik): ${stats.tasks.byPriority.P1.completed}/${stats.tasks.byPriority.P1.total}
+- P2 (Yüksek): ${stats.tasks.byPriority.P2.completed}/${stats.tasks.byPriority.P2.total}
+
+### Journal
+- Günlük sayısı: ${stats.journal.entries}/7
+- Ortalama mood: ${stats.journal.avgMood.toFixed(1)}/5
+- Ortalama enerji: ${stats.journal.avgEnergy.toFixed(1)}/5
+- Mood trendi: ${stats.journal.moodTrend.join(', ')}
+- Enerji trendi: ${stats.journal.energyTrend.join(', ')}
+
+## Görevin
+1. Bu verilerdeki ADHD-spesifik pattern'leri tespit et (hyperfocus, enerji dalgalanmaları, tutarsızlık vb.)
+2. 3-4 kısa insight yaz (her biri max 1 cümle)
+3. 3-4 pratik öneri yaz (ADHD-friendly, küçük adımlar)
+4. 2-3 cümlelik genel bir özet yaz
+
+## Format (JSON olarak yanıtla)
+{
+  "insights": ["insight1", "insight2", "insight3"],
+  "recommendations": ["öneri1", "öneri2", "öneri3"],
+  "summary": "Genel özet..."
+}
+
+Sadece JSON döndür, başka açıklama ekleme.`
+}
+
+async function callLLMForInsights(
+  prompt: string,
+  provider: string,
+  model: string,
+  apiKey: string,
+  ollamaBaseUrl: string
+): Promise<string> {
+  const messages = [
+    { role: 'system', content: 'Sen bir ADHD koçusun. JSON formatında yanıt ver.' },
+    { role: 'user', content: prompt },
+  ]
+
+  if (provider === 'openai') {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: 800,
+        temperature: 0.7,
+      }),
+    })
+    const data = await response.json()
+    return data.choices[0].message.content
+  }
+
+  if (provider === 'anthropic') {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 800,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+    const data = await response.json()
+    return data.content[0].text
+  }
+
+  if (provider === 'google') {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 800, temperature: 0.7 },
+        }),
+      }
+    )
+    const data = await response.json()
+    return data.candidates[0].content.parts[0].text
+  }
+
+  if (provider === 'groq') {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: 800,
+        temperature: 0.7,
+      }),
+    })
+    const data = await response.json()
+    return data.choices[0].message.content
+  }
+
+  if (provider === 'ollama') {
+    const response = await fetch(`${ollamaBaseUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        messages,
+        stream: false,
+      }),
+    })
+    const data = await response.json()
+    return data.message.content
+  }
+
+  throw new Error('Unsupported provider')
+}
+
+function parseAIInsightsResponse(
+  response: string,
+  fallbackStats: WeeklyStats
+): { insights: string[]; recommendations: string[]; summary: string } {
+  try {
+    // Try to extract JSON from response
+    const jsonMatch = response.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0])
+      return {
+        insights: parsed.insights || fallbackStats.insights,
+        recommendations: parsed.recommendations || fallbackStats.recommendations,
+        summary: parsed.summary || 'AI analysis complete.',
+      }
+    }
+  } catch (e) {
+    console.error('Failed to parse AI response:', e)
+  }
+
+  return {
+    insights: fallbackStats.insights,
+    recommendations: fallbackStats.recommendations,
+    summary: response.slice(0, 200),
+  }
 }
