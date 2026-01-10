@@ -1,4 +1,4 @@
-export type ModuleType = 'notes' | 'habits' | 'tasks' | 'journal' | 'analysis' | 'bookmarks'
+export type ModuleType = 'notes' | 'habits' | 'tasks' | 'journal' | 'analysis' | 'bookmarks' | 'calendar'
 
 export interface Note {
   id: string
@@ -30,6 +30,8 @@ export interface Task {
   priority: 'P1' | 'P2' | 'P3' | 'P4'
   deadline?: Date
   deadlineTime?: string // HH:mm format for specific time
+  endDate?: Date // End date for multi-day tasks (Calendar)
+  allDay?: boolean // Is this an all-day task? (Calendar)
   completed: boolean
   completedAt?: Date
   subtasks: SubTask[]
