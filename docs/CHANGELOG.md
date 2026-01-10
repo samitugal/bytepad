@@ -28,6 +28,29 @@ Bu dosya Claude Code tarafından otomatik güncellenir.
   - Auto-sync with configurable intervals
   - Force push/pull options
 
+- **Dark/Light Theme Toggle**
+  - Theme selector: Dark, Light, System
+  - Auto-detect system preference
+  - Notepad++ inspired light theme
+  - CSS variables for dynamic theme switching
+  - Persisted to localStorage
+
+- **Smart Task Scheduling (AI)**
+  - Energy-based task recommendations
+  - Optimal task ordering based on productivity patterns
+  - FlowBot tools: smart_schedule, get_next_task
+
+- **Auto-Tagging (AI)**
+  - Automatic tag suggestions for notes and bookmarks
+  - Content analysis and keyword extraction
+  - URL/domain-based tag suggestions
+  - FlowBot tools: suggest_tags, suggest_tags_for_note, suggest_tags_for_bookmark
+
+- **Predictive Analytics**
+  - Streak risk detection for habits
+  - "Streak at risk" warnings based on time of day
+  - FlowBot tool: check_streak_risk
+
 ### Changed
 - Settings panel completely redesigned with 5 tabs
 - MenuBar chat button shows disabled state when API key missing

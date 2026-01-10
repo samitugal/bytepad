@@ -6,6 +6,8 @@ import { useNoteStore } from '../stores/noteStore'
 import { useJournalStore } from '../stores/journalStore'
 import { useBookmarkStore } from '../stores/bookmarkStore'
 import { useSettingsStore } from '../stores/settingsStore'
+import { formatScheduleForChat, getTaskRecommendations, predictStreakRisk } from './smartSchedulingService'
+import { suggestTagsForNote, suggestTagsForBookmark, suggestTagsForContent, formatTagSuggestions } from './autoTaggingService'
 
 export interface ToolCall {
   name: string
@@ -261,11 +263,13 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
             data: { id: existing.id, date: today },
           }
         } else {
+          const moodVal = Math.min(5, Math.max(1, (args.mood as number) || 3)) as 1 | 2 | 3 | 4 | 5
+          const energyVal = Math.min(5, Math.max(1, (args.energy as number) || 3)) as 1 | 2 | 3 | 4 | 5
           const id = journalStore.addEntry({
             date: today,
             content: args.content as string,
-            mood: (args.mood as number) || 3,
-            energy: (args.energy as number) || 3,
+            mood: moodVal,
+            energy: energyVal,
             tags: (args.tags as string[]) || [],
           })
           return {
@@ -415,6 +419,93 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
           success: true,
           message: `Day plan created: ${priorityTasks.length} priority tasks, ${todayHabits.length - completedHabits.length} habits remaining`,
           data: plan,
+        }
+      }
+
+      case 'smart_schedule': {
+        const scheduleText = formatScheduleForChat()
+        return {
+          success: true,
+          message: scheduleText,
+          data: { type: 'smart_schedule' },
+        }
+      }
+
+      case 'get_next_task': {
+        const recommendation = getTaskRecommendations()
+        if (!recommendation.nextTask) {
+          return {
+            success: true,
+            message: 'No pending tasks! You\'re all caught up. 🎉',
+            data: null,
+          }
+        }
+        return {
+          success: true,
+          message: `**Recommended Task:** ${recommendation.nextTask.title}\n_${recommendation.reason}_`,
+          data: recommendation,
+        }
+      }
+
+      case 'check_streak_risk': {
+        const risk = predictStreakRisk()
+        if (risk.atRiskHabits.length === 0) {
+          return {
+            success: true,
+            message: 'All habits are on track! No streak risks detected. ✅',
+            data: risk,
+          }
+        }
+        let message = '**⚠️ Streak Risk Alert:**\n'
+        risk.atRiskHabits.forEach(h => {
+          const icon = h.risk === 'high' ? '🔴' : '🟡'
+          message += `${icon} ${h.reason}\n`
+        })
+        return {
+          success: true,
+          message,
+          data: risk,
+        }
+      }
+
+      // ============ AUTO-TAGGING OPERATIONS ============
+      case 'suggest_tags_for_note': {
+        const noteId = args.noteId as string
+        if (!noteId) {
+          return { success: false, message: 'Note ID required' }
+        }
+        const suggestions = suggestTagsForNote(noteId)
+        return {
+          success: true,
+          message: formatTagSuggestions(suggestions),
+          data: suggestions,
+        }
+      }
+
+      case 'suggest_tags_for_bookmark': {
+        const bookmarkId = args.bookmarkId as string
+        if (!bookmarkId) {
+          return { success: false, message: 'Bookmark ID required' }
+        }
+        const suggestions = suggestTagsForBookmark(bookmarkId)
+        return {
+          success: true,
+          message: formatTagSuggestions(suggestions),
+          data: suggestions,
+        }
+      }
+
+      case 'suggest_tags': {
+        const content = args.content as string || ''
+        const title = args.title as string || ''
+        if (!content && !title) {
+          return { success: false, message: 'Content or title required' }
+        }
+        const suggestions = suggestTagsForContent(content, title)
+        return {
+          success: true,
+          message: formatTagSuggestions(suggestions),
+          data: suggestions,
         }
       }
 

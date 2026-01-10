@@ -224,6 +224,69 @@ export const FLOWBOT_TOOLS: ToolDefinition[] = [
       required: [],
     },
   },
+  {
+    name: 'smart_schedule',
+    description: 'Generate AI-powered smart schedule based on current energy level and task priorities. Shows optimal task order and streak risk alerts.',
+    parameters: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'get_next_task',
+    description: 'Get the best task recommendation based on current energy level and priorities.',
+    parameters: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'check_streak_risk',
+    description: 'Check which habits are at risk of breaking their streak today.',
+    parameters: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+
+  // ============ AUTO-TAGGING TOOLS ============
+  {
+    name: 'suggest_tags_for_note',
+    description: 'Get AI-powered tag suggestions for an existing note.',
+    parameters: {
+      type: 'object',
+      properties: {
+        noteId: { type: 'string', description: 'ID of the note to analyze' },
+      },
+      required: ['noteId'],
+    },
+  },
+  {
+    name: 'suggest_tags_for_bookmark',
+    description: 'Get AI-powered tag suggestions for an existing bookmark.',
+    parameters: {
+      type: 'object',
+      properties: {
+        bookmarkId: { type: 'string', description: 'ID of the bookmark to analyze' },
+      },
+      required: ['bookmarkId'],
+    },
+  },
+  {
+    name: 'suggest_tags',
+    description: 'Get AI-powered tag suggestions for any content.',
+    parameters: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', description: 'Content to analyze for tags' },
+        title: { type: 'string', description: 'Title of the content' },
+      },
+      required: [],
+    },
+  },
 
   // ============ BOOKMARK TOOLS ============
   {
