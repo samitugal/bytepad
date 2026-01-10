@@ -246,12 +246,34 @@ export async function sendMessage(
       
       const response = await llmWithTools.invoke(messages)
       
+      // Debug: log full response
+      console.log('[Agent] Response:', {
+        hasContent: !!response.content,
+        contentLength: typeof response.content === 'string' ? response.content.length : 0,
+        contentPreview: typeof response.content === 'string' ? response.content.substring(0, 200) : response.content,
+        toolCallsCount: response.tool_calls?.length || 0,
+      })
+      
       // If no tool calls, agent is done - return final response
       if (!response.tool_calls?.length) {
         const content = typeof response.content === 'string' ? response.content : ''
-        console.log('[Agent] No tool calls, returning final response')
+        console.log('[Agent] No tool calls, returning final response:', content.substring(0, 100))
+        
+        // If content is empty but we have tool results, something went wrong
+        if (!content && toolResults.length > 0) {
+          console.warn('[Agent] Empty response after tool execution - forcing summary')
+          // Force a summary request
+          messages.push(new HumanMessage('Lütfen yaptığın işlemleri özetle ve kullanıcıya Türkçe yanıt ver.'))
+          const summaryResponse = await llm.invoke(messages)
+          const summaryContent = typeof summaryResponse.content === 'string' ? summaryResponse.content : ''
+          return {
+            content: summaryContent || `İşlemler tamamlandı:\n${toolResults.join('\n')}`,
+            toolResults
+          }
+        }
+        
         return { 
-          content: content || 'İşlem tamamlandı!', 
+          content: content || 'Nasıl yardımcı olabilirim?', 
           toolResults 
         }
       }
