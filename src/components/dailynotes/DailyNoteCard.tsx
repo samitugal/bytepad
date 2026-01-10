@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useDailyNotesStore } from '../../stores/dailyNotesStore'
 import type { DailyNoteCard as DailyNoteCardType } from '../../types'
+import { ConfirmModal } from '../common'
+import { useTranslation } from '../../i18n'
 
 interface Props {
   card: DailyNoteCardType
@@ -10,6 +12,7 @@ interface Props {
 const EMOJI_OPTIONS = ['📝', '💡', '🎯', '📋', '⭐', '🔥', '💪', '🎨', '📚', '🚀', '✅', '❓', '⚠️', '💭', '🔗']
 
 export function DailyNoteCard({ card, date }: Props) {
+  const { t } = useTranslation()
   const { updateCard, deleteCard, togglePinCard } = useDailyNotesStore()
   const [isEditing, setIsEditing] = useState(!card.title && !card.content)
   const [title, setTitle] = useState(card.title)
@@ -17,6 +20,7 @@ export function DailyNoteCard({ card, date }: Props) {
   const [icon, setIcon] = useState(card.icon || '📝')
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [tagsInput, setTagsInput] = useState(card.tags.join(', '))
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
   const contentRef = useRef<HTMLTextAreaElement>(null)
 
@@ -42,9 +46,12 @@ export function DailyNoteCard({ card, date }: Props) {
   }
 
   const handleDelete = () => {
-    if (window.confirm('Delete this card?')) {
-      deleteCard(date, card.id)
-    }
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDelete = () => {
+    deleteCard(date, card.id)
+    setShowDeleteConfirm(false)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -95,7 +102,7 @@ export function DailyNoteCard({ card, date }: Props) {
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Card title..."
+          placeholder={t('dailyNotes.cardTitle')}
           className="bg-np-bg-primary border border-np-border text-np-text-primary px-3 py-2 text-sm focus:outline-none focus:border-np-blue"
         />
 
@@ -104,7 +111,7 @@ export function DailyNoteCard({ card, date }: Props) {
           ref={contentRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Write your note..."
+          placeholder={t('dailyNotes.writeNote')}
           rows={4}
           className="bg-np-bg-primary border border-np-border text-np-text-primary px-3 py-2 text-sm focus:outline-none focus:border-np-blue resize-none"
         />
@@ -114,7 +121,7 @@ export function DailyNoteCard({ card, date }: Props) {
           type="text"
           value={tagsInput}
           onChange={(e) => setTagsInput(e.target.value)}
-          placeholder="Tags (comma separated)..."
+          placeholder={t('dailyNotes.tags')}
           className="bg-np-bg-primary border border-np-border text-np-text-secondary px-3 py-1 text-xs focus:outline-none focus:border-np-blue"
         />
 
@@ -124,7 +131,7 @@ export function DailyNoteCard({ card, date }: Props) {
             onClick={handleDelete}
             className="text-np-error text-xs hover:underline"
           >
-            Delete
+            {t('common.delete')}
           </button>
           <div className="flex gap-2">
             <button
@@ -137,13 +144,13 @@ export function DailyNoteCard({ card, date }: Props) {
               }}
               className="text-np-text-secondary text-xs hover:text-np-text-primary"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               onClick={handleSave}
               className="np-btn text-xs"
             >
-              Save (Ctrl+Enter)
+              {t('common.save')} (Ctrl+Enter)
             </button>
           </div>
         </div>
@@ -165,13 +172,13 @@ export function DailyNoteCard({ card, date }: Props) {
       <div className="flex items-start gap-2 mb-2">
         <span className="text-xl">{card.icon || '📝'}</span>
         <h3 className="text-np-text-primary font-medium flex-1 truncate">
-          {card.title || 'Untitled'}
+          {card.title || t('notes.untitled')}
         </h3>
       </div>
 
       {/* Content */}
       <p className="text-np-text-secondary text-sm line-clamp-3 mb-3">
-        {card.content || 'No content'}
+        {card.content || t('notes.emptyNote')}
       </p>
 
       {/* Tags */}
@@ -196,7 +203,7 @@ export function DailyNoteCard({ card, date }: Props) {
             togglePinCard(date, card.id)
           }}
           className={`text-xs px-2 py-1 ${card.pinned ? 'text-np-yellow' : 'text-np-text-secondary hover:text-np-yellow'}`}
-          title={card.pinned ? 'Unpin' : 'Pin'}
+          title={card.pinned ? t('dailyNotes.pinned') : t('dailyNotes.pinned')}
         >
           📌
         </button>
@@ -206,11 +213,23 @@ export function DailyNoteCard({ card, date }: Props) {
             handleDelete()
           }}
           className="text-xs px-2 py-1 text-np-text-secondary hover:text-np-error"
-          title="Delete"
+          title={t('common.delete')}
         >
           ×
         </button>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title={`// ${t('dailyNotes.deleteCard')}`}
+        message={t('dailyNotes.deleteCardConfirm', { title: card.title || t('notes.untitled') })}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        confirmVariant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   )
 }

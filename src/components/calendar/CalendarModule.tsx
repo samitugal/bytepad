@@ -11,15 +11,11 @@ import {
   isDateInRange
 } from '../../stores/calendarStore'
 import { useTaskStore } from '../../stores/taskStore'
+import { useTranslation } from '../../i18n'
 import type { Task } from '../../types'
 
-const WEEKDAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
-const PRIORITY_LABELS: Record<string, string> = {
-  P1: 'Kritik',
-  P2: 'Yüksek',
-  P3: 'Normal',
-  P4: 'Düşük'
-}
+const WEEKDAYS_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const WEEKDAYS_TR = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
 
 const PRIORITY_COLORS: Record<string, string> = {
   P1: 'bg-np-error',
@@ -29,17 +25,25 @@ const PRIORITY_COLORS: Record<string, string> = {
 }
 
 export function CalendarModule() {
-  const { 
-    currentView, 
-    currentDate, 
+  const { t, language } = useTranslation()
+  const PRIORITY_LABELS: Record<string, string> = {
+    P1: t('calendar.priority.P1'),
+    P2: t('calendar.priority.P2'),
+    P3: t('calendar.priority.P3'),
+    P4: t('calendar.priority.P4')
+  }
+
+  const {
+    currentView,
+    currentDate,
     selectedDate,
-    setView, 
+    setView,
     setSelectedDate,
     goToToday,
     goToPrevious,
     goToNext
   } = useCalendarStore()
-  
+
   const tasks = useTaskStore((state) => state.tasks)
   const addTask = useTaskStore((state) => state.addTask)
   const toggleTask = useTaskStore((state) => state.toggleTask)
@@ -67,7 +71,7 @@ export function CalendarModule() {
 
   // Handle task delete
   const handleDeleteTask = () => {
-    if (selectedTask && confirm(`"${selectedTask.title}" silinsin mi?`)) {
+    if (selectedTask && confirm(t('calendar.deleteConfirm', { title: selectedTask.title }))) {
       deleteTask(selectedTask.id)
       setSelectedTask(null)
     }
@@ -201,7 +205,7 @@ export function CalendarModule() {
             onClick={goToToday}
             className="np-btn text-xs"
           >
-            Bugün
+            {t('calendar.today')}
           </button>
         </div>
 
@@ -210,14 +214,14 @@ export function CalendarModule() {
           <button
             onClick={goToPrevious}
             className="np-btn px-2"
-            title="Önceki"
+            title={t('common.previous')}
           >
             ←
           </button>
           <button
             onClick={goToNext}
             className="np-btn px-2"
-            title="Sonraki"
+            title={t('common.next')}
           >
             →
           </button>
@@ -233,16 +237,16 @@ export function CalendarModule() {
                     ? 'bg-np-blue text-white'
                     : 'bg-np-bg-primary text-np-text-secondary hover:bg-np-bg-tertiary'
                 }`}
-                title={`${view === 'month' ? 'Ay (M)' : view === 'week' ? 'Hafta (W)' : 'Gün (D)'}`}
+                title={`${t(`calendar.${view}`)} (${view[0].toUpperCase()})`}
               >
-                {view === 'month' ? 'Ay' : view === 'week' ? 'Hafta' : 'Gün'}
+                {t(`calendar.${view}`)}
               </button>
             ))}
           </div>
 
           {/* Keyboard shortcuts hint */}
-          <div className="text-[10px] text-np-text-secondary ml-2 hidden lg:block" title="Klavye kısayolları: ←/→ gezinti, T bugün, M/W/D görünüm, N yeni task">
-            ⌨ ←→ T M W D N
+          <div className="text-[10px] text-np-text-secondary ml-2 hidden lg:block" title={t('calendar.keyboardHints')}>
+            ←→ T M W D N
           </div>
         </div>
       </div>
@@ -279,7 +283,7 @@ export function CalendarModule() {
 
       {/* Keyboard Shortcuts Help */}
       <div className="absolute bottom-4 right-4 text-[10px] text-np-text-secondary opacity-60">
-        ←→ nav | T today | M/W/D view | N new task
+        {t('calendar.keyboardHints')}
       </div>
 
       {/* Task Creation Modal */}
@@ -287,16 +291,16 @@ export function CalendarModule() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-np-bg-secondary border border-np-border p-4 w-96">
             <h3 className="text-np-text-primary font-semibold mb-4">
-              Yeni Task - {selectedDate.toLocaleDateString('tr-TR')}
+              {t('calendar.newTask')} - {selectedDate.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}
             </h3>
-            
+
             <div className="space-y-3">
               <input
                 type="text"
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
-                placeholder="Task başlığı..."
-                className="w-full bg-np-bg-primary border border-np-border text-np-text-primary 
+                placeholder={t('calendar.taskTitle')}
+                className="w-full bg-np-bg-primary border border-np-border text-np-text-primary
                            px-3 py-2 focus:outline-none focus:border-np-blue"
                 autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && handleCreateTask()}
@@ -306,22 +310,22 @@ export function CalendarModule() {
                 <select
                   value={newTaskPriority}
                   onChange={(e) => setNewTaskPriority(e.target.value as 'P1' | 'P2' | 'P3' | 'P4')}
-                  className="bg-np-bg-primary border border-np-border text-np-text-primary 
+                  className="bg-np-bg-primary border border-np-border text-np-text-primary
                              px-2 py-2 focus:outline-none focus:border-np-blue"
                 >
-                  <option value="P1">P1 - Kritik</option>
-                  <option value="P2">P2 - Yüksek</option>
-                  <option value="P3">P3 - Normal</option>
-                  <option value="P4">P4 - Düşük</option>
+                  <option value="P1">P1 - {t('calendar.priority.P1')}</option>
+                  <option value="P2">P2 - {t('calendar.priority.P2')}</option>
+                  <option value="P3">P3 - {t('calendar.priority.P3')}</option>
+                  <option value="P4">P4 - {t('calendar.priority.P4')}</option>
                 </select>
 
                 <input
                   type="date"
                   value={newTaskEndDate}
                   onChange={(e) => setNewTaskEndDate(e.target.value)}
-                  className="flex-1 bg-np-bg-primary border border-np-border text-np-text-primary 
+                  className="flex-1 bg-np-bg-primary border border-np-border text-np-text-primary
                              px-2 py-2 focus:outline-none focus:border-np-blue"
-                  placeholder="Bitiş tarihi (opsiyonel)"
+                  placeholder={t('calendar.endDate')}
                   min={selectedDate.toISOString().split('T')[0]}
                 />
               </div>
@@ -332,14 +336,14 @@ export function CalendarModule() {
                 onClick={() => setShowTaskForm(false)}
                 className="np-btn"
               >
-                İptal
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleCreateTask}
                 className="np-btn bg-np-blue text-white"
                 disabled={!newTaskTitle.trim()}
               >
-                Oluştur
+                {t('common.create')}
               </button>
             </div>
           </div>
@@ -372,19 +376,20 @@ export function CalendarModule() {
             )}
 
             <div className="text-xs text-np-text-secondary space-y-1 mb-4">
-              {selectedTask.deadline && (
+              {/* Time block info */}
+              {(selectedTask.startTime || selectedTask.deadlineTime) && (
                 <div>
-                  📅 Başlangıç: {new Date(selectedTask.deadline).toLocaleDateString('tr-TR')}
-                  {selectedTask.deadlineTime && ` ${selectedTask.deadlineTime}`}
+                  🕐 {t('common.time')}: {selectedTask.startTime || '--:--'} - {selectedTask.deadlineTime || '--:--'}
                 </div>
               )}
-              {selectedTask.endDate && (
+              {/* Date info */}
+              {selectedTask.deadline && (
                 <div>
-                  📅 Bitiş: {new Date(selectedTask.endDate).toLocaleDateString('tr-TR')}
+                  📅 {t('common.date')}: {new Date(selectedTask.deadline).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}
                 </div>
               )}
               <div>
-                {selectedTask.completed ? '✅ Tamamlandı' : '⏳ Bekliyor'}
+                {selectedTask.completed ? `✅ ${t('common.completed')}` : `⏳ ${t('common.pending')}`}
               </div>
             </div>
 
@@ -393,20 +398,20 @@ export function CalendarModule() {
                 onClick={handleDeleteTask}
                 className="np-btn text-np-error hover:bg-np-error/20"
               >
-                Sil
+                {t('common.delete')}
               </button>
               <div className="flex gap-2">
                 <button
                   onClick={() => setSelectedTask(null)}
                   className="np-btn"
                 >
-                  Kapat
+                  {t('common.close')}
                 </button>
                 <button
                   onClick={handleToggleTask}
                   className={`np-btn ${selectedTask.completed ? 'bg-np-warning' : 'bg-np-green'} text-white`}
                 >
-                  {selectedTask.completed ? 'Geri Al' : 'Tamamla'}
+                  {selectedTask.completed ? t('common.undo') : t('common.done')}
                 </button>
               </div>
             </div>
@@ -427,6 +432,8 @@ interface MonthViewProps {
 }
 
 function MonthView({ currentDate, selectedDate, getTasksForDate, onDateClick, onTaskClick }: MonthViewProps) {
+  const { t, language } = useTranslation()
+  const WEEKDAYS = language === 'tr' ? WEEKDAYS_TR : WEEKDAYS_EN
   const days = getMonthDays(currentDate.getFullYear(), currentDate.getMonth())
 
   return (
@@ -491,7 +498,7 @@ function MonthView({ currentDate, selectedDate, getTasksForDate, onDateClick, on
                 ))}
                 {tasks.length > 3 && (
                   <div className="text-[10px] text-np-text-secondary">
-                    +{tasks.length - 3} daha
+                    +{tasks.length - 3} {t('common.more')}
                   </div>
                 )}
               </div>
@@ -501,6 +508,52 @@ function MonthView({ currentDate, selectedDate, getTasksForDate, onDateClick, on
       </div>
     </div>
   )
+}
+
+// Helper to parse time string to hour
+function parseTimeToHour(time: string | undefined): number | null {
+  if (!time) return null
+  const parts = time.split(':')
+  return parseInt(parts[0])
+}
+
+// Helper to check if a task spans a specific hour
+function taskSpansHour(task: Task, hour: number): { spans: boolean; isStart: boolean; isEnd: boolean; duration: number } {
+  const startHour = parseTimeToHour(task.startTime)
+  const endHour = parseTimeToHour(task.deadlineTime)
+
+  // If no start time, use deadlineTime as single hour
+  if (startHour === null && endHour !== null) {
+    return {
+      spans: endHour === hour,
+      isStart: true,
+      isEnd: true,
+      duration: 1
+    }
+  }
+
+  // If only start time, show at that hour
+  if (startHour !== null && endHour === null) {
+    return {
+      spans: startHour === hour,
+      isStart: true,
+      isEnd: true,
+      duration: 1
+    }
+  }
+
+  // If both start and end time
+  if (startHour !== null && endHour !== null) {
+    const duration = endHour - startHour
+    return {
+      spans: hour >= startHour && hour < endHour,
+      isStart: hour === startHour,
+      isEnd: hour === endHour - 1,
+      duration: Math.max(1, duration)
+    }
+  }
+
+  return { spans: false, isStart: false, isEnd: false, duration: 0 }
 }
 
 // Week View Component
@@ -513,6 +566,8 @@ interface WeekViewProps {
 }
 
 function WeekView({ currentDate, selectedDate, getTasksForDate, onDateClick, onTaskClick }: WeekViewProps) {
+  const { language } = useTranslation()
+  const WEEKDAYS = language === 'tr' ? WEEKDAYS_TR : WEEKDAYS_EN
   const days = getWeekDays(currentDate)
   const hours = Array.from({ length: 24 }, (_, i) => i)
 
@@ -522,7 +577,7 @@ function WeekView({ currentDate, selectedDate, getTasksForDate, onDateClick, onT
       <div className="grid grid-cols-8 border-b border-np-border sticky top-0 bg-np-bg-secondary z-10">
         <div className="p-2 border-r border-np-border" /> {/* Empty corner */}
         {days.map((date, i) => (
-          <div 
+          <div
             key={i}
             onClick={() => onDateClick(date)}
             className={`
@@ -550,40 +605,56 @@ function WeekView({ currentDate, selectedDate, getTasksForDate, onDateClick, onT
               {hour.toString().padStart(2, '0')}:00
             </div>
             {days.map((date, i) => {
-              const tasks = getTasksForDate(date).filter(t => {
-                if (t.allDay) return hour === 8 // Show all-day tasks at 8am
-                if (t.deadlineTime) {
-                  const taskHour = parseInt(t.deadlineTime.split(':')[0])
-                  return taskHour === hour
-                }
-                return false
+              // Get tasks that start at this hour OR span this hour (for time blocks)
+              const allDayTasks = getTasksForDate(date).filter(t => t.allDay && hour === 8)
+              const timedTasks = getTasksForDate(date).filter(t => {
+                if (t.allDay) return false
+                const { spans, isStart } = taskSpansHour(t, hour)
+                // Only show task at its start hour (to avoid duplicates)
+                return spans && isStart
               })
+              const tasks = [...allDayTasks, ...timedTasks]
 
               return (
-                <div 
+                <div
                   key={i}
                   onClick={() => onDateClick(date)}
                   className={`
-                    border-r border-np-border p-0.5 cursor-pointer
+                    border-r border-np-border p-0.5 cursor-pointer relative
                     hover:bg-np-bg-tertiary
                     ${isWeekend(date) ? 'bg-np-bg-primary/30' : ''}
                   `}
                 >
-                  {tasks.map((task) => (
-                    <div
-                      key={task.id}
-                      onClick={(e) => onTaskClick(task, e)}
-                      className={`
-                        text-[10px] px-1 py-0.5 mb-0.5 truncate rounded-sm cursor-pointer
-                        ${PRIORITY_COLORS[task.priority]} text-white
-                        ${task.completed ? 'opacity-50 line-through' : ''}
-                        hover:ring-1 hover:ring-white/50
-                      `}
-                      title={task.title}
-                    >
-                      {task.title}
-                    </div>
-                  ))}
+                  {tasks.map((task) => {
+                    const { duration } = taskSpansHour(task, hour)
+                    const heightMultiplier = Math.min(duration, 4) // Cap at 4 hours for display
+                    const showDuration = duration > 1
+
+                    return (
+                      <div
+                        key={task.id}
+                        onClick={(e) => onTaskClick(task, e)}
+                        className={`
+                          text-[10px] px-1 py-0.5 mb-0.5 truncate rounded-sm cursor-pointer
+                          ${PRIORITY_COLORS[task.priority]} text-white
+                          ${task.completed ? 'opacity-50 line-through' : ''}
+                          hover:ring-1 hover:ring-white/50
+                        `}
+                        style={showDuration ? {
+                          minHeight: `${heightMultiplier * 56}px`,
+                          position: 'relative',
+                          zIndex: 5
+                        } : undefined}
+                        title={`${task.title}${task.startTime ? ` (${task.startTime}` : ''}${task.deadlineTime ? ` - ${task.deadlineTime})` : task.startTime ? ')' : ''}`}
+                      >
+                        <div className="flex items-center gap-1">
+                          {task.startTime && <span className="opacity-75">{task.startTime}</span>}
+                          {task.deadlineTime && task.startTime && <span className="opacity-75">-{task.deadlineTime}</span>}
+                        </div>
+                        <div className="truncate">{task.title}</div>
+                      </div>
+                    )
+                  })}
                 </div>
               )
             })}
@@ -603,16 +674,18 @@ interface DayViewProps {
 }
 
 function DayView({ tasks, onDateClick, onTaskClick }: DayViewProps) {
+  const { t } = useTranslation()
   const hours = Array.from({ length: 24 }, (_, i) => i)
   const allDayTasks = tasks.filter(t => t.allDay)
-  const timedTasks = tasks.filter(t => !t.allDay && t.deadlineTime)
+  // Include tasks that have either startTime or deadlineTime (or both)
+  const timedTasks = tasks.filter(t => !t.allDay && (t.startTime || t.deadlineTime))
 
   return (
     <div className="h-full flex flex-col overflow-auto">
       {/* All-day tasks section */}
       {allDayTasks.length > 0 && (
         <div className="border-b border-np-border p-2 bg-np-bg-primary">
-          <div className="text-xs text-np-text-secondary mb-1">Tüm gün</div>
+          <div className="text-xs text-np-text-secondary mb-1">{t('common.allDay')}</div>
           <div className="space-y-1">
             {allDayTasks.map((task) => (
               <div
@@ -635,41 +708,52 @@ function DayView({ tasks, onDateClick, onTaskClick }: DayViewProps) {
       {/* Hourly grid */}
       <div className="flex-1">
         {hours.map((hour) => {
+          // Only show tasks at their START hour (to avoid duplicates)
           const hourTasks = timedTasks.filter(t => {
-            if (t.deadlineTime) {
-              const taskHour = parseInt(t.deadlineTime.split(':')[0])
-              return taskHour === hour
-            }
-            return false
+            const { spans, isStart } = taskSpansHour(t, hour)
+            return spans && isStart
           })
 
           return (
-            <div 
-              key={hour} 
+            <div
+              key={hour}
               onClick={onDateClick}
               className="flex border-b border-np-border min-h-[60px] cursor-pointer hover:bg-np-bg-tertiary"
             >
               <div className="w-16 p-2 text-xs text-np-text-secondary border-r border-np-border text-right">
                 {hour.toString().padStart(2, '0')}:00
               </div>
-              <div className="flex-1 p-1">
-                {hourTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    onClick={(e) => onTaskClick(task, e)}
-                    className={`
-                      text-sm px-2 py-1 mb-1 rounded cursor-pointer
-                      ${PRIORITY_COLORS[task.priority]} text-white
-                      ${task.completed ? 'opacity-50 line-through' : ''}
-                      hover:ring-1 hover:ring-white/50
-                    `}
-                  >
-                    {task.deadlineTime && (
-                      <span className="opacity-75 mr-2">{task.deadlineTime}</span>
-                    )}
-                    {task.title}
-                  </div>
-                ))}
+              <div className="flex-1 p-1 relative">
+                {hourTasks.map((task) => {
+                  const { duration } = taskSpansHour(task, hour)
+                  const heightMultiplier = Math.min(duration, 6) // Cap at 6 hours for display
+                  const showDuration = duration > 1
+
+                  return (
+                    <div
+                      key={task.id}
+                      onClick={(e) => onTaskClick(task, e)}
+                      className={`
+                        text-sm px-2 py-1 mb-1 rounded cursor-pointer
+                        ${PRIORITY_COLORS[task.priority]} text-white
+                        ${task.completed ? 'opacity-50 line-through' : ''}
+                        hover:ring-1 hover:ring-white/50
+                      `}
+                      style={showDuration ? {
+                        minHeight: `${heightMultiplier * 56}px`,
+                        position: 'relative',
+                        zIndex: 5
+                      } : undefined}
+                    >
+                      <div className="flex items-center gap-2 opacity-75 text-xs">
+                        {task.startTime && <span>{task.startTime}</span>}
+                        {task.startTime && task.deadlineTime && <span>-</span>}
+                        {task.deadlineTime && <span>{task.deadlineTime}</span>}
+                      </div>
+                      <div>{task.title}</div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )

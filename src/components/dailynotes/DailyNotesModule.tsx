@@ -1,8 +1,10 @@
 import { useEffect, useCallback } from 'react'
 import { useDailyNotesStore } from '../../stores/dailyNotesStore'
 import { DailyNoteCard } from './DailyNoteCard'
+import { useTranslation } from '../../i18n'
 
 export function DailyNotesModule() {
+  const { t, language } = useTranslation()
   const {
     currentDate,
     filter,
@@ -63,7 +65,8 @@ export function DailyNotesModule() {
   const formatDate = (dateStr: string) => {
     try {
       const date = new Date(dateStr)
-      return date.toLocaleDateString('tr-TR', {
+      const locale = language === 'tr' ? 'tr-TR' : 'en-US'
+      return date.toLocaleDateString(locale, {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
@@ -79,14 +82,14 @@ export function DailyNotesModule() {
       {/* Header */}
       <div className="border-b border-np-border bg-np-bg-secondary px-4 py-3">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-np-text-primary font-medium">Daily Notes</h2>
+          <h2 className="text-np-text-primary font-medium">{t('dailyNotes.title')}</h2>
           <button
             onClick={handleAddCard}
             className="np-btn text-xs flex items-center gap-1"
-            title="New Card (N)"
+            title={`${t('dailyNotes.newCard')} (N)`}
           >
             <span>+</span>
-            <span>New Card</span>
+            <span>{t('dailyNotes.newCard')}</span>
           </button>
         </div>
 
@@ -95,7 +98,7 @@ export function DailyNotesModule() {
           <button
             onClick={goToPrevDay}
             className="text-np-text-secondary hover:text-np-text-primary px-2 py-1"
-            title="Previous Day (←)"
+            title={`${t('common.previous')} (←)`}
           >
             ←
           </button>
@@ -108,14 +111,14 @@ export function DailyNotesModule() {
                 onClick={goToToday}
                 className="text-xs text-np-blue hover:underline"
               >
-                Go to Today (T)
+                {t('common.today')} (T)
               </button>
             )}
           </div>
           <button
             onClick={goToNextDay}
             className="text-np-text-secondary hover:text-np-text-primary px-2 py-1"
-            title="Next Day (→)"
+            title={`${t('common.next')} (→)`}
           >
             →
           </button>
@@ -134,7 +137,7 @@ export function DailyNotesModule() {
                     : 'border-np-border text-np-text-secondary hover:text-np-text-primary'
                 }`}
               >
-                {f === 'all' ? 'All' : f === 'pinned' ? '📌 Pinned' : '🕐 Newest'}
+                {f === 'all' ? t('tasks.all') : f === 'pinned' ? `📌 ${t('dailyNotes.pinned')}` : `🕐 ${language === 'tr' ? 'En Yeni' : 'Newest'}`}
               </button>
             ))}
           </div>
@@ -142,7 +145,7 @@ export function DailyNotesModule() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search cards..."
+            placeholder={t('common.search') + '...'}
             className="bg-np-bg-primary border border-np-border text-np-text-primary text-xs px-3 py-1 w-48 focus:outline-none focus:border-np-blue"
           />
         </div>
@@ -153,15 +156,15 @@ export function DailyNotesModule() {
         {cards.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-np-text-secondary">
             <div className="text-4xl mb-4">📝</div>
-            <div className="text-sm mb-2">No notes for this day</div>
+            <div className="text-sm mb-2">{language === 'tr' ? 'Bu gün için not yok' : 'No notes for this day'}</div>
             <button
               onClick={handleAddCard}
               className="text-np-blue hover:underline text-sm"
             >
-              + Add your first card
+              + {language === 'tr' ? 'İlk kartını ekle' : 'Add your first card'}
             </button>
             <div className="text-xs mt-4 text-np-text-secondary/50">
-              Press N to add a new card
+              {language === 'tr' ? 'Yeni kart için N bas' : 'Press N to add a new card'}
             </div>
           </div>
         ) : (
@@ -175,7 +178,7 @@ export function DailyNotesModule() {
               className="border-2 border-dashed border-np-border hover:border-np-blue min-h-[150px] flex flex-col items-center justify-center text-np-text-secondary hover:text-np-blue transition-colors"
             >
               <span className="text-2xl mb-2">+</span>
-              <span className="text-sm">New Card</span>
+              <span className="text-sm">{t('dailyNotes.newCard')}</span>
             </button>
           </div>
         )}
@@ -183,8 +186,8 @@ export function DailyNotesModule() {
 
       {/* Status Bar */}
       <div className="border-t border-np-border bg-np-bg-tertiary px-4 py-1 text-xs text-np-text-secondary flex justify-between">
-        <span>{cards.length} card{cards.length !== 1 ? 's' : ''}</span>
-        <span>← → Navigate | N New | T Today</span>
+        <span>{cards.length} {language === 'tr' ? 'kart' : (cards.length !== 1 ? 'cards' : 'card')}</span>
+        <span>← → {language === 'tr' ? 'Gezin' : 'Navigate'} | N {language === 'tr' ? 'Yeni' : 'New'} | T {t('common.today')}</span>
       </div>
     </div>
   )

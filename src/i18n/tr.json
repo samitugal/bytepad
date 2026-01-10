@@ -12,7 +12,22 @@
         "success": "Başarılı",
         "confirm": "Onayla",
         "yes": "Evet",
-        "no": "Hayır"
+        "no": "Hayır",
+        "more": "daha",
+        "undo": "Geri Al",
+        "create": "Oluştur",
+        "title": "Başlık",
+        "description": "Açıklama",
+        "done": "Tamamlandı",
+        "pending": "Bekliyor",
+        "completed": "Tamamlandı",
+        "allDay": "Tüm gün",
+        "time": "Saat",
+        "date": "Tarih",
+        "today": "Bugün",
+        "tomorrow": "Yarın",
+        "previous": "Önceki",
+        "next": "Sonraki"
     },
     "nav": {
         "notes": "Notlar",
@@ -128,15 +143,42 @@
         "tags": "Etiketler"
     },
     "tasks": {
+        "title": "Görevler",
         "newTask": "Yeni Görev",
         "searchTasks": "Görevlerde ara...",
         "noTasks": "Henüz görev yok",
+        "noActiveTasks": "Aktif görev yok",
         "completed": "Tamamlandı",
         "pending": "Bekliyor",
+        "pendingCount": "{count} bekleyen görev",
+        "pendingCountPlural": "{count} bekleyen görev",
         "priority": "Öncelik",
         "deadline": "Son Tarih",
         "all": "Tümü",
-        "active": "Aktif"
+        "active": "Aktif",
+        "filter": "Filtre",
+        "sort": "Sırala",
+        "created": "Oluşturulma",
+        "taskTitle": "Görev başlığı...",
+        "descriptionOptional": "Açıklama (opsiyonel)...",
+        "start": "Başlangıç",
+        "end": "Bitiş",
+        "startDate": "Başlangıç tarihi",
+        "endDate": "Bitiş tarihi",
+        "time": "Saat",
+        "remindMe": "Hatırlat",
+        "minBefore": "{min} dk önce",
+        "hourBefore": "1 saat önce",
+        "hoursBefore": "{hours} saat önce",
+        "dayBefore": "1 gün önce",
+        "subtasks": "Alt görevler",
+        "addSubtask": "Alt görev ekle...",
+        "add": "Ekle",
+        "done": "Tamamlanan",
+        "createFirst": "İlk görevini oluştur veya Tamamlanan bölümüne bak",
+        "moreCompleted": "+{count} tamamlanmış görev daha",
+        "clickExpand": "Genişletmek için tıkla",
+        "enterAddSubtask": "Alt görev eklemek için Enter"
     },
     "habits": {
         "newHabit": "Yeni Alışkanlık",
@@ -163,5 +205,57 @@
         "recommendations": "Öneriler",
         "generateAI": "AI İçgörüleri Oluştur",
         "analyzing": "Analiz ediliyor..."
+    },
+    "calendar": {
+        "today": "Bugün",
+        "month": "Ay",
+        "week": "Hafta",
+        "day": "Gün",
+        "newTask": "Yeni Görev",
+        "taskTitle": "Görev başlığı...",
+        "priority": {
+            "P1": "Kritik",
+            "P2": "Yüksek",
+            "P3": "Normal",
+            "P4": "Düşük"
+        },
+        "endDate": "Bitiş tarihi (opsiyonel)",
+        "deleteConfirm": "\"{title}\" silinsin mi?",
+        "start": "Başlangıç",
+        "end": "Bitiş",
+        "keyboardHints": "nav | T bugün | M/W/D görünüm | N yeni görev"
+    },
+    "dailyNotes": {
+        "title": "Günlük Notlar",
+        "newCard": "Yeni Kart",
+        "cardTitle": "Kart başlığı...",
+        "writeNote": "Notunuzu yazın...",
+        "tags": "Etiketler (virgülle ayırın)...",
+        "pinned": "Sabitlenmiş",
+        "deleteCard": "Kartı Sil",
+        "deleteCardConfirm": "\"{title}\" kartını silmek istediğinize emin misiniz?"
+    },
+    "flowbot": {
+        "title": "FlowBot",
+        "subtitle": "ADHD Koçu",
+        "greeting": "Merhaba! Ben FlowBot.",
+        "greetingDesc": "ADHD-dostu verimlilik koçun.",
+        "placeholder": "Mesajını yaz...",
+        "thinking": "FlowBot düşünüyor...",
+        "clearChat": "Sohbeti temizle",
+        "openClose": "Ctrl+/ ile aç/kapat",
+        "sendEnter": "Enter ile gönder",
+        "quickActions": {
+            "planDay": "Günümü planla",
+            "motivate": "Motivasyon",
+            "stuck": "Sıkıştım"
+        }
+    },
+    "confirm": {
+        "deleteTask": "Görevi Sil",
+        "deleteTaskMessage": "\"{title}\" görevini silmek istediğinize emin misiniz?",
+        "deleteNote": "Notu Sil",
+        "deleteNoteMessage": "\"{title}\" notunu silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz.",
+        "subtasksWarning": "Bu işlem alt görevleri de silecektir."
     }
 }

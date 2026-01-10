@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useBookmarkStore, getFilteredBookmarks } from '../../stores/bookmarkStore'
+import { useTranslation } from '../../i18n'
 import type { Bookmark } from '../../types'
 
 const COLLECTIONS = [
@@ -10,6 +11,7 @@ const COLLECTIONS = [
 ]
 
 export function BookmarksModule() {
+  const { t, language } = useTranslation()
   const {
     bookmarks,
     selectedCollection,
@@ -72,14 +74,14 @@ export function BookmarksModule() {
       <div className="w-48 border-r border-np-border bg-np-bg-secondary flex flex-col">
         {/* Collections */}
         <div className="p-3 border-b border-np-border">
-          <div className="text-xs text-np-text-secondary mb-2">Collections</div>
+          <div className="text-xs text-np-text-secondary mb-2">{language === 'tr' ? 'Koleksiyonlar' : 'Collections'}</div>
           <button
             onClick={() => setSelectedCollection(null)}
             className={`w-full text-left px-2 py-1 text-sm flex items-center justify-between ${
               !selectedCollection ? 'bg-np-selection text-np-text-primary' : 'text-np-text-secondary hover:bg-np-bg-tertiary'
             }`}
           >
-            <span>📚 All bookmarks</span>
+            <span>📚 {language === 'tr' ? 'Tüm yer imleri' : 'All bookmarks'}</span>
             <span className="text-xs">{bookmarks.length}</span>
           </button>
           {COLLECTIONS.map((col) => {
@@ -139,12 +141,12 @@ export function BookmarksModule() {
               onChange={(e) => setSortBy(e.target.value as 'date' | 'title' | 'domain')}
               className="np-input text-xs"
             >
-              <option value="date">By date ↓</option>
-              <option value="title">By title</option>
-              <option value="domain">By domain</option>
+              <option value="date">{language === 'tr' ? 'Tarihe göre' : 'By date'} ↓</option>
+              <option value="title">{language === 'tr' ? 'Başlığa göre' : 'By title'}</option>
+              <option value="domain">{language === 'tr' ? 'Domaine göre' : 'By domain'}</option>
             </select>
             <button onClick={() => setShowAddForm(true)} className="np-btn">
-              <span className="text-np-green">+</span> Add
+              <span className="text-np-green">+</span> {t('common.add')}
             </button>
           </div>
         </div>
@@ -155,7 +157,7 @@ export function BookmarksModule() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search bookmarks..."
+            placeholder={t('common.search') + '...'}
             className="w-full np-input"
           />
         </div>
@@ -178,7 +180,7 @@ export function BookmarksModule() {
                 value={newBookmark.title}
                 onChange={(e) => setNewBookmark({ ...newBookmark, title: e.target.value })}
                 onKeyDown={handleKeyDown}
-                placeholder="Title (optional, auto-detected)"
+                placeholder={language === 'tr' ? 'Başlık (opsiyonel)' : 'Title (optional)'}
                 className="w-full np-input"
               />
               <div className="flex gap-2">
@@ -187,7 +189,7 @@ export function BookmarksModule() {
                   value={newBookmark.tags}
                   onChange={(e) => setNewBookmark({ ...newBookmark, tags: e.target.value })}
                   onKeyDown={handleKeyDown}
-                  placeholder="Tags (comma separated)"
+                  placeholder={language === 'tr' ? 'Etiketler (virgülle ayır)' : 'Tags (comma separated)'}
                   className="flex-1 np-input"
                 />
                 <select
@@ -204,10 +206,10 @@ export function BookmarksModule() {
               </div>
               <div className="flex gap-2">
                 <button onClick={handleAdd} className="np-btn text-np-green">
-                  Save
+                  {t('common.save')}
                 </button>
                 <button onClick={() => setShowAddForm(false)} className="np-btn">
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
@@ -218,8 +220,8 @@ export function BookmarksModule() {
         <div className="flex-1 overflow-y-auto">
           {filteredBookmarks.length === 0 ? (
             <div className="text-center text-np-text-secondary py-8">
-              <div className="text-np-green mb-2">// No bookmarks</div>
-              <div className="text-sm">Add your first bookmark to get started</div>
+              <div className="text-np-green mb-2">// {language === 'tr' ? 'Yer imi yok' : 'No bookmarks'}</div>
+              <div className="text-sm">{language === 'tr' ? 'İlk yer imini ekle' : 'Add your first bookmark'}</div>
             </div>
           ) : (
             filteredBookmarks.map((bookmark) => (

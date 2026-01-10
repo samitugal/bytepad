@@ -2,6 +2,34 @@
 
 Bu dosya Claude Code tarafından otomatik güncellenir.
 
+## [0.12.0] - 2026-01-10
+
+### Added - Sprint 15: Agent Tools Refactor
+- **Dynamic System Prompt**
+  - Real-time date/time/timezone context in prompt
+  - ADHD-friendly response guidelines
+  - Clear tool usage instructions
+
+- **New FlowBot Tools**
+  - `complete_task` - Mark tasks done by ID or partial title
+  - `create_time_block` - Schedule tasks with start/end times
+  - `get_free_time_slots` - Find available time slots (9:00-22:00)
+  - `get_productivity_stats` - Comprehensive daily stats with priority breakdown
+  - `get_upcoming_deadlines` - Tasks due in next N days
+  - `get_overdue_tasks` - Past-due tasks with days overdue
+  - `search_web` - Tavily-powered web search integration
+
+- **Improved Tool Documentation**
+  - All 15 tools now have English descriptions
+  - Detailed parameter descriptions with examples
+  - Structured JSON responses with message field
+
+### Changed
+- Tool descriptions converted from Turkish to English for better LLM understanding
+- All tool responses now return structured JSON with success flag and message
+
+---
+
 ## [0.11.0] - 2026-01-10
 
 ### Added

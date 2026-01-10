@@ -1,16 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useUIStore } from '../../stores/uiStore'
+import { useTranslation } from '../../i18n'
 import type { ModuleType } from '../../types'
 
-const MODULES: { id: ModuleType; label: string; shortcut: string }[] = [
-  { id: 'notes', label: 'Notes', shortcut: '1' },
-  { id: 'dailynotes', label: 'Daily Notes', shortcut: '2' },
-  { id: 'habits', label: 'Habits', shortcut: '3' },
-  { id: 'tasks', label: 'Tasks', shortcut: '4' },
-  { id: 'journal', label: 'Journal', shortcut: '5' },
-  { id: 'bookmarks', label: 'Bookmarks', shortcut: '6' },
-  { id: 'calendar', label: 'Calendar', shortcut: '7' },
-  { id: 'analysis', label: 'Analyze', shortcut: '8' },
+const MODULE_IDS: { id: ModuleType; shortcut: string }[] = [
+  { id: 'notes', shortcut: '1' },
+  { id: 'dailynotes', shortcut: '2' },
+  { id: 'habits', shortcut: '3' },
+  { id: 'tasks', shortcut: '4' },
+  { id: 'journal', shortcut: '5' },
+  { id: 'bookmarks', shortcut: '6' },
+  { id: 'calendar', shortcut: '7' },
+  { id: 'analysis', shortcut: '8' },
 ]
 
 const MIN_WIDTH = 80
@@ -18,7 +19,23 @@ const MAX_WIDTH = 250
 const DEFAULT_WIDTH = 128
 
 export function Sidebar() {
+  const { t } = useTranslation()
   const { activeModule, setActiveModule } = useUIStore()
+  
+  // Map module IDs to translated labels
+  const getModuleLabel = (id: ModuleType): string => {
+    const labelMap: Record<ModuleType, string> = {
+      notes: t('nav.notes'),
+      dailynotes: t('dailyNotes.title'),
+      habits: t('nav.habits'),
+      tasks: t('nav.tasks'),
+      journal: t('nav.journal'),
+      bookmarks: t('nav.bookmarks'),
+      calendar: t('nav.calendar'),
+      analysis: t('nav.analysis'),
+    }
+    return labelMap[id] || id
+  }
   const [width, setWidth] = useState(() => {
     const saved = localStorage.getItem('myflowspace-sidebar-width')
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH
@@ -67,7 +84,7 @@ export function Sidebar() {
       style={{ width: `${width}px` }}
     >
       <div className="flex-1 py-2 overflow-hidden">
-        {MODULES.map((module) => (
+        {MODULE_IDS.map((module) => (
           <button
             key={module.id}
             onClick={() => setActiveModule(module.id)}
@@ -77,13 +94,13 @@ export function Sidebar() {
                 : 'text-np-text-secondary hover:bg-np-bg-tertiary hover:text-np-text-primary'
             }`}
           >
-            <span className="truncate">{activeModule === module.id ? '>' : ' '} {module.label}</span>
+            <span className="truncate">{activeModule === module.id ? '>' : ' '} {getModuleLabel(module.id)}</span>
             <span className="text-xs text-np-text-secondary flex-shrink-0">^{module.shortcut}</span>
           </button>
         ))}
       </div>
       <div className="border-t border-np-border p-2 text-xs text-np-text-secondary">
-        <div className="truncate">Ctrl+K: Palette</div>
+        <div className="truncate">Ctrl+K: {t('settings.general.commandPalette')}</div>
       </div>
       
       {/* Resize handle */}

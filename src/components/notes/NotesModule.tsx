@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { NoteList } from './NoteList'
 import { NoteEditor } from './NoteEditor'
 import { KnowledgeGraph } from './KnowledgeGraph'
+import { useTranslation } from '../../i18n'
 
 export function NotesModule() {
+  const { t } = useTranslation()
   const [showGraph, setShowGraph] = useState(false)
 
   return (
@@ -15,9 +17,9 @@ export function NotesModule() {
       <button
         onClick={() => setShowGraph(true)}
         className="absolute bottom-4 right-4 bg-np-bg-secondary border border-np-border px-3 py-2 text-xs text-np-text-secondary hover:text-np-cyan hover:border-np-cyan transition-colors"
-        title="Open Knowledge Graph"
+        title={t('nav.notes') + ' Graph'}
       >
-        🕸️ Graph
+        🕸️ {t('nav.notes')}
       </button>
 
       {/* Knowledge Graph Modal */}
