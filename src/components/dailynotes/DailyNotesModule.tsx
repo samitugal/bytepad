@@ -22,14 +22,8 @@ export function DailyNotesModule() {
 
   const handleAddCard = useCallback(() => {
     getOrCreateDailyNote(currentDate)
-    // Format date as "10.01.2026 - Saturday"
-    const date = new Date(currentDate)
-    const dateStr = date.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' })
-    const title = `${dateStr} - ${dayName}`
-    
     addCard(currentDate, {
-      title,
+      title: '',
       content: '',
       icon: '📝',
       pinned: false,
