@@ -237,34 +237,33 @@
   - Deadline ile birlikte saat bilgisi
   - Reminder X dakika önce
 
-## Sonraki Sprint: Advanced Features
-- [ ] **Global Search (Alt+U)**
+## Sonraki Sprint: Advanced Features 
+- [x] **Global Search (Alt+U)**
   - Tüm modüllerde (Notes, Tasks, Habits, Journal) arama
   - Fuzzy search desteği
   - Sonuçları kategorize göster
   
-- [ ] **Notes Markdown Preview Fix**
+- [x] **Notes Markdown Preview Fix**
   - react-markdown render düzeltmesi
-  - Kod blokları syntax highlighting
+  - Heading stilleri iyileştirildi
   
-- [ ] **DateTime Picker Tema Uyumu**
+- [x] **DateTime Picker Tema Uyumu**
   - Native date/time picker yerine custom component
   - Notepad++ temasına uygun styling
   
-- [ ] **Habits Günlük Reset & Raporlama**
-  - Gün sonunda completion status sıfırlama
-  - Streak hesaplama mantığı güncelleme
-  - Günlük/haftalık tamamlanan/tamamlanmayan raporlama
+- [x] **Habits Günlük Reset & Raporlama**
+  - Daily stats kaydı
+  - Haftalık progress bar görünümü
+  - Completion rate tracking
   
-- [ ] **Notes Tag-Based Search**
+- [x] **Notes Tag-Based Search**
   - Tag'lere göre filtreleme
   - Tag cloud görünümü
   - Multi-tag intersection search
   
-- [ ] **Knowledge Graph (Obsidian-style)**
+- [x] **Knowledge Graph (Obsidian-style)**
   - [[wikilink]] syntax desteği
-  - Notlar arası bağlantı grafiği
-  - D3.js veya force-graph ile görselleştirme
+  - Canvas-based force-directed graph
   - Backlinks panel
 
 ## Potansiyel Eklemeler
