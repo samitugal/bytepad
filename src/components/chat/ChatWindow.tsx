@@ -16,27 +16,48 @@ function getContext(): ChatContext {
   const entries = useJournalStore.getState().entries
 
   const today = new Date().toISOString().split('T')[0]
-  const pendingTasks = tasks.filter(t => !t.completed).length
+  const pendingTasksList = tasks.filter(t => !t.completed)
   const completedTasksToday = tasks.filter(t =>
     t.completed && t.completedAt &&
     new Date(t.completedAt).toISOString().split('T')[0] === today
   ).length
 
-  const habitsCompletedToday = habits.filter(h => h.completions[today]).length
-  const totalHabitsToday = habits.filter(h => h.frequency === 'daily').length
+  const dailyHabits = habits.filter(h => h.frequency === 'daily')
+  const habitsCompletedToday = dailyHabits.filter(h => h.completions[today]).length
 
   const maxStreak = Math.max(...habits.map(h => h.streak), 0)
 
   const todayEntry = entries.find(e => e.date === today)
 
+  // Build rich task list for AI context (max 10 tasks)
+  const taskList = pendingTasksList
+    .sort((a, b) => {
+      const priorityOrder = { P1: 1, P2: 2, P3: 3, P4: 4 }
+      return priorityOrder[a.priority] - priorityOrder[b.priority]
+    })
+    .slice(0, 10)
+    .map(t => ({
+      title: t.title,
+      priority: t.priority,
+      deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : undefined,
+    }))
+
+  // Build habit list for AI context
+  const habitList = dailyHabits.map(h => ({
+    name: h.name,
+    completed: !!h.completions[today],
+  }))
+
   return {
-    pendingTasks,
+    pendingTasks: pendingTasksList.length,
     completedTasksToday,
     habitsCompletedToday,
-    totalHabitsToday,
+    totalHabitsToday: dailyHabits.length,
     currentStreak: maxStreak,
     lastMood: todayEntry?.mood,
     lastEnergy: todayEntry?.energy,
+    taskList,
+    habitList,
   }
 }
 

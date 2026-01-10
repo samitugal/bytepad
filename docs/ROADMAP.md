@@ -701,6 +701,36 @@ FlowBot:
 - [x] Quick action buttons
 - [ ] Inline task/bookmark preview (sonraki iterasyon)
 
+## 8.7: Advanced Prompt Engineering (2 gün)
+**Hedef:** FlowBot'u gerçek bir ADHD koçuna dönüştürme
+
+### Sorunlar (Mevcut):
+- Tool sonuçlarındaki detaylar (task isimleri, ID'ler) LLM'e aktarılmıyor
+- Follow-up soru sormuyor, eksik bilgiyle devam ediyor
+- Planlama yapmak yerine sadece özet veriyor
+- Kullanıcının mevcut task'larını bilmiyor
+
+### Çözümler:
+- [ ] **Rich Tool Results**: Tool sonuçlarındaki `data` alanını LLM'e tam olarak aktar
+- [ ] **Conversational Flow**: Eksik bilgi varsa follow-up soru sor
+- [ ] **Context Awareness**: Mevcut task listesini system prompt'a ekle
+- [ ] **Actionable Planning**: Sadece özet değil, somut adımlar öner
+- [ ] **Task Details**: Task isimlerini, priority'lerini ve deadline'larını göster
+
+### Geliştirilmiş System Prompt:
+```
+1. ÖNCE mevcut durumu analiz et (task'lar, habit'ler)
+2. Eksik bilgi varsa SORU SOR (ne kadar zamanın var? hangi alana odaklanmak istiyorsun?)
+3. Somut, adım adım plan öner
+4. Her task için tahmini süre ver
+5. Kullanıcının onayını al
+```
+
+### Test Senaryoları:
+- "Günümü planla" → Mevcut task'ları listele, follow-up sor, detaylı plan öner
+- "Task ekle" → Eksik bilgi varsa sor (priority, deadline)
+- "Ne yapmalıyım?" → En uygun task'ı öner, neden olduğunu açıkla
+
 ## 8.7: Predefined Commands (1 gün) ✓
 - [x] `/plan` veya "günümü planla" - plan_day tool'u
 - [x] `/find <query>` veya "... hakkında kaynak bul" - web_search tool'u

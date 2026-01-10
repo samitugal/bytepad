@@ -97,6 +97,9 @@ export interface ChatContext {
   currentStreak: number
   lastMood?: number
   lastEnergy?: number
+  // Rich context for better AI responses
+  taskList?: Array<{ title: string; priority: string; deadline?: string }>
+  habitList?: Array<{ name: string; completed: boolean }>
 }
 
 // Bookmark types
