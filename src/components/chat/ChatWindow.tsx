@@ -3,8 +3,7 @@ import { useChatStore } from '../../stores/chatStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useHabitStore } from '../../stores/habitStore'
 import { useJournalStore } from '../../stores/journalStore'
-import { sendMessageStreaming, getQuickActions } from '../../services/llmService'
-import type { ToolResult } from '../../services/agentService'
+import { sendMessage, getQuickActions } from '../../services/aiService'
 import type { ChatContext } from '../../types'
 
 // Destructive tools that require confirmation (for future use)
@@ -79,68 +78,44 @@ export function ChatWindow() {
     }
   }, [isOpen])
 
-  const [streamingContent, setStreamingContent] = useState('')
-
   const handleSend = async (text: string) => {
     if (!text.trim() || isLoading) return
 
     const userMessage = text.trim()
     setInput('')
     setError(null)
-    setStreamingContent('')
 
     addMessage({ role: 'user', content: userMessage })
     setLoading(true)
 
     try {
       const context = getContext()
-      let accumulatedContent = ''
-      const toolMessages: string[] = []
-
-      const response = await sendMessageStreaming(
-        userMessage,
-        messages,
-        context,
-        (chunk) => {
-          accumulatedContent += chunk
-          setStreamingContent(accumulatedContent)
-        },
-        (_toolName, result) => {
-          toolMessages.push(`✓ ${result}`)
-        }
-      )
+      const response = await sendMessage(userMessage, messages, context)
 
       // Build final response message
       let finalContent = response.content
 
       if (response.toolResults.length > 0) {
-        const toolSummary = response.toolResults
-          .map((r: ToolResult) => `${r.success ? '✓' : '✗'} ${r.message}`)
-          .join('\n')
-
+        const toolSummary = response.toolResults.join('\n')
         finalContent = finalContent
           ? `${finalContent}\n\n---\n**Yapılan işlemler:**\n${toolSummary}`
           : `**Yapılan işlemler:**\n${toolSummary}`
       }
 
-      setStreamingContent('')
       addMessage({ role: 'assistant', content: finalContent })
     } catch (err) {
       console.error('[FlowBot Error]', err)
       const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu'
 
-      if (errorMessage.includes('API key')) {
+      if (errorMessage.includes('API key') || errorMessage.includes('apiKey')) {
         setError('API key geçersiz veya eksik. Settings → AI bölümünden kontrol et.')
       } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
         setError('Bağlantı hatası. İnternet bağlantını kontrol et.')
       } else if (errorMessage.includes('rate limit') || errorMessage.includes('429')) {
         setError('Çok fazla istek gönderildi. Biraz bekle ve tekrar dene.')
-      } else if (errorMessage.includes('timeout')) {
-        setError('İstek zaman aşımına uğradı. Tekrar dene.')
       } else {
         setError(errorMessage)
       }
-      setStreamingContent('')
     } finally {
       setLoading(false)
     }
@@ -234,11 +209,7 @@ export function ChatWindow() {
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-np-bg-tertiary px-3 py-2 text-sm border-l-2 border-np-green max-w-[85%]">
-              {streamingContent ? (
-                <div className="whitespace-pre-wrap">{streamingContent}<span className="animate-pulse">▊</span></div>
-              ) : (
-                <span className="text-np-text-secondary animate-pulse">FlowBot düşünüyor...</span>
-              )}
+              <span className="text-np-text-secondary animate-pulse">FlowBot düşünüyor...</span>
             </div>
           </div>
         )}
