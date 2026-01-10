@@ -177,14 +177,15 @@ export function CalendarModule() {
   }
 
   // Render header with title
+  const locale = language === 'tr' ? 'tr-TR' : 'en-US'
   const renderTitle = () => {
     switch (currentView) {
       case 'month':
-        return formatMonthYear(currentDate)
+        return formatMonthYear(currentDate, locale)
       case 'week':
-        return formatWeekRange(currentDate)
+        return formatWeekRange(currentDate, locale)
       case 'day':
-        return currentDate.toLocaleDateString('tr-TR', { 
+        return currentDate.toLocaleDateString(locale, { 
           weekday: 'long', 
           day: 'numeric', 
           month: 'long', 

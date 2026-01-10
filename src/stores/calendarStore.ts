@@ -145,20 +145,20 @@ export function isWeekend(date: Date): boolean {
   return day === 0 || day === 6
 }
 
-export function formatMonthYear(date: Date): string {
-  return date.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })
+export function formatMonthYear(date: Date, locale: string = 'en-US'): string {
+  return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
 }
 
-export function formatWeekRange(date: Date): string {
+export function formatWeekRange(date: Date, locale: string = 'en-US'): string {
   const weekDays = getWeekDays(date)
   const start = weekDays[0]
   const end = weekDays[6]
   
   if (start.getMonth() === end.getMonth()) {
-    return `${start.getDate()} - ${end.getDate()} ${start.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}`
+    return `${start.getDate()} - ${end.getDate()} ${start.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}`
   }
   
-  return `${start.getDate()} ${start.toLocaleDateString('tr-TR', { month: 'short' })} - ${end.getDate()} ${end.toLocaleDateString('tr-TR', { month: 'short', year: 'numeric' })}`
+  return `${start.getDate()} ${start.toLocaleDateString(locale, { month: 'short' })} - ${end.getDate()} ${end.toLocaleDateString(locale, { month: 'short', year: 'numeric' })}`
 }
 
 export function isDateInRange(date: Date, start: Date, end: Date): boolean {
