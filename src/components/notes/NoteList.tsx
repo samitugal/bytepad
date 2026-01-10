@@ -1,15 +1,55 @@
+import { useState, useMemo } from 'react'
 import { useNoteStore } from '../../stores/noteStore'
 
 export function NoteList() {
   const { notes, activeNoteId, searchQuery, setActiveNote, setSearchQuery, addNote } = useNoteStore()
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [showTagCloud, setShowTagCloud] = useState(false)
 
-  const filteredNotes = searchQuery
-    ? notes.filter(note =>
-        note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        note.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  // Get all unique tags with counts
+  const tagCloud = useMemo(() => {
+    const tagCounts: Record<string, number> = {}
+    notes.forEach(note => {
+      note.tags.forEach(tag => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1
+      })
+    })
+    return Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([tag, count]) => ({ tag, count }))
+  }, [notes])
+
+  // Filter notes by search query AND selected tags
+  const filteredNotes = useMemo(() => {
+    let result = notes
+
+    // Filter by search query
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(note =>
+        note.title.toLowerCase().includes(q) ||
+        note.content.toLowerCase().includes(q) ||
+        note.tags.some(tag => tag.toLowerCase().includes(q))
       )
-    : notes
+    }
+
+    // Filter by selected tags (intersection - must have ALL selected tags)
+    if (selectedTags.length > 0) {
+      result = result.filter(note =>
+        selectedTags.every(tag => note.tags.includes(tag))
+      )
+    }
+
+    return result
+  }, [notes, searchQuery, selectedTags])
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    )
+  }
 
   const handleNewNote = () => {
     addNote({
@@ -47,6 +87,49 @@ export function NoteList() {
           <span className="text-np-green">+</span> New Note
         </button>
       </div>
+
+      {/* Tag Cloud Toggle */}
+      {tagCloud.length > 0 && (
+        <div className="border-b border-np-border">
+          <button
+            onClick={() => setShowTagCloud(!showTagCloud)}
+            className="w-full px-2 py-1 text-xs text-np-text-secondary hover:text-np-text-primary text-left flex items-center gap-1"
+          >
+            <span>{showTagCloud ? '▼' : '▶'}</span>
+            <span>Tags ({tagCloud.length})</span>
+            {selectedTags.length > 0 && (
+              <span className="ml-auto text-np-purple">{selectedTags.length} selected</span>
+            )}
+          </button>
+          
+          {/* Tag Cloud */}
+          {showTagCloud && (
+            <div className="px-2 pb-2 flex flex-wrap gap-1">
+              {tagCloud.map(({ tag, count }) => (
+                <button
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                  className={`text-xs px-1.5 py-0.5 transition-colors ${
+                    selectedTags.includes(tag)
+                      ? 'bg-np-purple text-white'
+                      : 'bg-np-bg-tertiary text-np-purple hover:bg-np-bg-hover'
+                  }`}
+                >
+                  #{tag} <span className="text-np-text-secondary">({count})</span>
+                </button>
+              ))}
+              {selectedTags.length > 0 && (
+                <button
+                  onClick={() => setSelectedTags([])}
+                  className="text-xs px-1.5 py-0.5 text-np-error hover:bg-np-error/20"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Note list */}
       <div className="flex-1 overflow-y-auto">

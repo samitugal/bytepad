@@ -44,7 +44,7 @@ html, body, #root {
 
 body {
   font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
-  font-size: 13px;
+  font-size: 1rem; /* Controlled by document.documentElement.style.fontSize */
   line-height: 1.6;
   background-color: var(--bg-primary);
   color: var(--text-primary);

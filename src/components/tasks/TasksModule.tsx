@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTaskStore, getFilteredTasks } from '../../stores/taskStore'
+import { DateTimePicker } from '../common'
 import type { Task } from '../../types'
 
 const PRIORITIES = ['P1', 'P2', 'P3', 'P4'] as const
@@ -129,17 +130,16 @@ export function TasksModule() {
           {/* Deadline with time */}
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs text-np-text-secondary">Deadline:</span>
-            <input
+            <DateTimePicker
               type="date"
               value={newTask.deadline}
-              onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })}
-              className="np-input text-sm"
+              onChange={(val) => setNewTask({ ...newTask, deadline: val })}
+              placeholder="Select date"
             />
-            <input
+            <DateTimePicker
               type="time"
               value={newTask.deadlineTime}
-              onChange={(e) => setNewTask({ ...newTask, deadlineTime: e.target.value })}
-              className="np-input text-sm"
+              onChange={(val) => setNewTask({ ...newTask, deadlineTime: val })}
               placeholder="Time"
             />
           </div>

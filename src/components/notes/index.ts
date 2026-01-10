@@ -1,3 +1,5 @@
 export { NotesModule } from './NotesModule'
+export { KnowledgeGraph } from './KnowledgeGraph'
+export { BacklinksPanel } from './BacklinksPanel'
 export { NoteList } from './NoteList'
 export { NoteEditor } from './NoteEditor'

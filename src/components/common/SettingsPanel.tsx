@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { exportAllData, downloadAsJson, importData, readFileAsJson, clearAllData, getDataStats } from '../../services/dataService'
-import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider } from '../../stores/settingsStore'
+import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider, FONT_SIZES, FontSize } from '../../stores/settingsStore'
 import { useNotificationStore } from '../../stores/notificationStore'
 import { requestNotificationPermission, startNotificationChecker, stopNotificationChecker } from '../../services/notificationService'
 
@@ -20,10 +20,12 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     llmModel,
     apiKeys,
     ollamaBaseUrl,
+    fontSize,
     setLLMProvider,
     setLLMModel,
     setApiKey,
     setOllamaBaseUrl,
+    setFontSize,
   } = useSettingsStore()
   
   const {
@@ -172,6 +174,31 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
             <p className="text-xs text-np-text-secondary mt-2">
               This will permanently delete all your notes, habits, tasks, and journal entries.
             </p>
+          </div>
+
+          {/* Display Settings */}
+          <div>
+            <h3 className="text-sm text-np-green mb-3">// Display</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-np-text-secondary mb-1">Font Size</label>
+                <select
+                  value={fontSize}
+                  onChange={(e) => setFontSize(e.target.value as FontSize)}
+                  className="w-full bg-np-bg-primary border border-np-border text-np-text-primary
+                             font-mono text-sm px-2 py-1.5 focus:outline-none focus:border-np-blue"
+                >
+                  {(Object.keys(FONT_SIZES) as FontSize[]).map((size) => (
+                    <option key={size} value={size}>
+                      {FONT_SIZES[size].label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-np-text-secondary mt-1">
+                  Changes apply immediately to the entire app.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Notification Settings */}
