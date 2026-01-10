@@ -1,8 +1,10 @@
 # Sprint 10: Agent Framework Migration
-**Goal:** Migrate custom LLM/agent code to Vercel AI SDK for better maintainability
+**Goal:** Migrate FlowBot to Vercel AI SDK for better tool calling and streaming
 **Duration:** 3-4 days
-**Priority:** HIGH
-**Status:** PLANNED
+**Priority:** MEDIUM
+**Status:** DEFERRED
+
+> **Note:** Vercel AI SDK paketleri kurulu (`ai`, `@ai-sdk/openai`, `@ai-sdk/anthropic`) ancak mevcut `llmService.ts` implementasyonu iyi çalışıyor. Migration karmaşık ve breaking changes riski var. İleride ihtiyaç duyulduğunda yapılacak.
 
 ---
 
