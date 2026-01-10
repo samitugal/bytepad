@@ -1,10 +1,10 @@
 # Sprint 10: Agent Framework Migration
-**Goal:** Migrate FlowBot to Vercel AI SDK for better tool calling and streaming
+**Goal:** Migrate FlowBot to LangChain.js for better tool calling
 **Duration:** 3-4 days
-**Priority:** MEDIUM
-**Status:** DEFERRED
+**Priority:** HIGH
+**Status:** ✅ COMPLETED (2026-01-10)
 
-> **Note:** Vercel AI SDK paketleri kurulu (`ai`, `@ai-sdk/openai`, `@ai-sdk/anthropic`) ancak mevcut `llmService.ts` implementasyonu iyi çalışıyor. Migration karmaşık ve breaking changes riski var. İleride ihtiyaç duyulduğunda yapılacak.
+> **Note:** LangChain.js ile migration tamamlandı. `llmService.ts` silindi, yeni `aiService.ts` oluşturuldu.
 
 ---
 
