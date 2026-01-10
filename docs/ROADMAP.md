@@ -271,7 +271,6 @@
   - Sol modül listesi genişletilebilir (drag handle)
   - Genişlik localStorage'da saklanıyor
   - Min: 80px, Max: 250px
-
 - [x] **Font Size Settings**
   - Settings panelinde "// Display" bölümü en üstte
   - Extra Small, Small, Default, Large, Extra Large seçenekleri
@@ -306,27 +305,179 @@
 - [ ] **Dark/Light Theme Toggle**
   - Tema değiştirme butonu
   - Sistem temasına uyum
+  - Notepad++ Light theme variant
 
 - [ ] **Calendar Integration**
   - Tasks ve Habits için takvim görünümü
   - Deadline'ları takvimde göster
+  - Drag & drop ile tarih değiştirme
+  - iCal/Google Calendar export
 
 - [ ] **Multiple Workspaces**
   - Farklı projeler için ayrı workspace'ler
   - Workspace değiştirme
+  - Workspace-specific settings
 
 - [ ] **Collaboration**
   - Paylaşımlı listeler
   - Real-time collaboration
+  - Yorum ve mention sistemi
 
-## Potansiyel Eklemeler
+---
+
+## İleri Seviye Geliştirme Fikirleri
+
+### AI & Automation
+- [ ] **Smart Task Scheduling**
+  - AI ile optimal task sıralaması
+  - Energy level'a göre task önerisi
+  - "En verimli saatleriniz" analizi
+  
+- [ ] **Auto-Tagging**
+  - AI ile otomatik tag önerisi (Notes, Bookmarks)
+  - İçerik analizi ile kategorizasyon
+  
+- [ ] **Predictive Analytics**
+  - Habit completion tahminleri
+  - "Bugün streak kırılma riski yüksek" uyarıları
+  - Productivity pattern detection
+
+- [ ] **Smart Reminders**
+  - Context-aware hatırlatmalar
+  - Lokasyon bazlı (eve gelince, işe gidince)
+  - Hava durumuna göre (yağmurlu günlerde indoor habits)
+
+### Productivity Features
+- [ ] **Time Blocking**
+  - Günlük/haftalık zaman blokları
+  - Task'ları bloklara atama
+  - Google Calendar sync
+
+- [ ] **Templates & Recurring**
+  - Not şablonları (meeting notes, daily standup)
+  - Recurring tasks (her Pazartesi X yap)
+  - Weekly review template
+
+- [ ] **Quick Capture Widget**
+  - Floating capture button
+  - Screenshot annotation
+  - Voice-to-text not alma
+
+- [ ] **Focus Sessions Analytics**
+  - Pomodoro istatistikleri
+  - En verimli saatler grafiği
+  - Distraction tracking
+
+### Data & Visualization
+- [ ] **Advanced Analytics Dashboard**
+  - Customizable widgets
+  - Trend grafikleri (30/60/90 gün)
+  - Karşılaştırmalı analiz (bu hafta vs geçen hafta)
+
+- [ ] **Habit Heatmap**
+  - GitHub contribution graph benzeri
+  - Yıllık habit görünümü
+  - Streak calendar
+
+- [ ] **Mind Map View**
+  - Notes için mind map görünümü
+  - Drag & drop node oluşturma
+  - Knowledge graph ile entegrasyon
+
+- [ ] **Export & Reports**
+  - PDF weekly/monthly report
+  - Notion/Obsidian export
+  - CSV data export
+
+### Integration & Extensions
+- [ ] **Browser Extension**
+  - Quick bookmark ekleme
+  - Web clipper (sayfa içeriğini not olarak kaydet)
+  - Tab manager integration
+
+- [ ] **API & Webhooks**
+  - Public REST API
+  - Zapier/Make integration
+  - Custom webhooks (task complete → Slack notification)
+
+- [ ] **Third-Party Integrations**
+  - Todoist/Asana import
+  - Notion sync
+  - Spotify (focus playlist)
+  - Slack status sync
+
+### Mobile & Cross-Platform
+- [ ] **Progressive Web App Enhancements**
+  - Background sync
+  - Push notifications (mobile)
+  - Share target (paylaş menüsünden içerik al)
+
+- [ ] **React Native App**
+  - iOS & Android native app
+  - Widget support
+  - Apple Watch / Wear OS companion
+
+- [ ] **Desktop App (Electron/Tauri)**
+  - System tray icon
+  - Global hotkeys
+  - Menu bar quick actions
+
+### Social & Gamification
+- [ ] **Achievement System**
+  - Badges (7-day streak, 100 tasks completed)
+  - Levels ve XP
+  - Leaderboard (opsiyonel, privacy-first)
+
+- [ ] **Accountability Partners**
+  - Habit buddy sistemi
+  - Shared goals
+  - Progress sharing
+
+- [ ] **Daily Challenges**
+  - Rastgele günlük challenge
+  - Streak bonusları
+  - Seasonal events
+
+### ADHD-Specific Features
+- [ ] **Body Doubling Mode**
+  - Virtual coworking sessions
+  - "Birisi izliyor" motivasyonu
+  - Pomodoro sync with others
+
+- [ ] **Dopamine Menu**
+  - Reward sistemi
+  - Task tamamlayınca mini-game
+  - Celebration animations
+
+- [ ] **Overwhelm Mode**
+  - Sadece 1 task göster
+  - Simplified UI
+  - "Sadece 5 dakika" timer
+
+- [ ] **Transition Helpers**
+  - Task arası geçiş hatırlatmaları
+  - "Şu an ne yapıyordun?" prompt
+  - Context switching desteği
+
+### Security & Privacy
+- [ ] **End-to-End Encryption**
+  - Client-side encryption
+  - Zero-knowledge architecture
+  - Local-only mode option
+
+- [ ] **Data Portability**
+  - Full data export (JSON, CSV)
+  - Account deletion
+  - GDPR compliance
+
+## Potansiyel Eklemeler (Uzun Vadeli)
 - [ ] Mobile app (React Native)
-- [ ] Browser extension
-- [ ] Widgets
-- [ ] Voice input
-- [ ] Gamification (achievements, levels)
-- [ ] PDF/Image export
+- [ ] Desktop app (Tauri)
+- [ ] Voice input (Web Speech API)
 - [ ] Email notifications (daily summary)
+- [ ] Team/Enterprise version
+- [ ] Plugin/Extension system
+- [ ] Self-hosted option
 
 ---
 
