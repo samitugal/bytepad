@@ -1,4 +1,4 @@
-export type ModuleType = 'notes' | 'habits' | 'tasks' | 'journal' | 'analysis'
+export type ModuleType = 'notes' | 'habits' | 'tasks' | 'journal' | 'analysis' | 'bookmarks'
 
 export interface Note {
   id: string
@@ -95,4 +95,19 @@ export interface ChatContext {
   currentStreak: number
   lastMood?: number
   lastEnergy?: number
+}
+
+// Bookmark types
+export interface Bookmark {
+  id: string
+  url: string
+  title: string
+  description?: string
+  favicon?: string
+  image?: string // Preview image/thumbnail
+  tags: string[]
+  collection?: string // e.g., "Gold", "Silver", "Bronze", "Unsorted"
+  isRead: boolean
+  createdAt: Date
+  domain: string // Extracted from URL
 }
