@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Task, SubTask } from '../types'
 
+// Cross-tab sync channel
+const syncChannel = new BroadcastChannel('myflowspace-tasks')
+
 interface TaskState {
   tasks: Task[]
   filter: 'all' | 'active' | 'completed'
@@ -126,6 +129,17 @@ export const useTaskStore = create<TaskState>()(
     }
   )
 )
+
+// Cross-tab synchronization
+syncChannel.onmessage = (event) => {
+  if (event.data?.type === 'SYNC') {
+    useTaskStore.setState({ tasks: event.data.tasks })
+  }
+}
+
+useTaskStore.subscribe((state) => {
+  syncChannel.postMessage({ type: 'SYNC', tasks: state.tasks })
+})
 
 export const getFilteredTasks = (state: TaskState) => {
   let filtered = [...state.tasks]
