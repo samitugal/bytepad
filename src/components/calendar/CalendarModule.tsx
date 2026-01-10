@@ -118,13 +118,14 @@ export function CalendarModule() {
         e.preventDefault()
         setView('day')
         break
-      case 'n':
+      case 'n': {
         e.preventDefault()
         // Open task form for current date or selected date
         const targetDate = selectedDate || currentDate
         setSelectedDate(targetDate)
         setShowTaskForm(true)
         break
+      }
     }
   }, [showTaskForm, selectedTask, goToPrevious, goToNext, goToToday, setView, selectedDate, currentDate, setSelectedDate])
 
