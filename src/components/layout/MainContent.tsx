@@ -1,12 +1,25 @@
+import { lazy, Suspense } from 'react'
 import { useUIStore } from '../../stores/uiStore'
+
+// Eager load frequently used modules
 import { NotesModule } from '../notes'
-import { HabitsModule } from '../habits'
 import { TasksModule } from '../tasks'
-import { JournalModule } from '../journal'
-import { AnalysisModule } from '../analysis'
-import { BookmarksModule } from '../bookmarks'
-import { CalendarModule } from '../calendar'
-import { DailyNotesModule } from '../dailynotes/DailyNotesModule'
+import { HabitsModule } from '../habits'
+
+// Lazy load less frequently used modules
+const JournalModule = lazy(() => import('../journal').then(m => ({ default: m.JournalModule })))
+const AnalysisModule = lazy(() => import('../analysis').then(m => ({ default: m.AnalysisModule })))
+const BookmarksModule = lazy(() => import('../bookmarks').then(m => ({ default: m.BookmarksModule })))
+const CalendarModule = lazy(() => import('../calendar').then(m => ({ default: m.CalendarModule })))
+const DailyNotesModule = lazy(() => import('../dailynotes/DailyNotesModule').then(m => ({ default: m.DailyNotesModule })))
+
+function LoadingFallback() {
+  return (
+    <div className="flex-1 flex items-center justify-center text-np-text-secondary">
+      <span className="animate-pulse">Loading...</span>
+    </div>
+  )
+}
 
 export function MainContent() {
   const { activeModule } = useUIStore()
@@ -36,7 +49,9 @@ export function MainContent() {
 
   return (
     <div className="flex-1 bg-np-bg-primary overflow-hidden flex">
-      {renderContent()}
+      <Suspense fallback={<LoadingFallback />}>
+        {renderContent()}
+      </Suspense>
     </div>
   )
 }
