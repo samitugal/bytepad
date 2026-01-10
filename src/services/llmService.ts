@@ -736,6 +736,23 @@ export async function sendMessageStreaming(
   ]
 
   const tools = formatToolsForOpenAI()
+  const isGPT5 = llmModel.startsWith('gpt-5')
+
+  // GPT-5 uses max_completion_tokens instead of max_tokens, and no temperature
+  const requestBody: Record<string, unknown> = {
+    model: llmModel,
+    messages,
+    tools,
+    tool_choice: 'auto',
+    stream: true,
+  }
+
+  if (isGPT5) {
+    requestBody.max_completion_tokens = 1000
+  } else {
+    requestBody.max_tokens = 1000
+    requestBody.temperature = 0.7
+  }
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -743,15 +760,7 @@ export async function sendMessageStreaming(
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKeys.openai}`,
     },
-    body: JSON.stringify({
-      model: llmModel,
-      messages,
-      tools,
-      tool_choice: 'auto',
-      stream: true,
-      max_tokens: 1000,
-      temperature: 0.7,
-    }),
+    body: JSON.stringify(requestBody),
   })
 
   if (!response.ok) {
