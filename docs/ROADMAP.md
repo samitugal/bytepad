@@ -266,6 +266,18 @@
   - Canvas-based force-directed graph
   - Backlinks panel
 
+## Sonraki: UI/UX İyileştirmeleri
+- [ ] **Resizable Sidebar**
+  - Sol modül listesi (Notes, Habits, Tasks, vb.) genişletilebilir
+  - Drag handle ile genişlik ayarı
+  - Genişlik localStorage'da saklanacak
+  - Min/max genişlik sınırları
+
+- [ ] **Font Size Settings Visibility**
+  - Settings panelinde "// Display" bölümünde mevcut
+  - Small, Medium, Large seçenekleri
+  - Panel scroll'u iyileştirilecek
+
 ## Potansiyel Eklemeler
 - [ ] Dark/Light theme toggle
 - [ ] Multiple workspaces
