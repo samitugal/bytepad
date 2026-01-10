@@ -2,6 +2,31 @@
 
 Bu dosya Claude Code tarafından otomatik güncellenir.
 
+## [0.10.0] - 2026-01-10
+
+### Added
+- **Calendar Module**
+  - Month/Week/Day görünümleri
+  - Task'ları takvimde görselleştirme
+  - Takvimden task oluşturma (tarih tıklama)
+  - Çok günlü task desteği (endDate)
+  - Priority renk kodları (P1=kırmızı, P2=turuncu, P3=mavi, P4=gri)
+  - Today highlight ve weekend farklı arka plan
+  - View switcher (Ay/Hafta/Gün)
+  - Bugün butonu ile hızlı navigasyon
+
+### Changed
+- Task type'a `endDate` ve `allDay` field'ları eklendi
+- Sidebar: Calendar (^6), Analyze (^7) olarak güncellendi
+- ModuleType'a 'calendar' eklendi
+
+### Technical
+- calendarStore (Zustand) - view state yönetimi
+- Helper functions: getMonthDays, getWeekDays, isDateInRange
+- CalendarModule, MonthView, WeekView, DayView components
+
+---
+
 ## [0.9.0] - 2026-01-10
 
 ### Added
