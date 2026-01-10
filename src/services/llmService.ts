@@ -124,11 +124,12 @@ async function callOpenAIWithTools(
   model: string
 ): Promise<LLMResponse> {
   const tools = formatToolsForOpenAI()
-
-  // GPT-5 uses max_completion_tokens and doesn't support custom temperature
   const isGPT5 = model.startsWith('gpt-5')
-  const tokenParam = isGPT5 ? { max_completion_tokens: 1000 } : { max_tokens: 1000 }
-  const tempParam = isGPT5 ? {} : { temperature: 0.7 }
+
+  // GPT-5 uses Responses API, others use Chat Completions API
+  if (isGPT5) {
+    return callOpenAIResponsesAPI(messages, apiKey, model, tools)
+  }
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -142,8 +143,8 @@ async function callOpenAIWithTools(
       tools,
       tool_choice: 'auto',
       parallel_tool_calls: true,
-      ...tokenParam,
-      ...tempParam,
+      max_tokens: 1000,
+      temperature: 0.7,
     }),
   })
 
@@ -168,6 +169,134 @@ async function callOpenAIWithTools(
   }
 
   return { content: message.content || '' }
+}
+
+// GPT-5 uses the new Responses API
+async function callOpenAIResponsesAPI(
+  messages: { role: string; content: string }[],
+  apiKey: string,
+  model: string,
+  tools: ReturnType<typeof formatToolsForOpenAI>
+): Promise<LLMResponse> {
+  // Convert messages to Responses API format
+  const systemMessage = messages.find(m => m.role === 'system')?.content || ''
+  const chatMessages = messages.filter(m => m.role !== 'system')
+  
+  // Build input array for Responses API
+  const input = chatMessages.map(m => ({
+    role: m.role as 'user' | 'assistant',
+    content: m.content,
+  }))
+
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      instructions: systemMessage,
+      input,
+      tools: tools.map(t => ({
+        type: 'function',
+        name: t.function.name,
+        description: t.function.description,
+        parameters: t.function.parameters,
+      })),
+      tool_choice: 'auto',
+      max_output_tokens: 1000,
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    debugLog('GPT-5 API Error', error)
+    throw new Error(error.error?.message || 'OpenAI Responses API error')
+  }
+
+  let data = await response.json()
+  debugLog('GPT-5 Initial Response', { id: data.id, status: data.status })
+
+  // Poll for completion if status is incomplete (GPT-5 reasoning takes time)
+  const maxPolls = 30 // Max 30 seconds
+  let pollCount = 0
+  while (data.status === 'incomplete' && pollCount < maxPolls) {
+    await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second
+    pollCount++
+    
+    const pollResponse = await fetch(`https://api.openai.com/v1/responses/${data.id}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+      },
+    })
+    
+    if (pollResponse.ok) {
+      data = await pollResponse.json()
+      debugLog('GPT-5 Poll', { poll: pollCount, status: data.status })
+    } else {
+      break
+    }
+  }
+
+  debugLog('GPT-5 Final Response', { status: data.status, outputLength: data.output?.length })
+
+  // Parse Responses API output - handle various response structures
+  let textContent = ''
+  const toolCalls: ToolCall[] = []
+
+  // Check for output array (standard response)
+  if (data.output && Array.isArray(data.output)) {
+    for (const item of data.output) {
+      // Text message
+      if (item.type === 'message' && item.content) {
+        for (const block of item.content) {
+          if (block.type === 'output_text' || block.type === 'text') {
+            textContent += block.text
+          }
+        }
+      }
+      // Function/tool call
+      if (item.type === 'function_call') {
+        toolCalls.push({
+          name: item.name,
+          arguments: typeof item.arguments === 'string' ? JSON.parse(item.arguments) : item.arguments,
+        })
+      }
+    }
+  }
+
+  // Check for output_text directly in response (alternative format)
+  if (data.output_text) {
+    textContent = data.output_text
+  }
+
+  // Check for tool_calls array (alternative format)
+  if (data.tool_calls && Array.isArray(data.tool_calls)) {
+    for (const tc of data.tool_calls) {
+      toolCalls.push({
+        name: tc.function?.name || tc.name,
+        arguments: typeof tc.function?.arguments === 'string' 
+          ? JSON.parse(tc.function.arguments) 
+          : (tc.arguments || tc.function?.arguments || {}),
+      })
+    }
+  }
+
+  // If status is incomplete or no content, check for partial results
+  if (data.status === 'incomplete' && !textContent && toolCalls.length === 0) {
+    debugLog('GPT-5 Incomplete Response', { status: data.status, output: data.output })
+    // Try to extract any available content
+    if (data.output?.[0]?.content?.[0]?.text) {
+      textContent = data.output[0].content[0].text
+    }
+  }
+
+  return {
+    content: textContent,
+    toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+  }
 }
 
 // Anthropic with native tool use
