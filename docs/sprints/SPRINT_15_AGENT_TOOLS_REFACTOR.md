@@ -29,6 +29,30 @@
 - **GPT-5 quirks:** Does not support `temperature` parameter
 - **API key validation:** Check console for `[Agent]` logs to debug
 
+## Critical Bug: Agent Returns Raw Tool Output
+**Problem:** Agent calls tool, gets result, but then returns empty response causing "İşlem tamamlandı!" fallback with raw JSON shown.
+
+**Root Cause:** LLM not generating follow-up response after receiving tool results.
+
+**Attempted Fixes:**
+1. ✅ Proper ToolMessage format with tool_call_id
+2. ✅ Improved system prompt with explicit instructions
+3. ⏳ Need to verify LLM actually processes tool results in loop
+
+**Expected Behavior:**
+```
+User: "Günün kalan saatlerine göre plan yap"
+Agent: calls get_current_datetime → gets {"hour": 20, "remainingHours": 4}
+Agent: "Saat 20:00, akşam için 4 saatin var! Araştırma modundaysan şunları öneriyorum..."
+```
+
+**Actual Behavior:**
+```
+User: "Günün kalan saatlerine göre plan yap"
+Agent: calls get_current_datetime → gets {"hour": 20, "remainingHours": 4}
+Agent: returns empty → shows "İşlem tamamlandı!" + raw JSON
+```
+
 ## ⚠️ Architecture Issue: Agent Loop Required
 
 **Current Problem:** Tool results are returned directly to user instead of being processed by the agent.
