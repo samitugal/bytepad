@@ -141,6 +141,10 @@ async function callOpenAIWithTools(
 ): Promise<LLMResponse> {
   const tools = formatToolsForOpenAI()
 
+  // GPT-5 uses max_completion_tokens instead of max_tokens
+  const isGPT5 = model.startsWith('gpt-5')
+  const tokenParam = isGPT5 ? { max_completion_tokens: 1000 } : { max_tokens: 1000 }
+
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -152,7 +156,7 @@ async function callOpenAIWithTools(
       messages,
       tools,
       tool_choice: 'auto',
-      max_tokens: 1000,
+      ...tokenParam,
       temperature: 0.7,
     }),
   })
@@ -244,6 +248,10 @@ async function callOpenAI(
   apiKey: string,
   model: string
 ): Promise<LLMResponse> {
+  // GPT-5 uses max_completion_tokens instead of max_tokens
+  const isGPT5 = model.startsWith('gpt-5')
+  const tokenParam = isGPT5 ? { max_completion_tokens: 500 } : { max_tokens: 500 }
+
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -253,7 +261,7 @@ async function callOpenAI(
     body: JSON.stringify({
       model,
       messages,
-      max_tokens: 500,
+      ...tokenParam,
       temperature: 0.7,
     }),
   })
