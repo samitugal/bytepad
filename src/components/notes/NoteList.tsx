@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useNoteStore } from '../../stores/noteStore'
 import { ResizablePanel } from '../common/ResizablePanel'
+import { useTranslation } from '../../i18n'
 
 export function NoteList() {
+  const { t, language } = useTranslation()
   const { notes, activeNoteId, searchQuery, setActiveNote, setSearchQuery, addNote } = useNoteStore()
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showTagCloud, setShowTagCloud] = useState(false)
@@ -62,7 +64,8 @@ export function NoteList() {
 
   const formatDate = (date: Date) => {
     const d = new Date(date)
-    return d.toLocaleDateString('tr-TR', { month: 'short', day: 'numeric' })
+    const locale = language === 'tr' ? 'tr-TR' : 'en-US'
+    return d.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
   }
 
   return (
@@ -80,7 +83,7 @@ export function NoteList() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search notes..."
+          placeholder={t('notes.searchNotes')}
           className="w-full bg-np-bg-primary border border-np-border text-np-text-primary
                      px-2 py-1 text-sm font-mono focus:border-np-blue focus:outline-none"
         />
@@ -92,7 +95,7 @@ export function NoteList() {
           onClick={handleNewNote}
           className="w-full np-btn text-left flex items-center gap-2"
         >
-          <span className="text-np-green">+</span> New Note
+          <span className="text-np-green">+</span> {t('notes.newNote')}
         </button>
       </div>
 
@@ -106,7 +109,7 @@ export function NoteList() {
             <span>{showTagCloud ? '▼' : '▶'}</span>
             <span>Tags ({tagCloud.length})</span>
             {selectedTags.length > 0 && (
-              <span className="ml-auto text-np-purple">{selectedTags.length} selected</span>
+              <span className="ml-auto text-np-purple">{selectedTags.length} {language === 'tr' ? 'seçili' : 'selected'}</span>
             )}
           </button>
 
@@ -130,7 +133,7 @@ export function NoteList() {
                   onClick={() => setSelectedTags([])}
                   className="text-xs px-1.5 py-0.5 text-np-error hover:bg-np-error/20"
                 >
-                  Clear
+                  {language === 'tr' ? 'Temizle' : 'Clear'}
                 </button>
               )}
             </div>
@@ -142,7 +145,7 @@ export function NoteList() {
       <div className="flex-1 overflow-y-auto">
         {filteredNotes.length === 0 ? (
           <div className="p-4 text-np-text-secondary text-sm text-center">
-            {searchQuery ? 'No notes found' : 'No notes yet'}
+            {searchQuery ? t('notes.noNotesFound') : t('notes.noNotes')}
           </div>
         ) : (
           filteredNotes.map((note) => (
@@ -156,11 +159,11 @@ export function NoteList() {
                 }`}
             >
               <div className="text-sm text-np-text-primary truncate">
-                {note.title || 'Untitled'}
+                {note.title || t('notes.untitled')}
               </div>
               <div className="text-xs text-np-text-secondary mt-1 flex items-center justify-between">
                 <span className="truncate max-w-[120px]">
-                  {note.content.substring(0, 30) || 'Empty note'}
+                  {note.content.substring(0, 30) || t('notes.emptyNote')}
                 </span>
                 <span>{formatDate(note.updatedAt)}</span>
               </div>
@@ -183,7 +186,7 @@ export function NoteList() {
 
       {/* Stats */}
       <div className="p-2 border-t border-np-border text-xs text-np-text-secondary">
-        {notes.length} note{notes.length !== 1 ? 's' : ''}
+        {notes.length} {t('nav.notes').toLowerCase()}
       </div>
     </ResizablePanel>
   )

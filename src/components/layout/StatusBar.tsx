@@ -3,8 +3,10 @@ import { useUIStore } from '../../stores/uiStore'
 import { useNoteStore } from '../../stores/noteStore'
 import { useHabitStore } from '../../stores/habitStore'
 import { useTaskStore } from '../../stores/taskStore'
+import { useTranslation } from '../../i18n'
 
 export function StatusBar() {
+  const { t, language } = useTranslation()
   const { activeModule } = useUIStore()
   const { notes } = useNoteStore()
   const habitStore = useHabitStore()
@@ -23,24 +25,25 @@ export function StatusBar() {
   }, [])
 
   const getStatusText = () => {
+    const locale = language === 'tr' ? 'tr-TR' : 'en-US'
     switch (activeModule) {
       case 'notes':
-        return `${notes.length} note${notes.length !== 1 ? 's' : ''} | UTF-8`
+        return `${notes.length} ${t('nav.notes').toLowerCase()} | UTF-8`
       case 'habits': {
         const completed = habitStore.getCompletedToday()
         const total = habitStore.getTotalHabits()
-        return `${completed}/${total} habits completed today`
+        return `${completed}/${total} ${t('nav.habits').toLowerCase()} ${t('common.completed').toLowerCase()}`
       }
       case 'tasks': {
         const pending = taskStore.getPendingCount()
-        return `${pending} task${pending !== 1 ? 's' : ''} pending`
+        return `${pending} ${t('nav.tasks').toLowerCase()} ${t('common.pending').toLowerCase()}`
       }
       case 'journal':
-        return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+        return new Date().toLocaleDateString(locale, { weekday: 'long', month: 'short', day: 'numeric' })
       case 'analysis':
-        return 'Weekly analysis ready'
+        return t('analysis.weeklyStats')
       default:
-        return 'Ready'
+        return t('common.loading').replace('...', '')
     }
   }
 
@@ -52,7 +55,7 @@ export function StatusBar() {
       <div className="flex items-center gap-4">
         {!isOnline && (
           <span className="text-np-orange flex items-center gap-1">
-            <span>⚡</span> Offline
+            <span>⚡</span> {language === 'tr' ? 'Çevrimdışı' : 'Offline'}
           </span>
         )}
         <span>MyFlowSpace v0.1.0</span>

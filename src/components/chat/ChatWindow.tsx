@@ -4,6 +4,7 @@ import { useTaskStore } from '../../stores/taskStore'
 import { useHabitStore } from '../../stores/habitStore'
 import { useJournalStore } from '../../stores/journalStore'
 import { sendMessage, getQuickActions } from '../../services/aiService'
+import { useTranslation } from '../../i18n'
 import type { ChatContext } from '../../types'
 
 // Destructive tools that require confirmation (for future use)
@@ -61,6 +62,7 @@ function getContext(): ChatContext {
 }
 
 export function ChatWindow() {
+  const { t } = useTranslation()
   const { messages, isOpen, isLoading, error, addMessage, setOpen, setLoading, setError, clearMessages } = useChatStore()
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -92,17 +94,8 @@ export function ChatWindow() {
       const context = getContext()
       const response = await sendMessage(userMessage, messages, context)
 
-      // Build final response message
-      let finalContent = response.content
-
-      if (response.toolResults.length > 0) {
-        const toolSummary = response.toolResults.join('\n')
-        finalContent = finalContent
-          ? `${finalContent}\n\n---\n**Yapılan işlemler:**\n${toolSummary}`
-          : `**Yapılan işlemler:**\n${toolSummary}`
-      }
-
-      addMessage({ role: 'assistant', content: finalContent })
+      // Use the agent's natural language response only - never show raw tool results
+      addMessage({ role: 'assistant', content: response.content })
     } catch (err) {
       console.error('[FlowBot Error]', err)
       const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu'
@@ -140,14 +133,14 @@ export function ChatWindow() {
       <div className="flex items-center justify-between px-3 py-2 border-b border-np-border bg-np-bg-tertiary">
         <div className="flex items-center gap-2">
           <span className="text-np-green">🤖</span>
-          <span className="text-np-text-primary text-sm">FlowBot</span>
-          <span className="text-np-text-secondary text-xs">// ADHD Coach</span>
+          <span className="text-np-text-primary text-sm">{t('flowbot.title')}</span>
+          <span className="text-np-text-secondary text-xs">// {t('flowbot.subtitle')}</span>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={clearMessages}
             className="text-np-text-secondary hover:text-np-text-primary px-2 py-1 text-xs"
-            title="Clear chat"
+            title={t('flowbot.clearChat')}
           >
             🗑
           </button>
@@ -165,9 +158,9 @@ export function ChatWindow() {
         {messages.length === 0 && (
           <div className="text-center py-8">
             <div className="text-np-green text-2xl mb-2">🤖</div>
-            <div className="text-np-text-primary text-sm mb-1">Merhaba! Ben FlowBot.</div>
+            <div className="text-np-text-primary text-sm mb-1">{t('flowbot.greeting')}</div>
             <div className="text-np-text-secondary text-xs mb-4">
-              ADHD-friendly productivity koçun.
+              {t('flowbot.greetingDesc')}
             </div>
             <div className="space-y-2">
               {quickActions.map(action => (
@@ -209,7 +202,7 @@ export function ChatWindow() {
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-np-bg-tertiary px-3 py-2 text-sm border-l-2 border-np-green max-w-[85%]">
-              <span className="text-np-text-secondary animate-pulse">FlowBot düşünüyor...</span>
+              <span className="text-np-text-secondary animate-pulse">{t('flowbot.thinking')}</span>
             </div>
           </div>
         )}
@@ -249,7 +242,7 @@ export function ChatWindow() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Mesajını yaz..."
+            placeholder={t('flowbot.placeholder')}
             disabled={isLoading}
             className="flex-1 bg-np-bg-primary border border-np-border text-np-text-primary 
                        text-sm px-3 py-2 focus:outline-none focus:border-np-blue
@@ -264,7 +257,7 @@ export function ChatWindow() {
           </button>
         </div>
         <div className="text-[10px] text-np-text-secondary mt-1">
-          Ctrl+/ ile aç/kapat • Enter ile gönder
+          {t('flowbot.openClose')} • {t('flowbot.sendEnter')}
         </div>
       </div>
     </div>

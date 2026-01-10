@@ -12,7 +12,22 @@
         "success": "Success",
         "confirm": "Confirm",
         "yes": "Yes",
-        "no": "No"
+        "no": "No",
+        "more": "more",
+        "undo": "Undo",
+        "create": "Create",
+        "title": "Title",
+        "description": "Description",
+        "done": "Done",
+        "pending": "Pending",
+        "completed": "Completed",
+        "allDay": "All day",
+        "time": "Time",
+        "date": "Date",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "previous": "Previous",
+        "next": "Next"
     },
     "nav": {
         "notes": "Notes",
@@ -128,15 +143,42 @@
         "tags": "Tags"
     },
     "tasks": {
+        "title": "Tasks",
         "newTask": "New Task",
         "searchTasks": "Search tasks...",
         "noTasks": "No tasks yet",
+        "noActiveTasks": "No active tasks",
         "completed": "Completed",
         "pending": "Pending",
+        "pendingCount": "{count} pending task",
+        "pendingCountPlural": "{count} pending tasks",
         "priority": "Priority",
         "deadline": "Deadline",
         "all": "All",
-        "active": "Active"
+        "active": "Active",
+        "filter": "Filter",
+        "sort": "Sort",
+        "created": "Created",
+        "taskTitle": "Task title...",
+        "descriptionOptional": "Description (optional)...",
+        "start": "Start",
+        "end": "End",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "time": "Time",
+        "remindMe": "Remind me",
+        "minBefore": "{min} min before",
+        "hourBefore": "1 hour before",
+        "hoursBefore": "{hours} hours before",
+        "dayBefore": "1 day before",
+        "subtasks": "Subtasks",
+        "addSubtask": "Add subtask...",
+        "add": "Add",
+        "done": "Done",
+        "createFirst": "Create your first task or check Done section",
+        "moreCompleted": "+{count} more completed tasks",
+        "clickExpand": "Click to expand",
+        "enterAddSubtask": "Enter to add subtask"
     },
     "habits": {
         "newHabit": "New Habit",
@@ -163,5 +205,57 @@
         "recommendations": "Recommendations",
         "generateAI": "Generate AI Insights",
         "analyzing": "Analyzing..."
+    },
+    "calendar": {
+        "today": "Today",
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "newTask": "New Task",
+        "taskTitle": "Task title...",
+        "priority": {
+            "P1": "Critical",
+            "P2": "High",
+            "P3": "Normal",
+            "P4": "Low"
+        },
+        "endDate": "End date (optional)",
+        "deleteConfirm": "Delete \"{title}\"?",
+        "start": "Start",
+        "end": "End",
+        "keyboardHints": "nav | T today | M/W/D view | N new task"
+    },
+    "dailyNotes": {
+        "title": "Daily Notes",
+        "newCard": "New Card",
+        "cardTitle": "Card title...",
+        "writeNote": "Write your note...",
+        "tags": "Tags (comma separated)...",
+        "pinned": "Pinned",
+        "deleteCard": "Delete Card",
+        "deleteCardConfirm": "Are you sure you want to delete \"{title}\"?"
+    },
+    "flowbot": {
+        "title": "FlowBot",
+        "subtitle": "ADHD Coach",
+        "greeting": "Hello! I'm FlowBot.",
+        "greetingDesc": "Your ADHD-friendly productivity coach.",
+        "placeholder": "Type your message...",
+        "thinking": "FlowBot is thinking...",
+        "clearChat": "Clear chat",
+        "openClose": "Open/close with Ctrl+/",
+        "sendEnter": "Press Enter to send",
+        "quickActions": {
+            "planDay": "Plan my day",
+            "motivate": "Motivation",
+            "stuck": "I'm stuck"
+        }
+    },
+    "confirm": {
+        "deleteTask": "Delete Task",
+        "deleteTaskMessage": "Are you sure you want to delete \"{title}\"?",
+        "deleteNote": "Delete Note",
+        "deleteNoteMessage": "Are you sure you want to delete \"{title}\"?\n\nThis action cannot be undone.",
+        "subtasksWarning": "This will also delete all subtasks."
     }
 }

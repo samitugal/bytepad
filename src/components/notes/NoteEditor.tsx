@@ -2,8 +2,11 @@ import { useState, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useNoteStore } from '../../stores/noteStore'
 import { BacklinksPanel } from './BacklinksPanel'
+import { ConfirmModal } from '../common'
+import { useTranslation } from '../../i18n'
 
 export function NoteEditor() {
+  const { t } = useTranslation()
   const { activeNoteId, notes, updateNote, deleteNote } = useNoteStore()
   const activeNote = notes.find(n => n.id === activeNoteId)
 
@@ -11,6 +14,7 @@ export function NoteEditor() {
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
   const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('edit')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     if (activeNote) {
@@ -47,19 +51,22 @@ export function NoteEditor() {
 
   const handleDelete = () => {
     if (!activeNoteId) return
-    if (confirm('Delete this note?')) {
-      deleteNote(activeNoteId)
-    }
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDelete = () => {
+    if (!activeNoteId) return
+    deleteNote(activeNoteId)
+    setShowDeleteConfirm(false)
   }
 
   if (!activeNote) {
     return (
       <div className="flex-1 flex items-center justify-center text-np-text-secondary">
         <div className="text-center">
-          <div className="text-np-green mb-2">// No note selected</div>
+          <div className="text-np-green mb-2">// {t('notes.noNotes')}</div>
           <div className="text-sm">
-            <span className="text-np-purple">Select</span> a note from the list or{' '}
-            <span className="text-np-purple">create</span> a new one
+            <span className="text-np-purple">{t('common.edit')}</span> {t('nav.notes').toLowerCase()}
           </div>
         </div>
       </div>
@@ -76,7 +83,7 @@ export function NoteEditor() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onBlur={handleSave}
-            placeholder="Note title..."
+            placeholder={t('notes.untitled') + '...'}
             className="bg-transparent border-none text-np-text-primary text-lg font-mono
                        focus:outline-none w-64"
           />
@@ -91,9 +98,9 @@ export function NoteEditor() {
                   ? 'bg-np-bg-hover text-np-text-primary' 
                   : 'text-np-text-secondary hover:text-np-text-primary'
               }`}
-              title="Edit mode"
+              title={t('common.edit')}
             >
-              Edit
+              {t('common.edit')}
             </button>
             <button
               onClick={() => setViewMode('split')}
@@ -102,7 +109,7 @@ export function NoteEditor() {
                   ? 'bg-np-bg-hover text-np-text-primary' 
                   : 'text-np-text-secondary hover:text-np-text-primary'
               }`}
-              title="Split view"
+              title="Split"
             >
               Split
             </button>
@@ -113,7 +120,7 @@ export function NoteEditor() {
                   ? 'bg-np-bg-hover text-np-text-primary' 
                   : 'text-np-text-secondary hover:text-np-text-primary'
               }`}
-              title="Preview mode"
+              title="Preview"
             >
               Preview
             </button>
@@ -122,16 +129,16 @@ export function NoteEditor() {
           <button
             onClick={handleSave}
             className="np-btn text-np-green"
-            title="Save (Ctrl+S)"
+            title={`${t('common.save')} (Ctrl+S)`}
           >
-            Save
+            {t('common.save')}
           </button>
           <button
             onClick={handleDelete}
             className="np-btn text-np-error hover:bg-np-error/20"
-            title="Delete note"
+            title={t('common.delete')}
           >
-            Delete
+            {t('common.delete')}
           </button>
         </div>
       </div>
@@ -139,7 +146,7 @@ export function NoteEditor() {
       {/* Tags input */}
       <div className="px-3 py-2 border-b border-np-border bg-np-bg-secondary">
         <div className="flex items-center gap-2">
-          <span className="text-np-text-secondary text-sm">Tags:</span>
+          <span className="text-np-text-secondary text-sm">{t('notes.tags')}:</span>
           <input
             type="text"
             value={tags}
@@ -212,6 +219,18 @@ export function NoteEditor() {
       {activeNote && (
         <BacklinksPanel noteId={activeNote.id} noteTitle={activeNote.title} />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title={`// ${t('confirm.deleteNote')}`}
+        message={t('confirm.deleteNoteMessage', { title: activeNote?.title || t('notes.untitled') })}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        confirmVariant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   )
 }
