@@ -266,9 +266,10 @@
   - Canvas-based force-directed graph
   - Backlinks panel
 
-## Tamamlandı: UI/UX İyileştirmeleri ✓
-- [x] **Resizable Sidebar**
+## UI/UX İyileştirmeleri 
+- [] **Resizable Sidebar**
   - Sol modül listesi genişletilebilir (drag handle)
+  - Sol iç panel de genişlebilir olmalı. Notes, bookmarks, habits, journal, tasks modülleri için
   - Genişlik localStorage'da saklanıyor
   - Min: 80px, Max: 250px
 - [x] **Font Size Settings**
@@ -596,6 +597,130 @@ Task Drag      → taskStore.updateTask() → Calendar re-render
 
 ---
 
+# Sprint 8: FlowBot Agent Mode 
+**Hedef:** FlowBot'u pasif chatbot'tan aktif agent'a dönüştürme
+**Süre:** 7-10 gün
+**Öncelik:** YÜKSEK
+
+## Konsept
+FlowBot artık sadece soru-cevap yapmayacak, uygulama içinde **aksiyon alabilecek**:
+- Task oluşturma/düzenleme/silme
+- Bookmark ekleme (web araması ile)
+- Not oluşturma
+- Habit tracking
+- Gün planlama
+- Veri analizi
+
+## 8.1: Agent Architecture (2 gün)
+### Function Calling / Tool Use
+```typescript
+interface AgentTool {
+  name: string
+  description: string
+  parameters: JSONSchema
+  execute: (params: unknown) => Promise<ToolResult>
+}
+```
+
+### Mevcut Tool'lar
+- **Task Management**: create_task, list_tasks, complete_task, update_task, delete_task
+- **Bookmark Management**: add_bookmark, search_web, list_bookmarks
+- **Note Management**: create_note, search_notes, update_note
+- **Habit Management**: list_habits, complete_habit, create_habit
+- **Journal**: get_today_journal, update_journal
+- **Analytics**: get_daily_summary, get_weekly_stats, suggest_daily_plan
+
+## 8.2: LLM Integration for Tool Calling (2 gün)
+- [ ] OpenAI Function Calling entegrasyonu
+- [ ] Anthropic Tool Use entegrasyonu
+- [ ] Multi-step execution (birden fazla tool çağırma)
+- [ ] Tool sonuçlarını LLM'e geri besleme
+
+## 8.3: Web Search Integration (1 gün)
+- [ ] Web search API entegrasyonu (SerpAPI, Tavily, veya Brave Search)
+- [ ] Arama sonuçlarını parse etme
+- [ ] Sonuçlardan bookmark oluşturma
+- [ ] Rate limiting ve error handling
+
+**Örnek:**
+```
+User: "Prompt engineering ile ilgili kaynaklar bul"
+FlowBot: 
+1. Web'de arar
+2. En iyi 5 sonucu seçer
+3. Her biri için bookmark oluşturur
+4. Kullanıcıya özet sunar
+```
+
+## 8.4: Day Planning Feature (1 gün)
+- [ ] `plan_my_day` komutu
+- [ ] Mevcut task'ları analiz et
+- [ ] Priority ve deadline'a göre sırala
+- [ ] Energy level'a göre öner
+
+**Örnek:**
+```
+User: "Günümü planla"
+FlowBot:
+1. Aktif task'ları çeker
+2. Bugünün mood/energy'sini kontrol eder
+3. Habits'leri kontrol eder
+4. Optimize edilmiş plan önerir:
+   Sabah: P1 task'lar (yüksek enerji)
+   Öğlen: P2 task'lar + habits
+   Akşam: Hafif işler + journal
+```
+
+## 8.5: Confirmation & Safety (1 gün)
+- [ ] Destructive action'lar için onay iste (delete, bulk update)
+- [ ] Action preview göster
+- [ ] Undo desteği
+- [ ] Rate limiting
+
+## 8.6: Agent UI Enhancements (1 gün)
+- [ ] Tool execution indicator
+- [ ] Action log (ne yapıldı)
+- [ ] Inline task/bookmark preview
+- [ ] Quick action buttons
+
+## 8.7: Predefined Commands (1 gün)
+- [ ] `/plan` - Günü planla
+- [ ] `/find <query>` - Web'de ara ve bookmark ekle
+- [ ] `/summarize` - Günlük/haftalık özet
+- [ ] `/focus <task>` - Focus mode başlat
+- [ ] `/quick <title>` - Hızlı task oluştur
+
+## Örnek Senaryolar
+
+### Senaryo 1: Kaynak Bulma
+```
+User: "React best practices hakkında kaynaklar bul"
+FlowBot: Web'de arar → 5 sonuç bulur → Bookmark'lara ekler → Özet sunar
+```
+
+### Senaryo 2: Gün Planlama
+```
+User: "Bugün çok enerjik değilim, günümü planla"
+FlowBot: Task'ları çeker → Düşük enerji için optimize eder → Plan önerir
+```
+
+### Senaryo 3: Hızlı Task
+```
+User: "Yarın 3'te doktor randevusu"
+FlowBot: Task oluşturur → Hatırlatma ayarlar → Onay verir
+```
+
+## Tamamlanma Kriterleri
+- [ ] Agent tool'ları tanımlı ve çalışıyor
+- [ ] LLM function calling entegre
+- [ ] Web search ile bookmark ekleme çalışıyor
+- [ ] Gün planlama özelliği çalışıyor
+- [ ] Destructive action'lar için onay var
+- [ ] Tool execution UI gösteriliyor
+- [ ] Predefined commands çalışıyor
+
+---
+
 # İlerleme Takibi
 
 ## Nasıl Kullanılır
@@ -607,9 +732,9 @@ Task Drag      → taskStore.updateTask() → Calendar re-render
 ## Durum Sembolleri
 - [ ] Yapılmadı
 - [x] Tamamlandı
-- 🔄 Devam ediyor
-- ⏳ Bekliyor
-- ❌ İptal edildi
+- Devam ediyor
+- Bekliyor
+- İptal edildi
 
 ---
 
