@@ -5,12 +5,29 @@ Bu dosya Claude Code tarafından otomatik güncellenir.
 ## [0.7.0] - 2026-01-10
 
 ### Added
-- **PWA Support (Sprint 3.5)**
+- **PWA Support (Sprint 3.5 Complete)**
   - PWA manifest for installable app
   - Service worker for offline caching
   - ErrorBoundary component for graceful error handling
-  - SVG favicon
+  - SVG icons for all PWA sizes
   - Apple mobile web app support
+
+- **Notification Center**
+  - Full notification center UI with Ctrl+Shift+N shortcut
+  - Snooze functionality (15 min / 1 hour)
+  - Pending and recent notifications view
+  - Clear all notifications option
+
+- **Onboarding Flow**
+  - First-time user welcome tour
+  - 5-step interactive guide
+  - Keyboard shortcuts reference
+  - Module overview
+  - FlowBot AI Coach introduction
+
+### Changed
+- Updated keyboard shortcuts: added Ctrl+Shift+N for notification center
+- ROADMAP: Sprint 3.5 marked as complete
 
 ---
 
@@ -231,9 +248,14 @@ Bu dosya Claude Code tarafından otomatik güncellenir.
 - [x] Data export/import
 - [x] Settings Panel
 
-### Sprint 4: Advanced Features
-- [ ] PWA support
-- [ ] AI API integration
+### Sprint 3.5: PWA & Polish ✓
+- [x] PWA support
+- [x] Notification Center
+- [x] Onboarding flow
+- [x] Loading states & Error boundaries
+
+### Sprint 4: Future Features
 - [ ] Dark/Light theme toggle
-- [ ] Desktop notifications
-- [ ] Keyboard shortcuts customization
+- [ ] Global search (Alt+U)
+- [ ] Knowledge graph (wikilinks)
+- [ ] Cloud sync

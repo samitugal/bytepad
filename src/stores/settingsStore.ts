@@ -52,17 +52,21 @@ interface SettingsState {
   llmModel: string
   apiKeys: Record<LLMProvider, string>
   ollamaBaseUrl: string
-  
+
   // Editor Settings
   noteMarkdownPreview: boolean
-  
+
+  // Onboarding
+  onboardingCompleted: boolean
+
   // Actions
   setLLMProvider: (provider: LLMProvider) => void
   setLLMModel: (model: string) => void
   setApiKey: (provider: LLMProvider, key: string) => void
   setOllamaBaseUrl: (url: string) => void
   setNoteMarkdownPreview: (enabled: boolean) => void
-  
+  completeOnboarding: () => void
+
   // Helpers
   getCurrentApiKey: () => string
   getCurrentModel: () => LLMModel | undefined
@@ -83,7 +87,8 @@ export const useSettingsStore = create<SettingsState>()(
       },
       ollamaBaseUrl: 'http://localhost:11434',
       noteMarkdownPreview: false,
-      
+      onboardingCompleted: false,
+
       // Actions
       setLLMProvider: (provider) => {
         const models = LLM_MODELS[provider]
@@ -102,7 +107,9 @@ export const useSettingsStore = create<SettingsState>()(
       setOllamaBaseUrl: (url) => set({ ollamaBaseUrl: url }),
       
       setNoteMarkdownPreview: (enabled) => set({ noteMarkdownPreview: enabled }),
-      
+
+      completeOnboarding: () => set({ onboardingCompleted: true }),
+
       // Helpers
       getCurrentApiKey: () => {
         const state = get()

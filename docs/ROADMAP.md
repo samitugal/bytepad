@@ -173,8 +173,8 @@
 - [x] NotificationSettings component
 - [x] Notification types (habit reminder, deadline, pomodoro, streak risk)
 - [x] Quiet hours support
-- [ ] Snooze functionality
-- [ ] Keyboard: Ctrl+Shift+N = notification center
+- [x] Snooze functionality
+- [x] Keyboard: Ctrl+Shift+N = notification center
 
 **Çıktı:** Browser notifications çalışıyor
 
@@ -215,13 +215,13 @@
 
 **Çıktı:** Production-ready PWA
 
-### MVP3 Tamamlanma Kriterleri 
-- [ ] AI Coach çalışıyor ve context-aware
-- [ ] Browser notifications çalışıyor
+### MVP3 Tamamlanma Kriterleri ✓
+- [x] AI Coach çalışıyor ve context-aware
+- [x] Browser notifications çalışıyor
 - [ ] Email notifications çalışıyor (opsiyonel)
-- [ ] Weekly analysis AI insights veriyor
-- [ ] PWA olarak yüklenebilir
-- [ ] Offline çalışıyor (AI hariç)
+- [x] Weekly analysis AI insights veriyor
+- [x] PWA olarak yüklenebilir
+- [x] Offline çalışıyor (AI hariç)
 
 ---
 
@@ -298,4 +298,4 @@
 
 ---
 
-*Son güncelleme: 2026-01-09*
+*Son güncelleme: 2026-01-10*

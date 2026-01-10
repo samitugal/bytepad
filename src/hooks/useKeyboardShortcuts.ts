@@ -32,6 +32,13 @@ export function useKeyboardShortcuts() {
       return
     }
 
+    // Ctrl+Shift+N - Notification Center (works everywhere)
+    if (e.ctrlKey && e.shiftKey && e.key === 'N') {
+      e.preventDefault()
+      useUIStore.getState().toggleNotificationCenter()
+      return
+    }
+
     // Ctrl+K - Command Palette (works everywhere)
     if (e.ctrlKey && e.key === 'k') {
       e.preventDefault()

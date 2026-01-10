@@ -25,7 +25,7 @@ interface NotificationState {
   preferences: NotificationPreferences
   scheduledNotifications: ScheduledNotification[]
   permissionGranted: boolean
-  
+
   // Actions
   setPreferences: (prefs: Partial<NotificationPreferences>) => void
   setPermissionGranted: (granted: boolean) => void
@@ -33,6 +33,7 @@ interface NotificationState {
   markNotificationFired: (id: string) => void
   removeScheduledNotification: (id: string) => void
   clearFiredNotifications: () => void
+  snoozeNotification: (id: string, minutes: number) => void
 }
 
 export const useNotificationStore = create<NotificationState>()(
@@ -79,6 +80,17 @@ export const useNotificationStore = create<NotificationState>()(
       
       clearFiredNotifications: () => set((state) => ({
         scheduledNotifications: state.scheduledNotifications.filter(n => !n.fired)
+      })),
+
+      snoozeNotification: (id, minutes) => set((state) => ({
+        scheduledNotifications: state.scheduledNotifications.map(n => {
+          if (n.id === id) {
+            const newTime = new Date(n.scheduledTime)
+            newTime.setMinutes(newTime.getMinutes() + minutes)
+            return { ...n, scheduledTime: newTime, fired: false }
+          }
+          return n
+        })
       })),
     }),
     {

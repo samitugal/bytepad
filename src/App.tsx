@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { MenuBar, Sidebar, TabBar, StatusBar, MainContent } from './components/layout'
-import { CommandPalette, FocusMode, SettingsPanel, ErrorBoundary } from './components/common'
+import { CommandPalette, FocusMode, SettingsPanel, ErrorBoundary, NotificationCenter, Onboarding } from './components/common'
 import { ChatWindow } from './components/chat'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { initializeNotifications } from './services/notificationService'
@@ -30,6 +30,8 @@ function App() {
         <CommandPalette />
         <FocusMode />
         <ChatWindow />
+        <NotificationCenter />
+        <Onboarding />
         <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
       </div>
     </ErrorBoundary>

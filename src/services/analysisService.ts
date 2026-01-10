@@ -74,8 +74,8 @@ export function calculateWeeklyStats(
   if (habits.length > 0) {
     const maxCompletion = Math.max(...Object.values(habitCompletions))
     const minCompletion = Math.min(...Object.values(habitCompletions))
-    bestDay = Object.entries(habitCompletions).find(([_, v]) => v === maxCompletion)?.[0] || null
-    worstDay = Object.entries(habitCompletions).find(([_, v]) => v === minCompletion)?.[0] || null
+    bestDay = Object.entries(habitCompletions).find(([, v]) => v === maxCompletion)?.[0] || null
+    worstDay = Object.entries(habitCompletions).find(([, v]) => v === minCompletion)?.[0] || null
   }
 
   const streaks = habits
