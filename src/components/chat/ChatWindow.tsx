@@ -3,7 +3,7 @@ import { useChatStore } from '../../stores/chatStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useHabitStore } from '../../stores/habitStore'
 import { useJournalStore } from '../../stores/journalStore'
-import { sendMessageWithTools, getQuickActions, type AgentResponse } from '../../services/llmService'
+import { sendMessageWithTools, getQuickActions } from '../../services/llmService'
 import type { ToolResult } from '../../services/agentService'
 import type { ChatContext } from '../../types'
 

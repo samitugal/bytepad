@@ -1,4 +1,4 @@
-import { useSettingsStore, PROVIDER_INFO, LLMProvider } from '../stores/settingsStore'
+import { useSettingsStore, PROVIDER_INFO } from '../stores/settingsStore'
 import { formatToolsForOpenAI, formatToolsForAnthropic } from './toolRegistry'
 import { executeToolCall, type ToolCall, type ToolResult } from './agentService'
 import type { ChatMessage, ChatContext } from '../types'
@@ -389,6 +389,40 @@ export async function sendMessageWithTools(
       const toolResult = await executeToolCall(toolCall)
       toolResults.push(toolResult)
     }
+
+    // If we executed tools but have no content, get a follow-up response
+    if (!result.content && toolResults.length > 0) {
+      const toolResultsSummary = toolResults
+        .map(r => `${r.success ? 'Başarılı' : 'Hata'}: ${r.message}`)
+        .join('\n')
+
+      // Add tool results to messages and get a natural response
+      const followUpMessages = [
+        ...messages,
+        { role: 'assistant', content: `[Tool çağrıları yapıldı]\n${toolResultsSummary}` },
+        { role: 'user', content: 'Bu işlemleri yaptın. Şimdi bana kısa ve doğal bir şekilde ne yaptığını açıkla ve varsa önerilerde bulun.' },
+      ]
+
+      try {
+        let followUpResult: LLMResponse
+        if (llmProvider === 'openai') {
+          followUpResult = await callOpenAI(followUpMessages, apiKeys.openai, llmModel)
+        } else if (llmProvider === 'anthropic') {
+          followUpResult = await callAnthropic(followUpMessages, apiKeys.anthropic, llmModel)
+        } else {
+          const providerCalls: Record<string, () => Promise<LLMResponse>> = {
+            google: () => callGoogle(followUpMessages, apiKeys.google, llmModel),
+            groq: () => callGroq(followUpMessages, apiKeys.groq, llmModel),
+            ollama: () => callOllama(followUpMessages, ollamaBaseUrl, llmModel),
+          }
+          followUpResult = await providerCalls[llmProvider]()
+        }
+        result.content = followUpResult.content
+      } catch {
+        // If follow-up fails, generate a simple response based on tool results
+        result.content = generateSimpleResponse(toolResults)
+      }
+    }
   }
 
   return {
@@ -396,6 +430,37 @@ export async function sendMessageWithTools(
     toolCalls: result.toolCalls || [],
     toolResults,
   }
+}
+
+// Generate a simple response when LLM follow-up fails
+function generateSimpleResponse(toolResults: ToolResult[]): string {
+  const successCount = toolResults.filter(r => r.success).length
+  const totalCount = toolResults.length
+
+  if (totalCount === 0) return ''
+
+  if (successCount === totalCount) {
+    if (totalCount === 1) {
+      const result = toolResults[0]
+      // Generate contextual responses based on tool type
+      if (result.message.includes('plan created') || result.message.includes('Day plan')) {
+        return `Günün için bir plan hazırladım! 📋 ${result.message.split(':').slice(1).join(':').trim() || ''}`
+      }
+      if (result.message.includes('Task') && result.message.includes('created')) {
+        return `Tamam, task'ı ekledim! ✅ Başka bir şey var mı?`
+      }
+      if (result.message.includes('Found') && result.message.includes('results')) {
+        return `Arama sonuçlarını buldum! 🔍 İstersen bunları bookmark'lara kaydedebilirim.`
+      }
+      if (result.message.includes('bookmark') || result.message.includes('Bookmark')) {
+        return `Bookmark'ları kaydettim! 📚 Bookmarks modülünden görebilirsin.`
+      }
+      return `Tamam, hallettim! ✅`
+    }
+    return `${totalCount} işlem başarıyla tamamlandı! ✅`
+  }
+
+  return `${successCount}/${totalCount} işlem tamamlandı.`
 }
 
 // Legacy function for backward compatibility
