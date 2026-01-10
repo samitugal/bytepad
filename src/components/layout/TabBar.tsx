@@ -6,6 +6,8 @@ const MODULE_NAMES: Record<ModuleType, string> = {
   habits: 'Habits',
   tasks: 'Tasks',
   journal: 'Journal',
+  bookmarks: 'Bookmarks',
+  calendar: 'Calendar',
   analysis: 'Analysis',
 }
 
