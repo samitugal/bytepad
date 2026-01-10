@@ -888,6 +888,29 @@ FlowBot: Task oluşturur → Hatırlatma ayarlar → Onay verir
 
 ---
 
+# Sprint 11: Daily Notes
+**See:** [SPRINT_11_DAILY_NOTES.md](./SPRINT_11_DAILY_NOTES.md)
+
+**Goal:** Quick daily notes with card-based grid layout (Notion/Obsidian style)
+**Duration:** 2-3 days
+**Priority:** MEDIUM
+**Status:** PLANNED
+
+### Summary
+- Grid layout kartlar halinde günlük notlar
+- Tarih bazlı organizasyon (← Dün | Bugün | Yarın →)
+- Pinned/Newest/By Tags filtreleme
+- Sidebar'da ^8 shortcut ile erişim
+
+### Key Tasks
+- [ ] Data model & Zustand store
+- [ ] Daily Notes tab UI
+- [ ] Card CRUD (add/edit/delete/pin)
+- [ ] Filtering & search
+- [ ] Notepad++ tema uyumu
+
+---
+
 # İlerleme Takibi
 
 ## Nasıl Kullanılır
@@ -905,4 +928,4 @@ FlowBot: Task oluşturur → Hatırlatma ayarlar → Onay verir
 
 ---
 
-*Son güncelleme: 2026-01-10 (Sprint 10: Agent Framework Migration planlandı)*
+*Son güncelleme: 2026-01-10 (Sprint 11: Daily Notes planlandı)*
