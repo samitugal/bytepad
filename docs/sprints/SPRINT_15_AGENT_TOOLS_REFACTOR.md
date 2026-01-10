@@ -13,6 +13,14 @@
 4. **Limited planning tools** - No tools for creating time-blocked schedules
 5. **Poor tool documentation** - Descriptions are too brief
 
+## Known Bugs (To Fix)
+| Bug | Description | Status |
+|-----|-------------|--------|
+| Response cut-off | Agent responds once then stops mid-conversation | 🔧 Fixed |
+| Empty follow-up | After tool execution, no natural language response | 🔧 Fixed |
+| No time context | "Plan remaining day" fails - agent doesn't know time | 🔧 Fixed |
+| Missing error handling | Tool errors not properly caught and displayed | 🔧 Fixed |
+
 ---
 
 ## 15.1: Core Tool Improvements (1 day)
