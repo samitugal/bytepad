@@ -3,7 +3,7 @@ import { useChatStore } from '../../stores/chatStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useHabitStore } from '../../stores/habitStore'
 import { useJournalStore } from '../../stores/journalStore'
-import { sendMessageWithTools, getQuickActions } from '../../services/llmService'
+import { sendMessageStreaming, getQuickActions } from '../../services/llmService'
 import type { ToolResult } from '../../services/agentService'
 import type { ChatContext } from '../../types'
 
@@ -79,21 +79,38 @@ export function ChatWindow() {
     }
   }, [isOpen])
 
+  const [streamingContent, setStreamingContent] = useState('')
+
   const handleSend = async (text: string) => {
     if (!text.trim() || isLoading) return
 
     const userMessage = text.trim()
     setInput('')
     setError(null)
+    setStreamingContent('')
 
     addMessage({ role: 'user', content: userMessage })
     setLoading(true)
 
     try {
       const context = getContext()
-      const response = await sendMessageWithTools(userMessage, messages, context)
+      let accumulatedContent = ''
+      const toolMessages: string[] = []
 
-      // Build response message with tool results
+      const response = await sendMessageStreaming(
+        userMessage,
+        messages,
+        context,
+        (chunk) => {
+          accumulatedContent += chunk
+          setStreamingContent(accumulatedContent)
+        },
+        (_toolName, result) => {
+          toolMessages.push(`✓ ${result}`)
+        }
+      )
+
+      // Build final response message
       let finalContent = response.content
 
       if (response.toolResults.length > 0) {
@@ -106,12 +123,12 @@ export function ChatWindow() {
           : `**Yapılan işlemler:**\n${toolSummary}`
       }
 
+      setStreamingContent('')
       addMessage({ role: 'assistant', content: finalContent })
     } catch (err) {
       console.error('[FlowBot Error]', err)
       const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu'
 
-      // Provide more specific error messages
       if (errorMessage.includes('API key')) {
         setError('API key geçersiz veya eksik. Settings → AI bölümünden kontrol et.')
       } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
@@ -123,6 +140,7 @@ export function ChatWindow() {
       } else {
         setError(errorMessage)
       }
+      setStreamingContent('')
     } finally {
       setLoading(false)
     }
@@ -215,8 +233,12 @@ export function ChatWindow() {
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-np-bg-tertiary px-3 py-2 text-sm border-l-2 border-np-green">
-              <span className="text-np-text-secondary animate-pulse">FlowBot düşünüyor...</span>
+            <div className="bg-np-bg-tertiary px-3 py-2 text-sm border-l-2 border-np-green max-w-[85%]">
+              {streamingContent ? (
+                <div className="whitespace-pre-wrap">{streamingContent}<span className="animate-pulse">▊</span></div>
+              ) : (
+                <span className="text-np-text-secondary animate-pulse">FlowBot düşünüyor...</span>
+              )}
             </div>
           </div>
         )}
