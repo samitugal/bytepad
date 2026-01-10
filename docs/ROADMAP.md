@@ -178,12 +178,12 @@
 
 **Çıktı:** Browser notifications çalışıyor
 
-## Sprint 3.3: Email Notifications (2 gün)
-- [ ] EmailJS setup
-- [ ] Email templates (daily summary, weekly report, streak alert)
-- [ ] Email preferences UI
-- [ ] Daily summary email (opsiyonel, kullanıcı seçer)
-- [ ] Streak risk alerts
+## Sprint 3.3: Email Notifications (2 gün) ✓
+- [x] EmailJS setup (@emailjs/browser)
+- [x] Email templates (daily summary, weekly report, streak alert)
+- [x] Email preferences UI (Settings panel)
+- [x] Daily summary email (opsiyonel, kullanıcı seçer)
+- [x] Streak risk alerts
 
 **Çıktı:** Email bildirimleri çalışıyor
 
@@ -194,10 +194,10 @@
 - [x] HabitChart component (completion rate)
 - [x] MoodChart component (trend line)
 - [x] TaskStats component
-- [ ] AI Insights integration
+- [x] AI Insights integration (generateAIInsights fonksiyonu)
 - [x] ADHD pattern detection (hyperfocus, energy dips, etc.)
 - [x] Recommendations generation
-- [ ] PDF/Image export (opsiyonel)
+- [ ] PDF/Image export (sonraki iterasyon)
 
 **Çıktı:** AI-powered haftalık analiz
 
@@ -267,11 +267,11 @@
   - Backlinks panel
 
 ## UI/UX İyileştirmeleri 
-- [] **Resizable Sidebar**
-  - Sol modül listesi genişletilebilir (drag handle)
-  - Sol iç panel de genişlebilir olmalı. Notes, bookmarks, habits, journal, tasks modülleri için
-  - Genişlik localStorage'da saklanıyor
-  - Min: 80px, Max: 250px
+- [x] **Resizable Sidebar**
+  - Sol modül listesi genişletilebilir (drag handle) ✓
+  - Notes modülü iç panel genişletilebilir (ResizablePanel component) ✓
+  - Genişlik localStorage'da saklanıyor ✓
+  - Min: 80px, Max: 250px ✓
 - [x] **Font Size Settings**
   - Settings panelinde "// Display" bölümü en üstte
   - Extra Small, Small, Default, Large, Extra Large seçenekleri
@@ -301,6 +301,15 @@
   - Senkronize edilen veriler:
     - Notes, Tasks, Habits, Journal, Bookmarks
   - Offline-first: İnternet olmadan çalışır, bağlanınca sync
+
+- [x] **GitHub Gist Sync** ✓ YENİ
+  - Private Gist ile cihazlar arası sync
+  - GitHub Personal Access Token ile kimlik doğrulama
+  - Yeni Gist oluşturma veya mevcut Gist'e bağlanma
+  - Auto-sync (1/5/15/30 dakika aralıklarla)
+  - Manuel sync, force push, force pull
+  - Son sync durumu ve hata gösterimi
+  - Senkronize edilen veriler: Notes, Tasks, Habits, Journal, Bookmarks
 
 ## Sonraki: Planlanan Özellikler
 - [ ] **Dark/Light Theme Toggle**
@@ -740,4 +749,4 @@ FlowBot: Task oluşturur → Hatırlatma ayarlar → Onay verir
 
 ---
 
-*Son güncelleme: 2026-01-10*
+*Son güncelleme: 2026-01-10 (Sprint 8 + Email Notifications + AI Insights + GitHub Gist Sync tamamlandı)*

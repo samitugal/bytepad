@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useHabitStore } from '../../stores/habitStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useJournalStore } from '../../stores/journalStore'
-import { calculateWeeklyStats, getWeekRange, type WeeklyStats } from '../../services/analysisService'
+import { calculateWeeklyStats, getWeekRange, generateAIInsights, type WeeklyStats } from '../../services/analysisService'
 
 const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -57,6 +57,12 @@ export function AnalysisModule() {
   const { entries } = useJournalStore()
 
   const [weekOffset, setWeekOffset] = useState(0)
+  const [aiInsights, setAiInsights] = useState<{
+    insights: string[]
+    recommendations: string[]
+    summary: string
+  } | null>(null)
+  const [isLoadingAI, setIsLoadingAI] = useState(false)
 
   const weekRange = useMemo(() => {
     const now = new Date()
@@ -67,6 +73,23 @@ export function AnalysisModule() {
   const stats: WeeklyStats = useMemo(() => {
     return calculateWeeklyStats(habits, tasks, entries, weekRange)
   }, [habits, tasks, entries, weekRange])
+
+  const handleGenerateAIInsights = async () => {
+    setIsLoadingAI(true)
+    setAiInsights(null)
+    try {
+      const result = await generateAIInsights(stats)
+      setAiInsights(result)
+    } catch (error) {
+      console.error('AI Insights error:', error)
+    } finally {
+      setIsLoadingAI(false)
+    }
+  }
+
+  // Use AI insights if available, otherwise use default stats
+  const displayInsights = aiInsights?.insights || stats.insights
+  const displayRecommendations = aiInsights?.recommendations || stats.recommendations
 
   const formatDateRange = (start: string, end: string) => {
     const s = new Date(start)
@@ -145,19 +168,18 @@ export function AnalysisModule() {
         <div className="space-y-2">
           {Object.entries(stats.tasks.byPriority).map(([priority, data]) => (
             <div key={priority} className="flex items-center gap-3">
-              <span className={`text-xs font-bold w-8 ${
-                priority === 'P1' ? 'text-np-error' :
+              <span className={`text-xs font-bold w-8 ${priority === 'P1' ? 'text-np-error' :
                 priority === 'P2' ? 'text-np-orange' :
-                priority === 'P3' ? 'text-np-blue' : 'text-np-text-secondary'
-              }`}>{priority}</span>
+                  priority === 'P3' ? 'text-np-blue' : 'text-np-text-secondary'
+                }`}>{priority}</span>
               <div className="flex-1">
                 <ProgressBar
                   value={data.completed}
                   max={data.total || 1}
                   color={
                     priority === 'P1' ? 'bg-np-error' :
-                    priority === 'P2' ? 'bg-np-orange' :
-                    priority === 'P3' ? 'bg-np-blue' : 'bg-np-text-secondary'
+                      priority === 'P2' ? 'bg-np-orange' :
+                        priority === 'P3' ? 'bg-np-blue' : 'bg-np-text-secondary'
                   }
                 />
               </div>
@@ -169,13 +191,45 @@ export function AnalysisModule() {
         </div>
       </div>
 
+      {/* AI Insights Button & Summary */}
+      <div className="bg-np-bg-secondary border border-np-border p-4 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm text-np-purple">// AI Analysis</div>
+          <button
+            onClick={handleGenerateAIInsights}
+            disabled={isLoadingAI}
+            className="np-btn text-xs flex items-center gap-2"
+          >
+            {isLoadingAI ? (
+              <>
+                <span className="animate-spin">⚡</span>
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <span>🤖</span>
+                Generate AI Insights
+              </>
+            )}
+          </button>
+        </div>
+        {aiInsights?.summary && (
+          <div className="text-sm text-np-text-primary bg-np-bg-tertiary p-3 border-l-2 border-np-purple">
+            {aiInsights.summary}
+          </div>
+        )}
+      </div>
+
       {/* Insights & Recommendations */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         {/* Insights */}
         <div className="bg-np-bg-secondary border border-np-border p-4">
-          <div className="text-sm text-np-green mb-3">// Insights</div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm text-np-green">// Insights</span>
+            {aiInsights && <span className="text-xs text-np-purple bg-np-purple/20 px-2 py-0.5">AI</span>}
+          </div>
           <div className="space-y-2">
-            {stats.insights.map((insight, i) => (
+            {displayInsights.map((insight, i) => (
               <div key={i} className="text-sm text-np-text-primary flex gap-2">
                 <span className="text-np-purple">→</span>
                 <span>{insight}</span>
@@ -186,9 +240,12 @@ export function AnalysisModule() {
 
         {/* Recommendations */}
         <div className="bg-np-bg-secondary border border-np-border p-4">
-          <div className="text-sm text-np-orange mb-3">// Recommendations</div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm text-np-orange">// Recommendations</span>
+            {aiInsights && <span className="text-xs text-np-purple bg-np-purple/20 px-2 py-0.5">AI</span>}
+          </div>
           <div className="space-y-2">
-            {stats.recommendations.map((rec, i) => (
+            {displayRecommendations.map((rec, i) => (
               <div key={i} className="text-sm text-np-text-primary flex gap-2">
                 <span className="text-np-cyan">•</span>
                 <span>{rec}</span>

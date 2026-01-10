@@ -4,6 +4,15 @@ import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider, FONT_SIZES, F
 import { useNotificationStore } from '../../stores/notificationStore'
 import { useAuthStore } from '../../stores/authStore'
 import { requestNotificationPermission, startNotificationChecker, stopNotificationChecker } from '../../services/notificationService'
+import {
+  syncWithGist,
+  forcePushToGist,
+  forcePullFromGist,
+  createGist,
+  validateGitHubToken,
+  startAutoSync,
+  stopAutoSync
+} from '../../services/gistSyncService'
 
 interface SettingsPanelProps {
   isOpen: boolean
@@ -22,12 +31,19 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     apiKeys,
     ollamaBaseUrl,
     fontSize,
+    emailPreferences,
+    gistSync,
     setLLMProvider,
     setLLMModel,
     setApiKey,
     setOllamaBaseUrl,
     setFontSize,
+    setEmailPreferences,
+    setGistSync,
   } = useSettingsStore()
+
+  const [gistSyncStatus, setGistSyncStatus] = useState<string | null>(null)
+  const [isGistSyncing, setIsGistSyncing] = useState(false)
 
   const {
     preferences: notifPrefs,
@@ -89,6 +105,66 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
         clearAllData()
         setImportStatus({ type: 'success', message: 'All data cleared. Refresh to reset.' })
       }
+    }
+  }
+
+  // Gist Sync Handlers
+  const handleGistSync = async () => {
+    setIsGistSyncing(true)
+    setGistSyncStatus(null)
+    const result = await syncWithGist()
+    setGistSyncStatus(result.message)
+    setIsGistSyncing(false)
+  }
+
+  const handleGistForcePush = async () => {
+    if (!confirm('This will overwrite remote data with local data. Continue?')) return
+    setIsGistSyncing(true)
+    setGistSyncStatus(null)
+    const result = await forcePushToGist()
+    setGistSyncStatus(result.message)
+    setIsGistSyncing(false)
+  }
+
+  const handleGistForcePull = async () => {
+    if (!confirm('This will overwrite local data with remote data. Continue?')) return
+    setIsGistSyncing(true)
+    setGistSyncStatus(null)
+    const result = await forcePullFromGist()
+    setGistSyncStatus(result.message)
+    setIsGistSyncing(false)
+  }
+
+  const handleCreateGist = async () => {
+    if (!gistSync.githubToken) {
+      setGistSyncStatus('Please enter GitHub token first')
+      return
+    }
+    setIsGistSyncing(true)
+    try {
+      const isValid = await validateGitHubToken(gistSync.githubToken)
+      if (!isValid) {
+        setGistSyncStatus('Invalid GitHub token')
+        setIsGistSyncing(false)
+        return
+      }
+      const gistId = await createGist(gistSync.githubToken, 'MyFlowSpace Data Sync')
+      setGistSync({ gistId, enabled: true })
+      setGistSyncStatus(`Gist created! ID: ${gistId}`)
+      startAutoSync()
+    } catch (error) {
+      setGistSyncStatus(`Error: ${error instanceof Error ? error.message : 'Unknown'}`)
+    }
+    setIsGistSyncing(false)
+  }
+
+  const handleToggleGistSync = () => {
+    const newEnabled = !gistSync.enabled
+    setGistSync({ enabled: newEnabled })
+    if (newEnabled && gistSync.githubToken && gistSync.gistId) {
+      startAutoSync()
+    } else {
+      stopAutoSync()
     }
   }
 
@@ -185,6 +261,149 @@ VITE_FIREBASE_PROJECT_ID=...`}
                 {authLoading ? 'Signing in...' : 'Sign in with Google'}
               </button>
             )}
+          </div>
+
+          {/* GitHub Gist Sync */}
+          <div>
+            <h3 className="text-sm text-np-green mb-3">// GitHub Gist Sync</h3>
+            <div className="space-y-3">
+              <p className="text-xs text-np-text-secondary">
+                Sync your data across devices using a private GitHub Gist.
+              </p>
+
+              {/* Enable/Disable */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-np-text-secondary">Enable Gist Sync</span>
+                <button
+                  onClick={handleToggleGistSync}
+                  disabled={!gistSync.githubToken || !gistSync.gistId}
+                  className={`np-btn text-xs ${gistSync.enabled ? 'text-np-error' : 'text-np-green'}`}
+                >
+                  {gistSync.enabled ? 'Disable' : 'Enable'}
+                </button>
+              </div>
+
+              {/* GitHub Token */}
+              <div>
+                <label className="block text-xs text-np-text-secondary mb-1">
+                  GitHub Personal Access Token
+                </label>
+                <input
+                  type="password"
+                  value={gistSync.githubToken}
+                  onChange={(e) => setGistSync({ githubToken: e.target.value })}
+                  placeholder="ghp_xxxxxxxxxxxx"
+                  className="w-full bg-np-bg-primary border border-np-border text-np-text-primary 
+                             font-mono text-xs px-2 py-1.5 focus:outline-none focus:border-np-blue"
+                />
+                <p className="text-xs text-np-text-secondary mt-1">
+                  Create at{' '}
+                  <a
+                    href="https://github.com/settings/tokens/new?scopes=gist&description=MyFlowSpace"
+                    target="_blank"
+                    rel="noopener"
+                    className="text-np-blue hover:underline"
+                  >
+                    github.com/settings/tokens
+                  </a>
+                  {' '}with "gist" scope
+                </p>
+              </div>
+
+              {/* Gist ID */}
+              <div>
+                <label className="block text-xs text-np-text-secondary mb-1">Gist ID</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={gistSync.gistId}
+                    onChange={(e) => setGistSync({ gistId: e.target.value })}
+                    placeholder="Enter existing Gist ID or create new"
+                    className="flex-1 bg-np-bg-primary border border-np-border text-np-text-primary 
+                               font-mono text-xs px-2 py-1.5 focus:outline-none focus:border-np-blue"
+                  />
+                  <button
+                    onClick={handleCreateGist}
+                    disabled={isGistSyncing || !gistSync.githubToken}
+                    className="np-btn text-xs"
+                  >
+                    {isGistSyncing ? '...' : 'Create New'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Auto Sync */}
+              {gistSync.gistId && (
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm text-np-text-secondary">
+                    <input
+                      type="checkbox"
+                      checked={gistSync.autoSync}
+                      onChange={(e) => setGistSync({ autoSync: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    Auto-sync every
+                  </label>
+                  <select
+                    value={gistSync.syncInterval}
+                    onChange={(e) => setGistSync({ syncInterval: Number(e.target.value) })}
+                    className="np-input text-xs"
+                    disabled={!gistSync.autoSync}
+                  >
+                    <option value={1}>1 min</option>
+                    <option value={5}>5 min</option>
+                    <option value={15}>15 min</option>
+                    <option value={30}>30 min</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Sync Actions */}
+              {gistSync.enabled && gistSync.gistId && (
+                <div className="flex gap-2 pt-2 border-t border-np-border">
+                  <button
+                    onClick={handleGistSync}
+                    disabled={isGistSyncing}
+                    className="np-btn text-xs flex-1"
+                  >
+                    {isGistSyncing ? '⏳ Syncing...' : '🔄 Sync Now'}
+                  </button>
+                  <button
+                    onClick={handleGistForcePush}
+                    disabled={isGistSyncing}
+                    className="np-btn text-xs text-np-orange"
+                    title="Overwrite remote with local"
+                  >
+                    ⬆️ Push
+                  </button>
+                  <button
+                    onClick={handleGistForcePull}
+                    disabled={isGistSyncing}
+                    className="np-btn text-xs text-np-cyan"
+                    title="Overwrite local with remote"
+                  >
+                    ⬇️ Pull
+                  </button>
+                </div>
+              )}
+
+              {/* Status */}
+              {gistSyncStatus && (
+                <div className={`text-xs p-2 border ${gistSync.lastSyncStatus === 'error'
+                    ? 'border-np-error text-np-error'
+                    : 'border-np-green text-np-green'
+                  }`}>
+                  {gistSyncStatus}
+                </div>
+              )}
+
+              {/* Last Sync Info */}
+              {gistSync.lastSyncAt && (
+                <div className="text-xs text-np-text-secondary">
+                  Last sync: {new Date(gistSync.lastSyncAt).toLocaleString()}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Data Stats */}
@@ -339,6 +558,130 @@ VITE_FIREBASE_PROJECT_ID=...`}
                         />
                       </div>
                     )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Email Notifications */}
+          <div>
+            <h3 className="text-sm text-np-green mb-3">// Email Notifications</h3>
+            <div className="space-y-3">
+              {/* Enable/Disable */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-np-text-secondary">Email Notifications</span>
+                <button
+                  onClick={() => setEmailPreferences({ enabled: !emailPreferences.enabled })}
+                  className={`np-btn text-xs ${emailPreferences.enabled ? 'text-np-error' : 'text-np-green'}`}
+                >
+                  {emailPreferences.enabled ? 'Disable' : 'Enable'}
+                </button>
+              </div>
+
+              {emailPreferences.enabled && (
+                <>
+                  {/* User Email */}
+                  <div>
+                    <label className="block text-xs text-np-text-secondary mb-1">Your Email</label>
+                    <input
+                      type="email"
+                      value={emailPreferences.userEmail}
+                      onChange={(e) => setEmailPreferences({ userEmail: e.target.value })}
+                      placeholder="your@email.com"
+                      className="w-full bg-np-bg-primary border border-np-border text-np-text-primary 
+                                 font-mono text-sm px-2 py-1.5 focus:outline-none focus:border-np-blue"
+                    />
+                  </div>
+
+                  {/* EmailJS Configuration */}
+                  <div className="pt-2 border-t border-np-border">
+                    <p className="text-xs text-np-text-secondary mb-2">
+                      EmailJS Configuration - Get free account at{' '}
+                      <a href="https://emailjs.com" target="_blank" rel="noopener" className="text-np-blue hover:underline">
+                        emailjs.com
+                      </a>
+                    </p>
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={emailPreferences.emailjsServiceId}
+                        onChange={(e) => setEmailPreferences({ emailjsServiceId: e.target.value })}
+                        placeholder="Service ID"
+                        className="w-full bg-np-bg-primary border border-np-border text-np-text-primary 
+                                   font-mono text-xs px-2 py-1 focus:outline-none focus:border-np-blue"
+                      />
+                      <input
+                        type="text"
+                        value={emailPreferences.emailjsPublicKey}
+                        onChange={(e) => setEmailPreferences({ emailjsPublicKey: e.target.value })}
+                        placeholder="Public Key"
+                        className="w-full bg-np-bg-primary border border-np-border text-np-text-primary 
+                                   font-mono text-xs px-2 py-1 focus:outline-none focus:border-np-blue"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email Types */}
+                  <div className="space-y-2 pt-2">
+                    <label className="flex items-center gap-2 text-sm text-np-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={emailPreferences.dailySummaryEnabled}
+                        onChange={(e) => setEmailPreferences({ dailySummaryEnabled: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <span>📧 Daily summary email</span>
+                    </label>
+                    {emailPreferences.dailySummaryEnabled && (
+                      <div className="ml-6 flex items-center gap-2">
+                        <span className="text-xs text-np-text-secondary">Send at:</span>
+                        <input
+                          type="time"
+                          value={emailPreferences.dailySummaryTime}
+                          onChange={(e) => setEmailPreferences({ dailySummaryTime: e.target.value })}
+                          className="np-input text-xs"
+                        />
+                      </div>
+                    )}
+
+                    <label className="flex items-center gap-2 text-sm text-np-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={emailPreferences.weeklySummaryEnabled}
+                        onChange={(e) => setEmailPreferences({ weeklySummaryEnabled: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <span>📊 Weekly report email</span>
+                    </label>
+                    {emailPreferences.weeklySummaryEnabled && (
+                      <div className="ml-6 flex items-center gap-2">
+                        <span className="text-xs text-np-text-secondary">Send on:</span>
+                        <select
+                          value={emailPreferences.weeklySummaryDay}
+                          onChange={(e) => setEmailPreferences({ weeklySummaryDay: Number(e.target.value) })}
+                          className="np-input text-xs"
+                        >
+                          <option value={0}>Sunday</option>
+                          <option value={1}>Monday</option>
+                          <option value={2}>Tuesday</option>
+                          <option value={3}>Wednesday</option>
+                          <option value={4}>Thursday</option>
+                          <option value={5}>Friday</option>
+                          <option value={6}>Saturday</option>
+                        </select>
+                      </div>
+                    )}
+
+                    <label className="flex items-center gap-2 text-sm text-np-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={emailPreferences.streakAlertsEnabled}
+                        onChange={(e) => setEmailPreferences({ streakAlertsEnabled: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <span>🔥 Streak risk alerts</span>
+                    </label>
                   </div>
                 </>
               )}
