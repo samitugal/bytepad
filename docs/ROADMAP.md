@@ -266,29 +266,67 @@
   - Canvas-based force-directed graph
   - Backlinks panel
 
-## Sonraki: UI/UX İyileştirmeleri
-- [ ] **Resizable Sidebar**
-  - Sol modül listesi (Notes, Habits, Tasks, vb.) genişletilebilir
-  - Drag handle ile genişlik ayarı
-  - Genişlik localStorage'da saklanacak
-  - Min/max genişlik sınırları
+## Tamamlandı: UI/UX İyileştirmeleri ✓
+- [x] **Resizable Sidebar**
+  - Sol modül listesi genişletilebilir (drag handle)
+  - Genişlik localStorage'da saklanıyor
+  - Min: 80px, Max: 250px
 
-- [ ] **Font Size Settings Visibility**
-  - Settings panelinde "// Display" bölümünde mevcut
-  - Small, Medium, Large seçenekleri
-  - Panel scroll'u iyileştirilecek
+- [x] **Font Size Settings**
+  - Settings panelinde "// Display" bölümü en üstte
+  - Extra Small, Small, Default, Large, Extra Large seçenekleri
+
+- [x] **Cross-Tab Synchronization**
+  - BroadcastChannel API ile aynı tarayıcıda sekmeler arası sync
+
+## Tamamlandı: Bookmarks Module ✓
+- [x] **Bookmarks (Raindrop.io benzeri)**
+  - URL, title, description, tags desteği
+  - Collections: Gold 🥇, Silver 🥈, Bronze 🥉, Unsorted
+  - Sol sidebar'da en çok kullanılan 5 tag
+  - Sıralama: tarih, başlık, domain
+  - Okundu/okunmadı işaretleme
+  - Cross-tab sync
+
+## Tamamlandı: Cloud Sync & Authentication ✓
+- [x] **Google Authentication (Firebase)**
+  - Google hesabı ile giriş
+  - Settings panelinde Account bölümü
+  - User avatar ve email gösterimi
+
+- [x] **Firebase Firestore Cloud Sync**
+  - Farklı tarayıcılar/cihazlar arası real-time sync
+  - User-isolated data (UID bazlı)
+  - Debounced writes (1 saniye)
+  - Senkronize edilen veriler:
+    - Notes, Tasks, Habits, Journal, Bookmarks
+  - Offline-first: İnternet olmadan çalışır, bağlanınca sync
+
+## Sonraki: Planlanan Özellikler
+- [ ] **Dark/Light Theme Toggle**
+  - Tema değiştirme butonu
+  - Sistem temasına uyum
+
+- [ ] **Calendar Integration**
+  - Tasks ve Habits için takvim görünümü
+  - Deadline'ları takvimde göster
+
+- [ ] **Multiple Workspaces**
+  - Farklı projeler için ayrı workspace'ler
+  - Workspace değiştirme
+
+- [ ] **Collaboration**
+  - Paylaşımlı listeler
+  - Real-time collaboration
 
 ## Potansiyel Eklemeler
-- [ ] Dark/Light theme toggle
-- [ ] Multiple workspaces
-- [ ] Cloud sync (Supabase/Firebase)
-- [ ] Collaboration (paylaşımlı lists)
-- [ ] Calendar integration
 - [ ] Mobile app (React Native)
 - [ ] Browser extension
 - [ ] Widgets
 - [ ] Voice input
 - [ ] Gamification (achievements, levels)
+- [ ] PDF/Image export
+- [ ] Email notifications (daily summary)
 
 ---
 
