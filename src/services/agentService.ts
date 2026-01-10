@@ -137,9 +137,21 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
           priority: t.priority,
           deadline: t.deadline ? new Date(t.deadline).toISOString().split('T')[0] : null,
         }))
+        // Build detailed message with task names
+        let message = `${tasks.length} pending task${tasks.length !== 1 ? 's' : ''}`
+        if (tasks.length > 0) {
+          const taskList = tasks.slice(0, 5).map(t => {
+            const deadline = t.deadline ? ` (${new Date(t.deadline).toLocaleDateString()})` : ''
+            return `[${t.priority}] ${t.title}${deadline}`
+          }).join('\n• ')
+          message += `:\n• ${taskList}`
+          if (tasks.length > 5) {
+            message += `\n... and ${tasks.length - 5} more`
+          }
+        }
         return {
           success: true,
-          message: `${tasks.length} pending task${tasks.length !== 1 ? 's' : ''}`,
+          message,
           data: formatted,
         }
       }
@@ -148,9 +160,21 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
         const tasks = useTaskStore.getState().tasks.filter(
           t => !t.completed && t.priority === args.priority
         )
+        // Build detailed message with task names
+        let message = `${tasks.length} ${args.priority} task${tasks.length !== 1 ? 's' : ''}`
+        if (tasks.length > 0) {
+          const taskList = tasks.slice(0, 5).map(t => {
+            const deadline = t.deadline ? ` (${new Date(t.deadline).toLocaleDateString()})` : ''
+            return `${t.title}${deadline}`
+          }).join('\n• ')
+          message += `:\n• ${taskList}`
+          if (tasks.length > 5) {
+            message += `\n... and ${tasks.length - 5} more`
+          }
+        }
         return {
           success: true,
-          message: `${tasks.length} ${args.priority} task${tasks.length !== 1 ? 's' : ''}`,
+          message,
           data: tasks.map(t => ({ id: t.id, title: t.title, deadline: t.deadline })),
         }
       }
@@ -196,10 +220,28 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
           streak: h.streak,
           category: h.category,
         }))
-        const completed = formatted.filter(h => h.completedToday).length
+        const completed = formatted.filter(h => h.completedToday)
+        const pending = formatted.filter(h => !h.completedToday)
+
+        // Build detailed message
+        let message = `**Bugünkü Habit'ler:** ${completed.length}/${habits.length} tamamlandı\n`
+        if (pending.length > 0) {
+          message += `\n**Bekleyen:**\n`
+          pending.forEach(h => {
+            const streakInfo = h.streak > 0 ? ` (🔥 ${h.streak} gün)` : ''
+            message += `• [ ] ${h.name}${streakInfo}\n`
+          })
+        }
+        if (completed.length > 0) {
+          message += `\n**Tamamlanan:**\n`
+          completed.forEach(h => {
+            message += `• [✓] ${h.name} (🔥 ${h.streak} gün)\n`
+          })
+        }
+
         return {
           success: true,
-          message: `${completed}/${habits.length} habits completed today`,
+          message,
           data: formatted,
         }
       }
@@ -314,21 +356,38 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
           new Date(t.completedAt).toISOString().split('T')[0] === today
         )
         const habitsCompletedToday = habits.filter(h => h.completions[today])
+        const topPriorityTasks = pendingTasks
+          .filter(t => t.priority === 'P1' || t.priority === 'P2')
+          .slice(0, 5)
+
+        // Build detailed message
+        let message = `**Günlük Özet**\n\n`
+        message += `📋 **Task'lar:** ${completedToday.length} tamamlandı, ${pendingTasks.length} bekliyor\n`
+        message += `✅ **Habit'ler:** ${habitsCompletedToday.length}/${habits.length} tamamlandı\n`
+
+        if (topPriorityTasks.length > 0) {
+          message += `\n**Öncelikli Görevler:**\n`
+          topPriorityTasks.forEach(t => {
+            const deadline = t.deadline ? ` (${new Date(t.deadline).toLocaleDateString()})` : ''
+            message += `• [${t.priority}] ${t.title}${deadline}\n`
+          })
+        }
 
         const summary = {
           pendingTasks: pendingTasks.length,
           completedToday: completedToday.length,
           habitsTotal: habits.length,
           habitsCompleted: habitsCompletedToday.length,
-          topPriorityTasks: pendingTasks
-            .filter(t => t.priority === 'P1' || t.priority === 'P2')
-            .map(t => t.title)
-            .slice(0, 3),
+          topPriorityTasks: topPriorityTasks.map(t => ({
+            title: t.title,
+            priority: t.priority,
+            deadline: t.deadline,
+          })),
         }
 
         return {
           success: true,
-          message: `Today: ${completedToday.length} tasks done, ${habitsCompletedToday.length}/${habits.length} habits`,
+          message,
           data: summary,
         }
       }
@@ -343,20 +402,45 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
         const completedThisWeek = tasks.filter(t =>
           t.completed && t.completedAt && new Date(t.completedAt) >= weekAgo
         )
+        const pendingTasks = tasks.filter(t => !t.completed)
+        const topStreaks = habits
+          .map(h => ({ name: h.name, streak: h.streak }))
+          .sort((a, b) => b.streak - a.streak)
+          .slice(0, 5)
+
+        // Build detailed message
+        let message = `**Haftalık Özet**\n\n`
+        message += `📋 **Task'lar:** ${completedThisWeek.length} bu hafta tamamlandı, ${pendingTasks.length} bekliyor\n`
+        message += `✅ **Habit'ler:** ${habits.length} toplam\n`
+
+        if (topStreaks.length > 0 && topStreaks[0].streak > 0) {
+          message += `\n**En İyi Streak'ler:**\n`
+          topStreaks.filter(h => h.streak > 0).forEach(h => {
+            message += `• 🔥 ${h.name}: ${h.streak} gün\n`
+          })
+        }
+
+        if (completedThisWeek.length > 0) {
+          message += `\n**Bu Hafta Tamamlanan:**\n`
+          completedThisWeek.slice(0, 5).forEach(t => {
+            message += `• ✓ ${t.title}\n`
+          })
+          if (completedThisWeek.length > 5) {
+            message += `• ... ve ${completedThisWeek.length - 5} tane daha\n`
+          }
+        }
 
         const summary = {
           tasksCompletedThisWeek: completedThisWeek.length,
-          pendingTasks: tasks.filter(t => !t.completed).length,
+          pendingTasks: pendingTasks.length,
           totalHabits: habits.length,
-          topStreaks: habits
-            .map(h => ({ name: h.name, streak: h.streak }))
-            .sort((a, b) => b.streak - a.streak)
-            .slice(0, 3),
+          topStreaks,
+          completedTasks: completedThisWeek.slice(0, 10).map(t => t.title),
         }
 
         return {
           success: true,
-          message: `This week: ${completedThisWeek.length} tasks completed`,
+          message,
           data: summary,
         }
       }
@@ -369,14 +453,23 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
         const pendingTasks = taskStore.tasks.filter(t => !t.completed)
         const today = new Date().toISOString().split('T')[0]
 
-        // Get P1 and P2 tasks first
+        // Get P1 and P2 tasks first (sorted by priority and deadline)
         const priorityTasks = pendingTasks
           .filter(t => t.priority === 'P1' || t.priority === 'P2')
+          .sort((a, b) => {
+            // P1 before P2
+            if (a.priority !== b.priority) return a.priority < b.priority ? -1 : 1
+            // Earlier deadline first
+            if (a.deadline && b.deadline) return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+            if (a.deadline) return -1
+            return 1
+          })
           .slice(0, 5)
 
         // Get today's habits
         const todayHabits = habitStore.habits.filter(h => h.frequency === 'daily')
         const completedHabits = todayHabits.filter(h => h.completions[today])
+        const pendingHabits = todayHabits.filter(h => !h.completions[today])
 
         // Get today's mood/energy from journal
         const todayEntry = journalStore.entries.find(e => e.date === today)
@@ -396,6 +489,40 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
           taskRecommendation = 'Normal enerji - önce en önemli 2 task, sonra molalar'
         }
 
+        // Build detailed message with time blocks
+        let message = `**Günlük Plan** (${availableHours} saat)\n\n`
+        message += `⚡ Enerji: ${energyLevel}/5 - ${taskRecommendation}\n\n`
+
+        // Priority tasks with time blocks
+        if (priorityTasks.length > 0) {
+          message += `**Öncelikli Görevler:**\n`
+          priorityTasks.forEach((t, i) => {
+            const deadline = t.deadline ? ` (son: ${new Date(t.deadline).toLocaleDateString()})` : ''
+            const timeBlock = energyLevel >= 4
+              ? ['09:00', '10:30', '13:00', '14:30', '16:00'][i] || '...'
+              : ['10:00', '11:30', '14:00', '15:30', '17:00'][i] || '...'
+            message += `• ${timeBlock} - [${t.priority}] ${t.title}${deadline}\n`
+          })
+        } else {
+          message += `**Öncelikli görev yok!** P3/P4 task'lardan başlayabilirsin.\n`
+        }
+
+        // Pending habits
+        if (pendingHabits.length > 0) {
+          message += `\n**Bugünkü Habit'ler:** (${completedHabits.length}/${todayHabits.length} tamamlandı)\n`
+          pendingHabits.slice(0, 5).forEach(h => {
+            message += `• [ ] ${h.name}\n`
+          })
+          if (pendingHabits.length > 5) {
+            message += `• ... ve ${pendingHabits.length - 5} tane daha\n`
+          }
+        } else if (todayHabits.length > 0) {
+          message += `\n✅ Tüm habit'ler tamamlandı!\n`
+        }
+
+        // Summary
+        message += `\n📊 Toplam: ${pendingTasks.length} bekleyen task`
+
         const plan = {
           focusArea: focusArea || 'General productivity',
           energyLevel,
@@ -409,15 +536,14 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
           habits: {
             total: todayHabits.length,
             completed: completedHabits.length,
-            pending: todayHabits.filter(h => !h.completions[today]).map(h => h.name),
+            pending: pendingHabits.map(h => h.name),
           },
           totalPending: pendingTasks.length,
-          message: `Focus on ${priorityTasks.length} high-priority tasks today. You have ${availableHours} hours available.`,
         }
 
         return {
           success: true,
-          message: `Day plan created: ${priorityTasks.length} priority tasks, ${todayHabits.length - completedHabits.length} habits remaining`,
+          message,
           data: plan,
         }
       }

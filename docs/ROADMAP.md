@@ -558,24 +558,25 @@ interface Task {
   - Tarih aralığı otomatik belirlenir
 - [x] Task oluşturulunca taskStore'a eklenir
 
-## 7.6: Task Interaction on Calendar (1 gün)
-- [ ] Task'a tıklayınca detay popup
-- [ ] Drag & drop ile tarih değiştirme
-- [ ] Resize ile süre değiştirme (week/day view)
-- [ ] Quick complete (checkbox)
-- [ ] Task'ı sil/düzenle
+## 7.6: Task Interaction on Calendar (1 gün) ✓
+- [x] Task'a tıklayınca detay popup
+- [ ] Drag & drop ile tarih değiştirme (sonraki iterasyon)
+- [ ] Resize ile süre değiştirme (sonraki iterasyon)
+- [x] Quick complete (popup'tan tamamla butonu)
+- [x] Task'ı sil/düzenle
 
-## 7.7: Visual Design & Polish 
+## 7.7: Visual Design & Polish ✓
 - [x] Notepad++ tema uyumu
 - [x] Priority renk kodları (P1=kırmızı, P2=turuncu, vb.)
 - [x] Completed task'lar için strikethrough
 - [x] Today highlight
 - [x] Weekend farklı arka plan
-- [ ] Keyboard shortcuts
+- [x] Keyboard shortcuts
   - `←/→` = prev/next period
   - `T` = today
   - `M/W/D` = month/week/day view
   - `N` = new task on selected date
+  - `Esc` = close modals
 
 ## Teknik Notlar
 
@@ -601,13 +602,14 @@ Task Drag      → taskStore.updateTask() → Calendar re-render
 - Custom CSS Grid - Takvim layout
 - Native drag & drop API
 
-## Tamamlanma Kriterleri
+## Tamamlanma Kriterleri ✓
 - [x] Month/Week/Day view'lar çalışıyor
 - [x] Task'lar takvimde doğru tarihlerde görünüyor
 - [x] Çok günlü task'lar spanning bar olarak görünüyor
 - [x] Takvimden yeni task oluşturulabiliyor
 - [ ] Drag & drop ile tarih değiştirilebiliyor (sonraki iterasyon)
-- [ ] Keyboard navigation çalışıyor (sonraki iterasyon)
+- [x] Keyboard navigation çalışıyor (←→ T M W D N Esc)
+- [x] Task detail popup (tıklayınca detay, tamamla, sil)
 - [x] Cloud sync ile senkronize
 
 ---
@@ -701,37 +703,23 @@ FlowBot:
 - [x] Quick action buttons
 - [ ] Inline task/bookmark preview (sonraki iterasyon)
 
-## 8.7: Advanced Prompt Engineering (2 gün)
+## 8.7: Advanced Prompt Engineering (2 gün) ✓
 **Hedef:** FlowBot'u gerçek bir ADHD koçuna dönüştürme
+**Durum:** TAMAMLANDI (2026-01-10)
 
-### Sorunlar (Mevcut):
-- Tool sonuçlarındaki detaylar (task isimleri, ID'ler) LLM'e aktarılmıyor
-- Follow-up soru sormuyor, eksik bilgiyle devam ediyor
-- Planlama yapmak yerine sadece özet veriyor
-- Kullanıcının mevcut task'larını bilmiyor
+### Yapılan İyileştirmeler:
+- ✅ **Rich Tool Results**: Tool mesajları artık task isimlerini, priority'leri ve deadline'ları gösteriyor
+- ✅ **Conversational Flow**: Follow-up prompt güçlendirildi, directive talimatlar eklendi
+- ✅ **Context Awareness**: Mevcut task listesi system prompt'a ekleniyor
+- ✅ **Actionable Planning**: plan_day zaman blokları ve detaylı liste içeriyor
+- ✅ **Task Details**: get_pending_tasks, plan_day, get_daily_summary detaylı mesajlar döndürüyor
+- ✅ **System Prompt**: Basitleştirildi, İngilizce'ye çevrildi, daha directive yapıldı
 
-### Çözümler:
-- [ ] **Rich Tool Results**: Tool sonuçlarındaki `data` alanını LLM'e tam olarak aktar
-- [ ] **Conversational Flow**: Eksik bilgi varsa follow-up soru sor
-- [ ] **Context Awareness**: Mevcut task listesini system prompt'a ekle
-- [ ] **Actionable Planning**: Sadece özet değil, somut adımlar öner
-- [ ] **Task Details**: Task isimlerini, priority'lerini ve deadline'larını göster
+### Güncellenen Dosyalar:
+- `src/services/agentService.ts` - Tool mesajları zenginleştirildi
+- `src/services/llmService.ts` - System prompt ve follow-up prompt iyileştirildi
 
-### Geliştirilmiş System Prompt:
-```
-1. ÖNCE mevcut durumu analiz et (task'lar, habit'ler)
-2. Eksik bilgi varsa SORU SOR (ne kadar zamanın var? hangi alana odaklanmak istiyorsun?)
-3. Somut, adım adım plan öner
-4. Her task için tahmini süre ver
-5. Kullanıcının onayını al
-```
-
-### Test Senaryoları:
-- "Günümü planla" → Mevcut task'ları listele, follow-up sor, detaylı plan öner
-- "Task ekle" → Eksik bilgi varsa sor (priority, deadline)
-- "Ne yapmalıyım?" → En uygun task'ı öner, neden olduğunu açıkla
-
-## 8.7: Predefined Commands (1 gün) ✓
+## 8.8: Predefined Commands (1 gün) ✓
 - [x] `/plan` veya "günümü planla" - plan_day tool'u
 - [x] `/find <query>` veya "... hakkında kaynak bul" - web_search tool'u
 - [x] `/quick <title>` veya "hızlı task: ..." - create_task tool'u
@@ -854,4 +842,4 @@ FlowBot: Task oluşturur → Hatırlatma ayarlar → Onay verir
 
 ---
 
-*Son güncelleme: 2026-01-10 (İleri Seviye AI Özellikleri: Smart Scheduling, Auto-Tagging, Predictive Analytics)*
+*Son güncelleme: 2026-01-10 (Sprint 7.6-7.7 Calendar keyboard shortcuts ve task popup eklendi)*
