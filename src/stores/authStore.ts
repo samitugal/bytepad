@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { signInWithGoogle, signOutUser, onAuthChange, isFirebaseConfigured, User } from '../services/firebase'
+import { initializeCloudSync, stopCloudSync } from '../services/cloudSync'
 
 interface AuthState {
   user: User | null
@@ -22,10 +23,16 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true })
         const user = await signInWithGoogle()
         set({ user, isLoading: false })
+        
+        // Initialize cloud sync after login
+        if (user) {
+          setTimeout(() => initializeCloudSync(), 500)
+        }
       },
 
       signOut: async () => {
         set({ isLoading: true })
+        stopCloudSync()
         await signOutUser()
         set({ user: null, isLoading: false })
       },
@@ -38,6 +45,13 @@ export const useAuthStore = create<AuthState>()(
         
         onAuthChange((user) => {
           set({ user, isLoading: false })
+          
+          // Initialize cloud sync if user is logged in
+          if (user) {
+            setTimeout(() => initializeCloudSync(), 500)
+          } else {
+            stopCloudSync()
+          }
         })
       },
     }),

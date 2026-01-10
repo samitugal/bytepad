@@ -6,12 +6,14 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { initializeNotifications } from './services/notificationService'
 import { useSettingsStore, FONT_SIZES } from './stores/settingsStore'
 import { useUIStore } from './stores/uiStore'
+import { useAuthStore } from './stores/authStore'
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const fontSize = useSettingsStore((state) => state.fontSize)
   const globalSearchOpen = useUIStore((state) => state.globalSearchOpen)
   const setGlobalSearchOpen = useUIStore((state) => state.setGlobalSearchOpen)
+  const initializeAuth = useAuthStore((state) => state.initialize)
 
   useKeyboardShortcuts()
 
@@ -24,6 +26,11 @@ function App() {
   useEffect(() => {
     initializeNotifications()
   }, [])
+
+  // Initialize auth and cloud sync
+  useEffect(() => {
+    initializeAuth()
+  }, [initializeAuth])
 
   return (
     <ErrorBoundary>
