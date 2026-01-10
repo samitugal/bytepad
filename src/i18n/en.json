@@ -1,0 +1,167 @@
+{
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "add": "Add",
+        "close": "Close",
+        "search": "Search",
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success",
+        "confirm": "Confirm",
+        "yes": "Yes",
+        "no": "No"
+    },
+    "nav": {
+        "notes": "Notes",
+        "habits": "Habits",
+        "tasks": "Tasks",
+        "journal": "Journal",
+        "bookmarks": "Bookmarks",
+        "calendar": "Calendar",
+        "analysis": "Analyze"
+    },
+    "menu": {
+        "file": "File",
+        "edit": "Edit",
+        "view": "View",
+        "focus": "Focus",
+        "chat": "Chat",
+        "settings": "Settings"
+    },
+    "settings": {
+        "title": "Settings",
+        "tabs": {
+            "general": "General",
+            "ai": "AI",
+            "integrations": "Integrations",
+            "sync": "Sync",
+            "data": "Data"
+        },
+        "general": {
+            "display": "Display",
+            "fontSize": "Font Size",
+            "fontSizeHint": "Changes apply immediately to the entire app.",
+            "language": "Language",
+            "languageHint": "Select your preferred language.",
+            "shortcuts": "Keyboard Shortcuts",
+            "commandPalette": "Command Palette",
+            "toggleChat": "Toggle Chat",
+            "globalSearch": "Global Search",
+            "focusMode": "Focus Mode",
+            "notifications": "Notifications"
+        },
+        "ai": {
+            "provider": "AI Provider",
+            "model": "Model",
+            "apiKey": "API Key",
+            "apiKeyRequired": "required",
+            "apiKeyHint": "Your API key is stored locally and never sent to our servers.",
+            "ollamaUrl": "Ollama Base URL",
+            "configured": "configured - Chat is ready",
+            "notConfigured": "API key required - Chat is disabled"
+        },
+        "integrations": {
+            "tavily": "Web Search (Tavily)",
+            "tavilyKey": "Tavily API Key",
+            "tavilyHint": "Get your API key at",
+            "browserNotifications": "Browser Notifications",
+            "pushNotifications": "Push Notifications",
+            "quietHours": "Quiet Hours",
+            "emailNotifications": "Email Notifications",
+            "yourEmail": "Your Email",
+            "emailjsConfig": "EmailJS Configuration",
+            "dailySummary": "Daily summary email",
+            "weeklyReport": "Weekly report email",
+            "streakAlerts": "Streak risk alerts"
+        },
+        "sync": {
+            "googleAccount": "Google Account",
+            "notConfigured": "Google Sign-in is not configured.",
+            "addFirebaseConfig": "Add Firebase config to",
+            "signOut": "Sign Out",
+            "signInWithGoogle": "Sign in with Google",
+            "signingIn": "Signing in...",
+            "gistSync": "GitHub Gist Sync",
+            "gistSyncDesc": "Sync your data across devices using a private GitHub Gist.",
+            "enableGistSync": "Enable Gist Sync",
+            "githubToken": "GitHub Token",
+            "createToken": "Create token",
+            "withGistScope": "with \"gist\" scope",
+            "gistId": "Gist ID",
+            "createNew": "Create New",
+            "autoSync": "Auto-sync every",
+            "syncNow": "Sync Now",
+            "syncing": "Syncing...",
+            "push": "Push",
+            "pull": "Pull",
+            "lastSync": "Last sync"
+        },
+        "data": {
+            "yourData": "Your Data",
+            "notes": "Notes",
+            "habits": "Habits",
+            "tasks": "Tasks",
+            "journal": "Journal",
+            "backupRestore": "Backup & Restore",
+            "exportAll": "Export All Data (JSON)",
+            "importBackup": "Import from Backup",
+            "dangerZone": "Danger Zone",
+            "deleteAll": "Delete All Data",
+            "deleteWarning": "This will permanently delete all your notes, tasks, habits, and journal entries."
+        }
+    },
+    "chat": {
+        "placeholder": "Ask FlowBot anything...",
+        "send": "Send",
+        "apiKeyRequired": "Configure API key in Settings → AI"
+    },
+    "notes": {
+        "newNote": "New Note",
+        "searchNotes": "Search notes...",
+        "untitled": "Untitled",
+        "emptyNote": "Empty note",
+        "noNotes": "No notes yet",
+        "noNotesFound": "No notes found",
+        "tags": "Tags"
+    },
+    "tasks": {
+        "newTask": "New Task",
+        "searchTasks": "Search tasks...",
+        "noTasks": "No tasks yet",
+        "completed": "Completed",
+        "pending": "Pending",
+        "priority": "Priority",
+        "deadline": "Deadline",
+        "all": "All",
+        "active": "Active"
+    },
+    "habits": {
+        "newHabit": "New Habit",
+        "streak": "Streak",
+        "days": "days",
+        "today": "Today",
+        "completed": "Completed",
+        "category": "Category"
+    },
+    "journal": {
+        "newEntry": "New Entry",
+        "mood": "Mood",
+        "energy": "Energy",
+        "todayEntry": "Today's Entry",
+        "noEntry": "No entry for this day"
+    },
+    "analysis": {
+        "weeklyStats": "Weekly Stats",
+        "habitCompletion": "Habit Completion",
+        "taskCompletion": "Task Completion",
+        "avgMood": "Avg Mood",
+        "avgEnergy": "Avg Energy",
+        "insights": "Insights",
+        "recommendations": "Recommendations",
+        "generateAI": "Generate AI Insights",
+        "analyzing": "Analyzing..."
+    }
+}
