@@ -12,6 +12,8 @@ export interface LLMModel {
 
 export const LLM_MODELS: Record<LLMProvider, LLMModel[]> = {
   openai: [
+    { id: 'gpt-5', name: 'GPT-5', provider: 'openai' },
+    { id: 'gpt-5-mini', name: 'GPT-5 Mini', provider: 'openai' },
     { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai' },
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'openai' },
     { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai' },
