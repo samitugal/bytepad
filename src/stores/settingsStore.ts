@@ -218,6 +218,23 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'myflowspace-settings',
+      // Persist all settings including API keys, font size, etc.
+      partialize: (state) => ({
+        llmProvider: state.llmProvider,
+        llmModel: state.llmModel,
+        apiKeys: state.apiKeys,
+        ollamaBaseUrl: state.ollamaBaseUrl,
+        fontSize: state.fontSize,
+        noteMarkdownPreview: state.noteMarkdownPreview,
+        emailPreferences: state.emailPreferences,
+        gistSync: state.gistSync,
+        onboardingCompleted: state.onboardingCompleted,
+      }),
+      // Merge persisted state with initial state to handle new fields
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...(persistedState as Partial<SettingsState>),
+      }),
     }
   )
 )
