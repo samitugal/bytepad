@@ -2,6 +2,24 @@
 
 Bu dosya Claude Code tarafından otomatik güncellenir.
 
+## [0.8.0] - 2026-01-10
+
+### Added
+- **Advanced Features Sprint**
+  - **Global Search (Alt+U)**: Search across Notes, Tasks, Habits, Journal
+  - **Custom DateTimePicker**: Theme-compatible date/time picker component
+  - **Habits Weekly Stats**: Daily completion tracking with visual progress bars
+  - **Notes Tag Cloud**: Filter notes by tags with multi-tag intersection
+  - **Knowledge Graph**: Obsidian-style [[wikilinks]] with visual graph
+  - **Backlinks Panel**: See which notes link to current note
+
+### Changed
+- Notes Markdown preview improved with better heading styles
+- Habits form uses custom time picker
+- Tasks form uses custom date/time picker
+
+---
+
 ## [0.7.0] - 2026-01-10
 
 ### Added
