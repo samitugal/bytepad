@@ -2,7 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+[data-theme="dark"] {
   /* Notepad++ Dark Theme Variables */
   --bg-primary: #1E1E1E;
   --bg-secondary: #252526;
@@ -29,6 +30,35 @@
   --warning: #CE9178;
   --error: #F14C4C;
   --info: #3794FF;
+}
+
+[data-theme="light"] {
+  /* Notepad++ Light Theme Variables */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F3F3F3;
+  --bg-tertiary: #E8E8E8;
+  --bg-hover: #CCE8FF;
+  --text-primary: #1E1E1E;
+  --text-secondary: #6E6E6E;
+  --border-color: #D4D4D4;
+  --selection-bg: #ADD6FF;
+  --scrollbar-bg: #F3F3F3;
+  --scrollbar-thumb: #C1C1C1;
+
+  /* Accent Colors - slightly adjusted for light theme */
+  --accent-blue: #0066B8;
+  --accent-light-blue: #006AB1;
+  --accent-green: #008000;
+  --accent-orange: #A31515;
+  --accent-purple: #AF00DB;
+  --accent-yellow: #795E26;
+  --accent-cyan: #267F99;
+
+  /* Status Colors */
+  --success: #008000;
+  --warning: #A31515;
+  --error: #E51400;
+  --info: #0066B8;
 }
 
 * {

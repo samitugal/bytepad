@@ -7,29 +7,29 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Notepad++ Dark Theme
-        'np-bg-primary': '#1E1E1E',
-        'np-bg-secondary': '#252526',
-        'np-bg-tertiary': '#2D2D30',
-        'np-bg-hover': '#094771',
-        'np-text-primary': '#D4D4D4',
-        'np-text-secondary': '#808080',
-        'np-border': '#3C3C3C',
-        'np-selection': '#264F78',
-        'np-scrollbar': '#424242',
-        // Accent colors (syntax highlighting inspired)
-        'np-blue': '#569CD6',
-        'np-light-blue': '#9CDCFE',
-        'np-green': '#6A9955',
-        'np-orange': '#CE9178',
-        'np-purple': '#C586C0',
-        'np-yellow': '#DCDCAA',
-        'np-cyan': '#4EC9B0',
+        // Theme-aware colors using CSS variables
+        'np-bg-primary': 'var(--bg-primary)',
+        'np-bg-secondary': 'var(--bg-secondary)',
+        'np-bg-tertiary': 'var(--bg-tertiary)',
+        'np-bg-hover': 'var(--bg-hover)',
+        'np-text-primary': 'var(--text-primary)',
+        'np-text-secondary': 'var(--text-secondary)',
+        'np-border': 'var(--border-color)',
+        'np-selection': 'var(--selection-bg)',
+        'np-scrollbar': 'var(--scrollbar-thumb)',
+        // Accent colors
+        'np-blue': 'var(--accent-blue)',
+        'np-light-blue': 'var(--accent-light-blue)',
+        'np-green': 'var(--accent-green)',
+        'np-orange': 'var(--accent-orange)',
+        'np-purple': 'var(--accent-purple)',
+        'np-yellow': 'var(--accent-yellow)',
+        'np-cyan': 'var(--accent-cyan)',
         // Status colors
-        'np-success': '#4EC9B0',
-        'np-warning': '#CE9178',
-        'np-error': '#F14C4C',
-        'np-info': '#3794FF',
+        'np-success': 'var(--success)',
+        'np-warning': 'var(--warning)',
+        'np-error': 'var(--error)',
+        'np-info': 'var(--info)',
       },
       fontFamily: {
         'mono': ['JetBrains Mono', 'Consolas', 'Monaco', 'monospace'],

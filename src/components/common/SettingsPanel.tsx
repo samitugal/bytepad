@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { exportAllData, downloadAsJson, importData, readFileAsJson, clearAllData, getDataStats } from '../../services/dataService'
 import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider, FONT_SIZES, FontSize, ApiKeyType, GistSyncPreferences } from '../../stores/settingsStore'
 import { useI18nStore, LANGUAGES, Language } from '../../i18n'
+import { useThemeStore, Theme } from '../../stores/themeStore'
 import { useNotificationStore } from '../../stores/notificationStore'
 import { useAuthStore } from '../../stores/authStore'
 import { requestNotificationPermission, startNotificationChecker, stopNotificationChecker } from '../../services/notificationService'
@@ -301,12 +302,37 @@ function GeneralTab({ fontSize, setFontSize }: {
     setFontSize: (size: FontSize) => void
 }) {
     const { language, setLanguage } = useI18nStore()
+    const { theme, setTheme } = useThemeStore()
 
     return (
         <div className="space-y-6">
             <div>
                 <h3 className="text-sm text-np-green mb-3">// Display</h3>
                 <div className="space-y-4">
+                    {/* Theme Selection */}
+                    <div>
+                        <label className="block text-xs text-np-text-secondary mb-1">Theme</label>
+                        <div className="flex gap-2">
+                            {(['dark', 'light', 'system'] as Theme[]).map((t) => (
+                                <button
+                                    key={t}
+                                    onClick={() => setTheme(t)}
+                                    className={`flex-1 px-3 py-2 text-sm border transition-colors ${theme === t
+                                            ? 'bg-np-selection border-np-blue text-np-text-primary'
+                                            : 'bg-np-bg-tertiary border-np-border text-np-text-secondary hover:bg-np-bg-hover'
+                                        }`}
+                                >
+                                    {t === 'dark' && '🌙 Dark'}
+                                    {t === 'light' && '☀️ Light'}
+                                    {t === 'system' && '💻 System'}
+                                </button>
+                            ))}
+                        </div>
+                        <p className="text-xs text-np-text-secondary mt-1">
+                            Choose your preferred color scheme.
+                        </p>
+                    </div>
+
                     {/* Language Selection */}
                     <div>
                         <label className="block text-xs text-np-text-secondary mb-1">Language</label>

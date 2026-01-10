@@ -312,10 +312,12 @@
   - Senkronize edilen veriler: Notes, Tasks, Habits, Journal, Bookmarks
 
 ## Sonraki: Planlanan Özellikler
-- [ ] **Dark/Light Theme Toggle**
-  - Tema değiştirme butonu
-  - Sistem temasına uyum
+- [x] **Dark/Light Theme Toggle** ✓
+  - Tema değiştirme butonu (Dark/Light/System)
+  - Sistem temasına uyum (auto-detect)
   - Notepad++ Light theme variant
+  - CSS variables ile dinamik tema değişimi
+  - Settings → General → Theme
 
 - [ ] **Calendar Module** ⭐ ÖNCELİKLİ
   - Detaylı analiz aşağıda (Sprint 7)
@@ -335,19 +337,23 @@
 ## İleri Seviye Geliştirme Fikirleri
 
 ### AI & Automation
-- [ ] **Smart Task Scheduling**
+- [x] **Smart Task Scheduling** ✓
   - AI ile optimal task sıralaması
   - Energy level'a göre task önerisi
   - "En verimli saatleriniz" analizi
+  - FlowBot tools: smart_schedule, get_next_task
   
-- [ ] **Auto-Tagging**
+- [x] **Auto-Tagging** ✓
   - AI ile otomatik tag önerisi (Notes, Bookmarks)
   - İçerik analizi ile kategorizasyon
+  - URL ve domain bazlı tag önerileri
+  - FlowBot tools: suggest_tags, suggest_tags_for_note, suggest_tags_for_bookmark
   
-- [ ] **Predictive Analytics**
+- [x] **Predictive Analytics** ✓
   - Habit completion tahminleri
   - "Bugün streak kırılma riski yüksek" uyarıları
   - Productivity pattern detection
+  - FlowBot tool: check_streak_risk
 
 - [ ] **Smart Reminders**
   - Context-aware hatırlatmalar
@@ -818,4 +824,4 @@ FlowBot: Task oluşturur → Hatırlatma ayarlar → Onay verir
 
 ---
 
-*Son güncelleme: 2026-01-10 (Sprint 9 tamamlandı: Settings Redesign & i18n)*
+*Son güncelleme: 2026-01-10 (İleri Seviye AI Özellikleri: Smart Scheduling, Auto-Tagging, Predictive Analytics)*
