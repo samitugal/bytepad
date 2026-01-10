@@ -28,9 +28,11 @@ export interface Task {
   title: string
   description?: string
   priority: 'P1' | 'P2' | 'P3' | 'P4'
-  deadline?: Date
+  startDate?: Date // Start date for task
+  startTime?: string // HH:mm format for specific start time
+  deadline?: Date // End/due date (kept for backward compatibility)
   deadlineTime?: string // HH:mm format for specific time
-  endDate?: Date // End date for multi-day tasks (Calendar)
+  endDate?: Date // Alias for deadline (Calendar uses this)
   allDay?: boolean // Is this an all-day task? (Calendar)
   completed: boolean
   completedAt?: Date

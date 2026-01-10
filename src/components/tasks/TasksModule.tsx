@@ -21,6 +21,8 @@ export function TasksModule() {
     title: '', 
     priority: 'P2' as Task['priority'], 
     description: '',
+    startDate: '',
+    startTime: '',
     deadline: '',
     deadlineTime: '',
     reminderEnabled: false,
@@ -34,12 +36,14 @@ export function TasksModule() {
       title: newTask.title,
       priority: newTask.priority,
       description: newTask.description,
+      startDate: newTask.startDate ? new Date(newTask.startDate) : undefined,
+      startTime: newTask.startTime || undefined,
       deadline: newTask.deadline ? new Date(newTask.deadline) : undefined,
       deadlineTime: newTask.deadlineTime || undefined,
       reminderEnabled: newTask.reminderEnabled,
       reminderMinutesBefore: newTask.reminderMinutesBefore,
     })
-    setNewTask({ title: '', priority: 'P2', description: '', deadline: '', deadlineTime: '', reminderEnabled: false, reminderMinutesBefore: 30 })
+    setNewTask({ title: '', priority: 'P2', description: '', startDate: '', startTime: '', deadline: '', deadlineTime: '', reminderEnabled: false, reminderMinutesBefore: 30 })
     setShowForm(false)
   }
 
@@ -127,14 +131,30 @@ export function TasksModule() {
             placeholder="Description (optional)..."
             className="w-full np-input mb-2 h-16 resize-none"
           />
-          {/* Deadline with time */}
+          {/* Start Date with time */}
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs text-np-text-secondary">Deadline:</span>
+            <span className="text-xs text-np-text-secondary w-16">Start:</span>
+            <DateTimePicker
+              type="date"
+              value={newTask.startDate}
+              onChange={(val) => setNewTask({ ...newTask, startDate: val })}
+              placeholder="Start date"
+            />
+            <DateTimePicker
+              type="time"
+              value={newTask.startTime}
+              onChange={(val) => setNewTask({ ...newTask, startTime: val })}
+              placeholder="Time"
+            />
+          </div>
+          {/* Deadline/End Date with time */}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs text-np-text-secondary w-16">End:</span>
             <DateTimePicker
               type="date"
               value={newTask.deadline}
               onChange={(val) => setNewTask({ ...newTask, deadline: val })}
-              placeholder="Select date"
+              placeholder="End date"
             />
             <DateTimePicker
               type="time"
