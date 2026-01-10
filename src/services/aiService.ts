@@ -161,10 +161,31 @@ function getToolDefinitions() {
 
 function getLLM() {
   const { llmProvider, llmModel, apiKeys } = useSettingsStore.getState()
-  if (llmProvider === 'anthropic') {
-    return new ChatAnthropic({ anthropicApiKey: apiKeys.anthropic, modelName: llmModel, maxTokens: 1000 })
+  const apiKey = apiKeys[llmProvider]
+  
+  console.log('[AI Service] Provider:', llmProvider, 'Model:', llmModel, 'API Key exists:', !!apiKey, 'Key length:', apiKey?.length)
+  
+  if (!apiKey) {
+    throw new Error(`API key for ${llmProvider} is not configured. Please set it in Settings → AI.`)
   }
-  return new ChatOpenAI({ openAIApiKey: apiKeys.openai, modelName: llmModel || 'gpt-4o-mini', temperature: 0.7, maxTokens: 1000 })
+  
+  if (llmProvider === 'anthropic') {
+    return new ChatAnthropic({ 
+      anthropicApiKey: apiKey, 
+      model: llmModel,
+      maxTokens: 1000 
+    })
+  }
+  
+  // OpenAI - GPT-5 doesn't support temperature parameter
+  const isGPT5 = llmModel?.startsWith('gpt-5')
+  
+  return new ChatOpenAI({ 
+    apiKey: apiKey,
+    model: llmModel || 'gpt-4o-mini', 
+    ...(isGPT5 ? {} : { temperature: 0.7 }),
+    maxTokens: 1000 
+  })
 }
 
 function convertMessages(history: ChatMessage[], system: string): BaseMessage[] {
