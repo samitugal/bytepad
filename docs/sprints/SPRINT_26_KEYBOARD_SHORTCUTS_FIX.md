@@ -2,7 +2,7 @@
 **Goal:** Fix broken shortcuts and add missing ones
 **Duration:** 1-2 days
 **Priority:** HIGH
-**Status:** PLANNED
+**Status:** COMPLETED ✅
 
 ---
 
