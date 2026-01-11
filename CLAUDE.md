@@ -104,6 +104,30 @@ docs/
 - **Output:** `dist-electron/bytepad-x.x.x-x64.exe`
 - **Features:** System tray, global shortcuts, auto-start
 
+### EXE Oluşturma Adımları
+```bash
+# 1. Tüm değişiklikleri kaydet ve commit et
+git add -A
+git commit -m "feat: description"
+
+# 2. (Opsiyonel) Remote'a push et
+git push origin main
+
+# 3. EXE oluştur (Windows)
+npm run package:win
+
+# 4. Çıktı dosyası
+# dist-electron/bytepad-{version}-win-x64.exe
+# dist-electron/win-unpacked/bytepad.exe (portable)
+```
+
+### Diğer Platformlar
+```bash
+npm run package:mac    # macOS (.dmg)
+npm run package:linux  # Linux (.AppImage, .deb)
+npm run package:all    # Windows + macOS
+```
+
 ## Git Workflow
 ```bash
 # Commit format
