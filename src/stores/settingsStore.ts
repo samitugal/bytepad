@@ -111,28 +111,28 @@ export const FONT_FAMILIES: Record<FontFamily, { label: string; value: string; i
     isNerd: false 
   },
   'proto-nerd': { 
-    label: '🔤 Proto Nerd Font', 
-    value: '"ProFont IIx Nerd Font", "ProFontWindows Nerd Font", monospace',
+    label: '🔤 0xProto Nerd Font', 
+    value: '"0xProto Nerd Font", "0xProto Nerd Font Mono", "0xProto NF", monospace',
     isNerd: true 
   },
   'hack-nerd': { 
     label: '🔤 Hack Nerd Font', 
-    value: '"Hack Nerd Font", monospace',
+    value: '"Hack Nerd Font", "Hack Nerd Font Mono", "Hack NF", monospace',
     isNerd: true 
   },
   'meslo-nerd': { 
     label: '🔤 Meslo Nerd Font', 
-    value: '"MesloLGS Nerd Font", "MesloLGS NF", monospace',
+    value: '"MesloLGS Nerd Font", "MesloLGS NF", "MesloLGM Nerd Font", monospace',
     isNerd: true 
   },
   'fira-code-nerd': { 
     label: '🔤 Fira Code Nerd Font', 
-    value: '"FiraCode Nerd Font", monospace',
+    value: '"FiraCode Nerd Font", "FiraCode Nerd Font Mono", "FiraCode NF", monospace',
     isNerd: true 
   },
   'jetbrains-mono-nerd': { 
     label: '🔤 JetBrains Mono Nerd Font', 
-    value: '"JetBrainsMono Nerd Font", monospace',
+    value: '"JetBrainsMono Nerd Font", "JetBrainsMono Nerd Font Mono", "JetBrainsMono NF", monospace',
     isNerd: true 
   },
 }
