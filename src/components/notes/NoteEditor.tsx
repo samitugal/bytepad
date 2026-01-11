@@ -153,7 +153,17 @@ export function NoteEditor() {
     if (!textarea) return
 
     const wikilink = `[[${suggestion.title}]]`
-    const newContent = content.slice(0, startPos) + wikilink + content.slice(endPos)
+    
+    // Check if there's already ]] after cursor - skip it to avoid ]]]]
+    let actualEndPos = endPos
+    const afterCursor = content.slice(endPos)
+    if (afterCursor.startsWith(']]')) {
+      actualEndPos = endPos + 2
+    } else if (afterCursor.startsWith(']')) {
+      actualEndPos = endPos + 1
+    }
+    
+    const newContent = content.slice(0, startPos) + wikilink + content.slice(actualEndPos)
     setContent(newContent)
 
     // Set cursor position after the inserted wikilink
