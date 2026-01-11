@@ -4,6 +4,9 @@
 
 :root,
 [data-theme="dark"] {
+  /* Font Family - controlled by settings */
+  --font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  
   /* Notepad++ Dark Theme Variables */
   --bg-primary: #1E1E1E;
   --bg-secondary: #252526;
@@ -73,7 +76,7 @@ html, body, #root {
 }
 
 body {
-  font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+  font-family: var(--font-family);
   font-size: 1rem; /* Controlled by document.documentElement.style.fontSize */
   line-height: 1.6;
   background-color: var(--bg-primary);
