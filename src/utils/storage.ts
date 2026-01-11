@@ -48,3 +48,31 @@ export const zustandStorage = {
     return storage.removeItem(name)
   },
 }
+
+// Parse tags from input string - supports multiple formats:
+// - Comma separated: "tag1, tag2, tag3"
+// - Space separated: "tag1 tag2 tag3"
+// - Hash prefixed: "#tag1 #tag2 #tag3"
+// - Mixed: "#tag1, tag2 #tag3"
+export function parseTags(input: string): string[] {
+  if (!input || !input.trim()) return []
+  
+  // First, normalize the input: replace commas with spaces
+  let normalized = input.replace(/,/g, ' ')
+  
+  // Split by whitespace
+  const parts = normalized.split(/\s+/).filter(Boolean)
+  
+  // Process each part: remove leading # and trim
+  const tags = parts.map(part => {
+    let tag = part.trim()
+    // Remove leading # if present
+    if (tag.startsWith('#')) {
+      tag = tag.substring(1)
+    }
+    return tag.trim().toLowerCase()
+  }).filter(Boolean)
+  
+  // Remove duplicates while preserving order
+  return [...new Set(tags)]
+}

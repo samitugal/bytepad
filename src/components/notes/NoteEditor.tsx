@@ -6,6 +6,7 @@ import { BacklinksPanel } from './BacklinksPanel'
 import { WikilinkAutocomplete, type WikilinkSuggestion } from './WikilinkAutocomplete'
 import { ConfirmModal } from '../common'
 import { useTranslation } from '../../i18n'
+import { parseTags } from '../../utils/storage'
 
 export function NoteEditor() {
   const { t } = useTranslation()
@@ -38,7 +39,7 @@ export function NoteEditor() {
     updateNote(activeNoteId, {
       title,
       content,
-      tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+      tags: parseTags(tags),
     })
     
     // Update tab title if exists

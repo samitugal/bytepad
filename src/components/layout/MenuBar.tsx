@@ -6,7 +6,7 @@ interface MenuBarProps {
   onSettingsClick?: () => void
 }
 
-// Window control functions - call Electron API if available, fallback to window.close()
+// Window control functions - call Electron API if available
 const handleMinimize = () => {
   if (window.electronAPI?.minimize) {
     window.electronAPI.minimize()
@@ -78,21 +78,21 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
       <div className="flex items-center gap-0 text-np-text-secondary app-no-drag">
         <button 
           onClick={handleMinimize}
-          className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors"
+          className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors app-no-drag"
           title="Minimize"
         >
           ─
         </button>
         <button 
           onClick={handleMaximize}
-          className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors"
+          className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors app-no-drag"
           title="Maximize"
         >
           □
         </button>
         <button 
           onClick={handleClose}
-          className="w-10 h-8 hover:bg-np-error hover:text-white flex items-center justify-center transition-colors"
+          className="w-10 h-8 hover:bg-np-error hover:text-white flex items-center justify-center transition-colors app-no-drag"
           title="Close"
         >
           ×
