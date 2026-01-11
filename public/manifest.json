@@ -1,7 +1,7 @@
 {
-  "name": "BytePad",
-  "short_name": "BytePad",
-  "description": "ADHD Productivity Super App - Notepad++ aesthetic, keyboard-first design",
+  "name": "bytepad",
+  "short_name": "bytepad",
+  "description": "bytepad - productivity app with Notepad++ aesthetic, keyboard-first design",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1E1E1E",
