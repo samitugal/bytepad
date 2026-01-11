@@ -2,7 +2,7 @@
 **Goal:** Fix reported bugs and improve user experience
 **Duration:** 2-3 days
 **Priority:** HIGH
-**Status:** PLANNED
+**Status:** IN_PROGRESS (6/7 completed)
 
 ---
 
@@ -169,18 +169,18 @@
 
 ## Implementation Plan
 
-### Phase 1: Critical Bugs (Day 1)
-- [ ] 22.2: Fix line numbers not updating
-- [ ] 22.4: Fix Focus Mode reset issue
-- [ ] 22.6: Fix Command Palette scroll
-- [ ] 22.7: Fix Gist sync (startup/close/interval)
+### Phase 1: Critical Bugs (Day 1) ✅
+- [x] 22.2: Fix line numbers not updating
+- [x] 22.4: Fix Focus Mode reset issue
+- [x] 22.6: Fix Command Palette scroll
+- [x] 22.7: Fix Gist sync (startup/close/interval)
 
-### Phase 2: UI Improvements (Day 2)
-- [ ] 22.1: Expand note title area
-- [ ] 22.5: Add mini timer widget for Focus Mode
+### Phase 2: UI Improvements (Day 2) ✅
+- [x] 22.1: Expand note title area
+- [x] 22.5: Add mini timer widget for Focus Mode
 
-### Phase 3: Multi-Tab (Day 2-3)
-- [ ] 22.3: Implement multi-tab functionality
+### Phase 3: Multi-Tab (Day 2-3) - PENDING
+- [ ] 22.3: Implement multi-tab functionality (moved to future sprint)
 
 ---
 
