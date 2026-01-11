@@ -619,6 +619,109 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
       message: `Found ${filtered.length} notes`,
     })
   },
+
+  // Get all notes with previews (for FlowBot to browse notes)
+  get_all_notes: async (args) => {
+    const notes = useNoteStore.getState().notes
+    const sortBy = (args.sortBy as string) || 'updated'
+    const limit = (args.limit as number) || 20
+    const tag = args.tag as string | undefined
+    const search = args.search as string | undefined
+
+    let filtered = [...notes]
+
+    // Filter by tag
+    if (tag) {
+      filtered = filtered.filter(n =>
+        n.tags.some(t => t.toLowerCase().includes(tag.toLowerCase()))
+      )
+    }
+
+    // Search in title and content
+    if (search) {
+      const query = search.toLowerCase()
+      filtered = filtered.filter(n =>
+        n.title.toLowerCase().includes(query) ||
+        n.content.toLowerCase().includes(query)
+      )
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      if (sortBy === 'title') return a.title.localeCompare(b.title)
+      if (sortBy === 'date') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    })
+
+    // Limit
+    filtered = filtered.slice(0, limit)
+
+    // Format response with previews
+    const previews = filtered.map(n => ({
+      id: n.id,
+      title: n.title || 'Untitled',
+      tags: n.tags,
+      createdAt: new Date(n.createdAt).toISOString().split('T')[0],
+      updatedAt: new Date(n.updatedAt).toISOString().split('T')[0],
+      contentPreview: n.content.slice(0, 200) + (n.content.length > 200 ? '...' : ''),
+      wordCount: n.content.split(/\s+/).filter(Boolean).length,
+    }))
+
+    return JSON.stringify({
+      count: previews.length,
+      totalNotes: notes.length,
+      notes: previews,
+      message: `Found ${previews.length} notes (total: ${notes.length})`,
+    })
+  },
+
+  // Get full note detail by ID
+  get_note_detail: async (args) => {
+    const notes = useNoteStore.getState().notes
+    const noteId = args.noteId as string
+
+    // Find by ID first, then by title
+    let note = notes.find(n => n.id === noteId)
+    if (!note) {
+      note = notes.find(n => n.title.toLowerCase().includes(noteId.toLowerCase()))
+    }
+
+    if (!note) {
+      return JSON.stringify({ success: false, message: 'Note not found' })
+    }
+
+    // Find backlinks (notes that link to this one)
+    const backlinks = notes
+      .filter(n => n.id !== note!.id && n.content.includes(`[[${note!.title}]]`))
+      .map(n => ({ id: n.id, title: n.title }))
+
+    // Find outgoing links (notes this one links to)
+    const wikiLinkRegex = /\[\[([^\]]+)\]\]/g
+    const outgoingLinks: Array<{ id: string; title: string }> = []
+    let match
+    while ((match = wikiLinkRegex.exec(note.content)) !== null) {
+      const linkedTitle = match[1]
+      const linkedNote = notes.find(n => n.title.toLowerCase() === linkedTitle.toLowerCase())
+      if (linkedNote) {
+        outgoingLinks.push({ id: linkedNote.id, title: linkedNote.title })
+      }
+    }
+
+    return JSON.stringify({
+      success: true,
+      id: note.id,
+      title: note.title || 'Untitled',
+      content: note.content,
+      tags: note.tags,
+      createdAt: new Date(note.createdAt).toISOString(),
+      updatedAt: new Date(note.updatedAt).toISOString(),
+      wordCount: note.content.split(/\s+/).filter(Boolean).length,
+      characterCount: note.content.length,
+      backlinks,
+      outgoingLinks,
+      message: `Note "${note.title}" retrieved`,
+    })
+  },
 }
 
 function getToolDefinitions() {
@@ -809,6 +912,27 @@ function getToolDefinitions() {
       description: 'Search and list notes. Use to find notes before editing them.',
       schema: z.object({
         search: z.string().optional().describe('Search term to filter notes by title or content'),
+      }),
+    }),
+
+    // Get all notes with previews - for browsing and analyzing user's notes
+    tool(async (input) => toolExecutors.get_all_notes(input), {
+      name: 'get_all_notes',
+      description: 'Get a list of all notes with titles, tags, dates, and content preview. Use this to browse user\'s notes, find relevant ones, or analyze their knowledge base. Returns notes sorted by last updated by default.',
+      schema: z.object({
+        sortBy: z.enum(['date', 'title', 'updated']).optional().describe('Sort order: "updated" (default), "date" (created), or "title"'),
+        limit: z.number().optional().describe('Maximum number of notes to return (default: 20)'),
+        tag: z.string().optional().describe('Filter by tag (partial match)'),
+        search: z.string().optional().describe('Search in title and content'),
+      }),
+    }),
+
+    // Get full note detail - for reading complete note content
+    tool(async (input) => toolExecutors.get_note_detail(input), {
+      name: 'get_note_detail',
+      description: 'Get the full content of a specific note by ID or title. Use after get_all_notes to read a note in detail. Returns complete content, word count, backlinks, and outgoing links.',
+      schema: z.object({
+        noteId: z.string().describe('The note ID or partial title to search for'),
       }),
     }),
   ]
