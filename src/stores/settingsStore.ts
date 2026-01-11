@@ -77,6 +77,19 @@ export interface GistSyncPreferences {
   lastSyncError: string | null
 }
 
+// Focus Mode Preferences
+export interface FocusPreferences {
+  defaultDuration: number // minutes (default: 25)
+  shortBreakDuration: number // minutes (default: 5)
+  longBreakDuration: number // minutes (default: 20)
+  sessionsUntilLongBreak: number // (default: 4)
+  autoStartBreak: boolean
+  playTickSound: boolean
+  playCompletionSound: boolean
+  showTimeInTitle: boolean // browser tab title
+  dailyGoalSessions: number // (default: 5)
+}
+
 // Email Notification Preferences
 export interface EmailPreferences {
   enabled: boolean
@@ -114,6 +127,9 @@ interface SettingsState {
   // GitHub Gist Sync
   gistSync: GistSyncPreferences
 
+  // Focus Mode Settings
+  focusPreferences: FocusPreferences
+
   // Onboarding
   onboardingCompleted: boolean
 
@@ -126,6 +142,7 @@ interface SettingsState {
   setNoteMarkdownPreview: (enabled: boolean) => void
   setEmailPreferences: (prefs: Partial<EmailPreferences>) => void
   setGistSync: (prefs: Partial<GistSyncPreferences>) => void
+  setFocusPreferences: (prefs: Partial<FocusPreferences>) => void
   completeOnboarding: () => void
 
   // Helpers
@@ -176,6 +193,17 @@ export const useSettingsStore = create<SettingsState>()(
         lastSyncStatus: null,
         lastSyncError: null,
       },
+      focusPreferences: {
+        defaultDuration: 25,
+        shortBreakDuration: 5,
+        longBreakDuration: 20,
+        sessionsUntilLongBreak: 4,
+        autoStartBreak: false,
+        playTickSound: false,
+        playCompletionSound: true,
+        showTimeInTitle: true,
+        dailyGoalSessions: 5,
+      },
       onboardingCompleted: false,
 
       // Actions
@@ -207,6 +235,10 @@ export const useSettingsStore = create<SettingsState>()(
         gistSync: { ...state.gistSync, ...prefs }
       })),
 
+      setFocusPreferences: (prefs) => set((state) => ({
+        focusPreferences: { ...state.focusPreferences, ...prefs }
+      })),
+
       completeOnboarding: () => set({ onboardingCompleted: true }),
 
       // Helpers
@@ -232,6 +264,7 @@ export const useSettingsStore = create<SettingsState>()(
         noteMarkdownPreview: state.noteMarkdownPreview,
         emailPreferences: state.emailPreferences,
         gistSync: state.gistSync,
+        focusPreferences: state.focusPreferences,
         onboardingCompleted: state.onboardingCompleted,
       }),
       // Merge persisted state with initial state to handle new fields
