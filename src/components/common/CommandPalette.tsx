@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useUIStore } from '../../stores/uiStore'
+import { useChatStore } from '../../stores/chatStore'
+import { useNoteStore } from '../../stores/noteStore'
+import { useTaskStore } from '../../stores/taskStore'
+import { useDailyNotesStore } from '../../stores/dailyNotesStore'
+import { useJournalStore } from '../../stores/journalStore'
+import { useBookmarkStore } from '../../stores/bookmarkStore'
+import { useHabitStore } from '../../stores/habitStore'
 
 interface Command {
   id: string
@@ -26,18 +33,42 @@ export function CommandPalette() {
     { id: 'goto-journal', title: 'Go to Journal', shortcut: 'Ctrl+5', category: 'navigation', action: () => setActiveModule('journal') },
     { id: 'goto-bookmarks', title: 'Go to Bookmarks', shortcut: 'Ctrl+6', category: 'navigation', action: () => setActiveModule('bookmarks') },
     { id: 'goto-calendar', title: 'Go to Calendar', shortcut: 'Ctrl+7', category: 'navigation', action: () => setActiveModule('calendar') },
-    { id: 'goto-analysis', title: 'Go to Analysis', shortcut: 'Ctrl+8', category: 'navigation', action: () => setActiveModule('analysis') },
+    { id: 'goto-graph', title: 'Go to Knowledge Graph', shortcut: 'Ctrl+8', category: 'navigation', action: () => setActiveModule('graph') },
+    { id: 'goto-analysis', title: 'Go to Analysis', shortcut: 'Ctrl+9', category: 'navigation', action: () => setActiveModule('analysis') },
     // Actions
-    { id: 'new-note', title: 'New Note', shortcut: 'Ctrl+N', category: 'action', action: () => { setActiveModule('notes'); } },
-    { id: 'new-dailynote', title: 'New Daily Note Card', category: 'action', action: () => { setActiveModule('dailynotes'); } },
-    { id: 'new-task', title: 'New Task', category: 'action', action: () => { setActiveModule('tasks'); } },
-    { id: 'new-habit', title: 'New Habit', category: 'action', action: () => { setActiveModule('habits'); } },
-    { id: 'new-journal', title: 'New Journal Entry', category: 'action', action: () => { setActiveModule('journal'); } },
-    { id: 'new-bookmark', title: 'New Bookmark', category: 'action', action: () => { setActiveModule('bookmarks'); } },
+    { id: 'new-note', title: 'New Note', shortcut: 'Ctrl+N', category: 'action', action: () => {
+      setActiveModule('notes')
+      const noteId = useNoteStore.getState().addNote({ title: '', content: '', tags: [] })
+      useNoteStore.getState().setActiveNote(noteId)
+    }},
+    { id: 'new-dailynote', title: 'New Daily Note Card', category: 'action', action: () => {
+      setActiveModule('dailynotes')
+      const today = new Date().toISOString().split('T')[0]
+      useDailyNotesStore.getState().addCard(today, { title: 'New Card', content: '', tags: [], pinned: false })
+    }},
+    { id: 'new-task', title: 'New Task', category: 'action', action: () => {
+      setActiveModule('tasks')
+      useTaskStore.getState().addTask({ title: 'New Task', description: '', priority: 'P3' })
+    }},
+    { id: 'new-habit', title: 'New Habit', category: 'action', action: () => {
+      setActiveModule('habits')
+      useHabitStore.getState().addHabit({ name: 'New Habit', frequency: 'daily', category: 'personal' })
+    }},
+    { id: 'new-journal', title: 'New Journal Entry', category: 'action', action: () => {
+      setActiveModule('journal')
+      const today = new Date().toISOString().split('T')[0]
+      useJournalStore.getState().addEntry({ date: today, content: '', mood: 3, energy: 3, tags: [] })
+    }},
+    { id: 'new-bookmark', title: 'New Bookmark', category: 'action', action: () => {
+      setActiveModule('bookmarks')
+      useBookmarkStore.getState().addBookmark({ title: 'New Bookmark', url: 'https://', description: '', tags: [], favicon: '' })
+    }},
     // Settings
     { id: 'toggle-focus', title: 'Toggle Focus Mode', shortcut: 'Ctrl+Shift+F', category: 'settings', action: () => useUIStore.getState().toggleFocusMode() },
-    { id: 'open-settings', title: 'Open Settings', category: 'settings', action: () => { /* Settings handled by SettingsPanel */ } },
-    { id: 'open-flowbot', title: 'Open FlowBot', shortcut: 'Ctrl+/', category: 'settings', action: () => { /* FlowBot handled by ChatWindow */ } },
+    { id: 'open-settings', title: 'Open Settings', category: 'settings', action: () => useUIStore.getState().setSettingsOpen(true) },
+    { id: 'open-flowbot', title: 'Open FlowBot', shortcut: 'Ctrl+/', category: 'settings', action: () => useChatStore.getState().setOpen(true) },
+    { id: 'global-search', title: 'Global Search', shortcut: 'Alt+U', category: 'settings', action: () => useUIStore.getState().setGlobalSearchOpen(true) },
+    { id: 'shortcuts-help', title: 'Keyboard Shortcuts Help', shortcut: 'Ctrl+?', category: 'settings', action: () => useUIStore.getState().setShortcutsModalOpen(true) },
   ], [setActiveModule])
 
   const filteredCommands = useMemo(() => {

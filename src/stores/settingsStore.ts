@@ -65,6 +65,78 @@ export const FONT_SIZES: Record<FontSize, { label: string; value: string }> = {
   '4xl': { label: 'Maximum (24px)', value: '24px' },
 }
 
+// Font Family Options
+export type FontFamily = 
+  | 'system' 
+  | 'fira-code' 
+  | 'jetbrains-mono' 
+  | 'cascadia-code'
+  | 'source-code-pro'
+  | 'consolas'
+  | 'proto-nerd'
+  | 'hack-nerd'
+  | 'meslo-nerd'
+  | 'fira-code-nerd'
+  | 'jetbrains-mono-nerd'
+
+export const FONT_FAMILIES: Record<FontFamily, { label: string; value: string; isNerd: boolean }> = {
+  'system': { 
+    label: 'System Default', 
+    value: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    isNerd: false 
+  },
+  'consolas': { 
+    label: 'Consolas', 
+    value: 'Consolas, monospace',
+    isNerd: false 
+  },
+  'fira-code': { 
+    label: 'Fira Code', 
+    value: '"Fira Code", monospace',
+    isNerd: false 
+  },
+  'jetbrains-mono': { 
+    label: 'JetBrains Mono', 
+    value: '"JetBrains Mono", monospace',
+    isNerd: false 
+  },
+  'cascadia-code': { 
+    label: 'Cascadia Code', 
+    value: '"Cascadia Code", monospace',
+    isNerd: false 
+  },
+  'source-code-pro': { 
+    label: 'Source Code Pro', 
+    value: '"Source Code Pro", monospace',
+    isNerd: false 
+  },
+  'proto-nerd': { 
+    label: '🔤 Proto Nerd Font', 
+    value: '"ProFont IIx Nerd Font", "ProFontWindows Nerd Font", monospace',
+    isNerd: true 
+  },
+  'hack-nerd': { 
+    label: '🔤 Hack Nerd Font', 
+    value: '"Hack Nerd Font", monospace',
+    isNerd: true 
+  },
+  'meslo-nerd': { 
+    label: '🔤 Meslo Nerd Font', 
+    value: '"MesloLGS Nerd Font", "MesloLGS NF", monospace',
+    isNerd: true 
+  },
+  'fira-code-nerd': { 
+    label: '🔤 Fira Code Nerd Font', 
+    value: '"FiraCode Nerd Font", monospace',
+    isNerd: true 
+  },
+  'jetbrains-mono-nerd': { 
+    label: '🔤 JetBrains Mono Nerd Font', 
+    value: '"JetBrainsMono Nerd Font", monospace',
+    isNerd: true 
+  },
+}
+
 // GitHub Gist Sync Preferences
 export interface GistSyncPreferences {
   enabled: boolean
@@ -117,6 +189,7 @@ interface SettingsState {
 
   // Display Settings
   fontSize: FontSize
+  fontFamily: FontFamily
 
   // Editor Settings
   noteMarkdownPreview: boolean
@@ -142,6 +215,7 @@ interface SettingsState {
   setApiKey: (provider: ApiKeyType, key: string) => void
   setOllamaBaseUrl: (url: string) => void
   setFontSize: (size: FontSize) => void
+  setFontFamily: (family: FontFamily) => void
   setNoteMarkdownPreview: (enabled: boolean) => void
   setEmailPreferences: (prefs: Partial<EmailPreferences>) => void
   setGistSync: (prefs: Partial<GistSyncPreferences>) => void
@@ -170,6 +244,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
       ollamaBaseUrl: 'http://localhost:11434',
       fontSize: 'base',
+      fontFamily: 'system',
       noteMarkdownPreview: false,
       emailPreferences: {
         enabled: false,
@@ -230,6 +305,8 @@ export const useSettingsStore = create<SettingsState>()(
 
       setFontSize: (size) => set({ fontSize: size }),
 
+      setFontFamily: (family) => set({ fontFamily: family }),
+
       setNoteMarkdownPreview: (enabled) => set({ noteMarkdownPreview: enabled }),
 
       setEmailPreferences: (prefs) => set((state) => ({
@@ -268,6 +345,7 @@ export const useSettingsStore = create<SettingsState>()(
         apiKeys: state.apiKeys,
         ollamaBaseUrl: state.ollamaBaseUrl,
         fontSize: state.fontSize,
+        fontFamily: state.fontFamily,
         noteMarkdownPreview: state.noteMarkdownPreview,
         emailPreferences: state.emailPreferences,
         gistSync: state.gistSync,

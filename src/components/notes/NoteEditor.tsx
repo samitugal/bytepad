@@ -181,15 +181,19 @@ export function NoteEditor() {
         {/* Editor Panel */}
         {(viewMode === 'edit' || viewMode === 'split') && (
           <div className={`relative ${viewMode === 'split' ? 'w-1/2 border-r border-np-border' : 'flex-1'} overflow-hidden`}>
-            {/* Line numbers */}
+            {/* Line numbers - absolutely positioned, syncs scroll with textarea */}
             <div 
               ref={lineNumbersRef}
               className="absolute left-0 top-0 bottom-0 w-12 bg-np-bg-secondary border-r border-np-border
-                         text-np-text-secondary text-sm font-mono text-right pr-2 pt-3 select-none overflow-hidden"
+                         text-np-text-secondary text-sm font-mono text-right pr-2 select-none 
+                         overflow-y-auto scrollbar-hide"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              {content.split('\n').map((_, i) => (
-                <div key={i} className="leading-6">{i + 1}</div>
-              ))}
+              <div style={{ paddingTop: '12px', paddingBottom: '16px' }}>
+                {content.split('\n').map((_, i) => (
+                  <div key={i} style={{ height: '24px', lineHeight: '24px' }}>{i + 1}</div>
+                ))}
+              </div>
             </div>
 
             {/* Editor */}
@@ -201,7 +205,13 @@ export function NoteEditor() {
               onScroll={handleScroll}
               placeholder="Start writing in Markdown..."
               className="w-full h-full bg-np-bg-primary text-np-text-primary font-mono text-sm
-                         pl-14 pr-4 pt-3 pb-4 resize-none focus:outline-none leading-6"
+                         pr-4 resize-none focus:outline-none"
+              style={{ 
+                lineHeight: '24px', 
+                paddingLeft: '56px', 
+                paddingTop: '12px', 
+                paddingBottom: '16px'
+              }}
               spellCheck={false}
             />
           </div>

@@ -17,7 +17,8 @@ const MODULE_MAP: Record<string, ModuleType> = {
   '5': 'journal',
   '6': 'bookmarks',
   '7': 'calendar',
-  '8': 'analysis',
+  '8': 'graph',
+  '9': 'analysis',
 }
 
 export function useKeyboardShortcuts() {

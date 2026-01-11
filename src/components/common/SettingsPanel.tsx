@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { exportAllData, downloadAsJson, importData, readFileAsJson, clearAllData, getDataStats } from '../../services/dataService'
-import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider, FONT_SIZES, FontSize, ApiKeyType, GistSyncPreferences } from '../../stores/settingsStore'
+import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider, FONT_SIZES, FontSize, FONT_FAMILIES, FontFamily, ApiKeyType, GistSyncPreferences } from '../../stores/settingsStore'
 import { useI18nStore, LANGUAGES, Language } from '../../i18n'
 import { useThemeStore, Theme } from '../../stores/themeStore'
 import { useNotificationStore } from '../../stores/notificationStore'
@@ -46,6 +46,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
         apiKeys,
         ollamaBaseUrl,
         fontSize,
+        fontFamily,
         emailPreferences,
         gistSync,
         setLLMProvider,
@@ -53,6 +54,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
         setApiKey,
         setOllamaBaseUrl,
         setFontSize,
+        setFontFamily,
         setEmailPreferences,
         setGistSync,
     } = useSettingsStore()
@@ -221,6 +223,8 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                         <GeneralTab
                             fontSize={fontSize}
                             setFontSize={setFontSize}
+                            fontFamily={fontFamily}
+                            setFontFamily={setFontFamily}
                         />
                     )}
 
@@ -297,9 +301,11 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
 // ============ TAB COMPONENTS ============
 
-function GeneralTab({ fontSize, setFontSize }: {
+function GeneralTab({ fontSize, setFontSize, fontFamily, setFontFamily }: {
     fontSize: FontSize
     setFontSize: (size: FontSize) => void
+    fontFamily: FontFamily
+    setFontFamily: (family: FontFamily) => void
 }) {
     const { language, setLanguage } = useI18nStore()
     const { theme, setTheme } = useThemeStore()
@@ -370,6 +376,47 @@ function GeneralTab({ fontSize, setFontSize }: {
                         </select>
                         <p className="text-xs text-np-text-secondary mt-1">
                             Changes apply immediately to the entire app.
+                        </p>
+                    </div>
+
+                    {/* Font Family */}
+                    <div>
+                        <label className="block text-xs text-np-text-secondary mb-1">Font Family</label>
+                        <select
+                            value={fontFamily}
+                            onChange={(e) => setFontFamily(e.target.value as FontFamily)}
+                            className="w-full bg-np-bg-primary border border-np-border text-np-text-primary
+                         font-mono text-sm px-2 py-1.5 focus:outline-none focus:border-np-blue"
+                        >
+                            <optgroup label="Standard Fonts">
+                                {(Object.keys(FONT_FAMILIES) as FontFamily[])
+                                    .filter((f) => !FONT_FAMILIES[f].isNerd)
+                                    .map((family) => (
+                                        <option key={family} value={family}>
+                                            {FONT_FAMILIES[family].label}
+                                        </option>
+                                    ))}
+                            </optgroup>
+                            <optgroup label="Nerd Fonts (requires installation)">
+                                {(Object.keys(FONT_FAMILIES) as FontFamily[])
+                                    .filter((f) => FONT_FAMILIES[f].isNerd)
+                                    .map((family) => (
+                                        <option key={family} value={family}>
+                                            {FONT_FAMILIES[family].label}
+                                        </option>
+                                    ))}
+                            </optgroup>
+                        </select>
+                        <p className="text-xs text-np-text-secondary mt-1">
+                            Nerd Fonts must be installed on your system.
+                            <a 
+                                href="https://www.nerdfonts.com/font-downloads" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-np-cyan hover:underline ml-1"
+                            >
+                                Download Nerd Fonts →
+                            </a>
                         </p>
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 # Post-MVP Audit Report
-**Date:** 2026-01-11
+**Date:** 2026-01-11 (Updated)
 **Version:** 0.13.0
 **Commit:** ddfd014
 
@@ -13,7 +13,7 @@ MyFlowSpace PWA is **production-ready** with ongoing improvements. Sprint 18 (Ga
 - **TypeScript:** ✅ Strict mode passes
 - **Lint:** ⚠️ 6 warnings (react-hooks deps, minor)
 - **Build:** ✅ Success (1.54MB bundle - needs code splitting!)
-- **Modules:** 9 active (Notes, Daily Notes, Habits, Tasks, Journal, Bookmarks, Calendar, Analyze, Gamification)
+- **Modules:** 10 active (Notes, Daily Notes, Habits, Tasks, Journal, Bookmarks, Calendar, **Graph**, Analyze, Gamification)
 - **Electron:** ✅ Desktop app working with proper icon
 
 ---
@@ -23,6 +23,7 @@ MyFlowSpace PWA is **production-ready** with ongoing improvements. Sprint 18 (Ga
 ### 1.1 Notes Module
 | Severity | Type | Issue | Status |
 |----------|------|-------|--------|
+| P2 | [bug] | Line numbers desync with text when lines wrap (long text) | Open |
 | P3 | [ux] | No keyboard shortcut for quick note creation from anywhere | Open |
 | P4 | [feat] | Wikilinks not implemented yet | Planned |
 
@@ -113,18 +114,17 @@ MyFlowSpace PWA is **production-ready** with ongoing improvements. Sprint 18 (Ga
 ## 3. Keyboard-First UX Audit
 
 ### ✅ Working Well
-- Module navigation (Ctrl+1-8)
-- Command Palette (Ctrl+K)
+- Module navigation (Ctrl+1-9, including Graph ^8)
+- Command Palette (Ctrl+K) - **FIXED: Settings & FlowBot now work**
 - FlowBot toggle (Ctrl+/)
 - Focus Mode (Ctrl+Shift+F)
 - Notification Center (Ctrl+Shift+N)
 - Global Search (Alt+U)
 - Escape closes modals correctly
 - Tab order is logical
+- **Command Palette now creates items directly (notes, tasks, habits, etc.)**
 
 ### ⚠️ Needs Improvement
-- Command Palette "Open Settings" and "Open FlowBot" actions have empty implementations
-- Command Palette missing habit toggle, bookmark add actions
 - No global "quick capture" shortcut
 - Focus Mode keyboard shortcuts (Space, R, C) not discoverable
 
@@ -173,6 +173,15 @@ MyFlowSpace PWA is **production-ready** with ongoing improvements. Sprint 18 (Ga
 - Browser tab title integration
 - Keyboard shortcuts (Space, R, C, Esc)
 
+### Sprint 25: Enhanced Knowledge Graph ✅
+- Standalone Graph module in sidebar (Ctrl+8)
+- Unified entity visualization (notes, tasks, habits, tags)
+- Force-directed graph with canvas rendering
+- Tag-based and wikilink connections
+- Filter by entity type
+- Search with node highlighting
+- Click-to-navigate to entities
+
 ---
 
 ## 6. Proposed Sprint Roadmap (Updated)
@@ -205,11 +214,25 @@ MyFlowSpace PWA is **production-ready** with ongoing improvements. Sprint 18 (Ga
 - [ ] System preference detection
 - [ ] Persist preference
 
-### Sprint 24: Knowledge Graph (7-12 days) - MEDIUM
-- [ ] Wikilink syntax [[Note Title]]
-- [ ] Backlinks panel
-- [ ] Graph visualization (D3.js or vis.js)
-- [ ] Auto-create missing notes
+### Sprint 24: Knowledge Graph ✅ COMPLETED (was Sprint 25)
+- [x] Standalone Graph module in sidebar
+- [x] Unified entity visualization
+- [x] Force-directed canvas graph
+- [x] Tag & wikilink connections
+- [x] Filter and search
+
+### Sprint 27: Note Editor Improvements (3-5 days) - MEDIUM
+- [ ] Fix line numbers sync with wrapped text (use CodeMirror or custom solution)
+- [ ] Add syntax highlighting for Markdown
+- [ ] Improve Split view responsiveness
+- [ ] Add word/character count in status bar
+- [ ] Keyboard shortcut for quick note creation (Ctrl+Alt+N)
+
+### Sprint 28: Sidebar Enhancements (2-3 days) - LOW
+- [ ] Show top 5 tags (currently shows only 2 when space available)
+- [ ] Collapsible tag section
+- [ ] Recent notes quick access
+- [ ] Favorites/pinned notes section
 
 ---
 
@@ -261,10 +284,10 @@ MyFlowSpace PWA is **production-ready** with ongoing improvements. Sprint 18 (Ga
 
 ## Next Steps
 
-1. **Immediate:** Sprint 22 - Code Splitting (critical for performance)
-2. **This week:** Refactor SettingsPanel.tsx, implement lazy loading
-3. **Next week:** Begin Sprint 20 (AI Productivity Report)
+1. **Immediate:** Sprint 27 - Note Editor Improvements (line numbers sync fix)
+2. **This week:** Sprint 22 - Code Splitting (critical for performance)
+3. **Next week:** Sprint 28 - Sidebar Enhancements (UX polish)
 
 ---
 
-*Last updated: 2026-01-11*
+*Last updated: 2026-01-11 (Post-UI Audit)*

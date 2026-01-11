@@ -1,6 +1,6 @@
 # MyFlowSpace - ADHD Productivity Super App
 
-## Sprint 22 Devam Ediyor! Bug Fixes & UX Improvements
+## Sprint 25 Tamamlandı! Knowledge Graph Enhanced
 
 ### Tamamlanan Sprint'ler
 - [x] MVP1: Foundation + Notes ✓
@@ -16,12 +16,12 @@
 - [x] Sprint 19: Enhanced Focus Mode (Time logging, animated timer) ✓
 - [x] Sprint 21: Electron Desktop App (System tray, shortcuts, portable EXE) ✓
 - [~] Sprint 22: Bug Fixes & UX (6/7 completed - multi-tab pending)
+- [x] Sprint 25: Knowledge Graph Enhanced (sidebar, unified entities, force-directed) ✓
 
 ### Planlanan Sprint'ler
 - [ ] Sprint 20: AI Productivity Report
 - [ ] Sprint 23: Multi-Tab Support
 - [ ] Sprint 24: FlowBot Note Tools (GetAllNotes, GetNoteDetail)
-- [ ] Sprint 25: Knowledge Graph Enhanced (sidebar, all entities)
 - [ ] Sprint 26: Keyboard Shortcuts Fix (Ctrl+N, help modal)
 
 > Detaylı görevler için: `docs/sprints/` klasörü
@@ -37,7 +37,8 @@ Tüm promptlar ve teknik kodlar ingilizce olmalıdır.
 ## Özellikler
 | Modül | Özellikler | Durum |
 |-------|------------|-------|
-| Notes | Markdown, tags, backlinks, knowledge graph | ✅ |
+| Notes | Markdown, tags, backlinks | ✅ |
+| Graph | Unified knowledge graph (notes, tasks, habits, tags) | ✅ |
 | Tasks | Priority, subtasks, due dates, calendar view | ✅ |
 | Habits | Daily tracking, streaks, statistics | ✅ |
 | Journal | Daily notes, mood/energy tracking | ✅ |
@@ -62,7 +63,7 @@ Tüm promptlar ve teknik kodlar ingilizce olmalıdır.
 ## Temel Shortcuts
 ```
 Ctrl+K        → Command Palette
-Ctrl+1-8      → Module navigation
+Ctrl+1-9      → Module navigation (1:Notes, 8:Graph, 9:Analyze)
 Ctrl+/        → FlowBot AI Coach
 Ctrl+Shift+F  → Focus Mode (global in Electron)
 Ctrl+Shift+N  → Notification Center
@@ -85,7 +86,7 @@ docs/
 │   ├── SPRINT_22_BUG_FIXES_UX.md (in progress)
 │   ├── SPRINT_23_MULTI_TAB.md
 │   ├── SPRINT_24_FLOWBOT_NOTE_TOOLS.md
-│   ├── SPRINT_25_KNOWLEDGE_GRAPH_ENHANCED.md
+│   ├── SPRINT_25_KNOWLEDGE_GRAPH_ENHANCED.md ✅
 │   └── SPRINT_26_KEYBOARD_SHORTCUTS_FIX.md
 ```
 
@@ -139,5 +140,4 @@ Yeni bir sprint veya özellik planlandığında:
 1. **Sprint 26** - Keyboard Shortcuts Fix (1-2 gün, hızlı kazanım)
 2. **Sprint 24** - FlowBot Note Tools (2-3 gün, yüksek değer)
 3. **Sprint 23** - Multi-Tab Support (3-4 gün)
-4. **Sprint 25** - Knowledge Graph Enhanced (5-7 gün)
-5. **Sprint 20** - AI Productivity Report (7-10 gün)
+4. **Sprint 20** - AI Productivity Report (7-10 gün)
