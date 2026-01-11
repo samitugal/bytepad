@@ -27,6 +27,8 @@ function createWindow() {
     minHeight: 600,
     title: 'MyFlowSpace',
     icon: getIconPath(),
+    frame: false, // Remove native title bar
+    titleBarStyle: 'hidden',
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,

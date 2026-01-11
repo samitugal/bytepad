@@ -6,6 +6,25 @@ interface MenuBarProps {
   onSettingsClick?: () => void
 }
 
+// Window control functions - call Electron API if available
+const handleMinimize = () => {
+  if (window.electronAPI?.minimize) {
+    window.electronAPI.minimize()
+  }
+}
+
+const handleMaximize = () => {
+  if (window.electronAPI?.maximize) {
+    window.electronAPI.maximize()
+  }
+}
+
+const handleClose = () => {
+  if (window.electronAPI?.close) {
+    window.electronAPI.close()
+  }
+}
+
 export function MenuBar({ onSettingsClick }: MenuBarProps) {
   const { toggleFocusMode } = useUIStore()
   const { toggleOpen: toggleChat } = useChatStore()
@@ -15,9 +34,12 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
   const hasApiKey = llmProvider === 'ollama' || !!apiKeys[llmProvider]
   const requiresKey = PROVIDER_INFO[llmProvider].requiresKey
 
+  // Check if running in Electron
+  const isElectron = !!window.electronAPI?.isElectron
+
   return (
-    <div className="h-6 bg-np-bg-secondary border-b border-np-border flex items-center justify-between px-2 text-sm select-none">
-      <div className="flex items-center gap-4">
+    <div className="h-8 bg-np-bg-secondary border-b border-np-border flex items-center justify-between px-2 text-sm select-none app-drag-region">
+      <div className="flex items-center gap-4 app-no-drag">
         <span className="text-np-text-primary font-medium">MyFlowSpace</span>
         <div className="flex items-center gap-3 text-np-text-secondary">
           <span className="hover:text-np-text-primary cursor-pointer">File</span>
@@ -53,11 +75,31 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-1 text-np-text-secondary">
-        <button className="w-6 h-5 hover:bg-np-bg-tertiary flex items-center justify-center">─</button>
-        <button className="w-6 h-5 hover:bg-np-bg-tertiary flex items-center justify-center">□</button>
-        <button className="w-6 h-5 hover:bg-np-error/80 flex items-center justify-center">×</button>
-      </div>
+      {isElectron && (
+        <div className="flex items-center gap-0 text-np-text-secondary app-no-drag">
+          <button 
+            onClick={handleMinimize}
+            className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors"
+            title="Minimize"
+          >
+            ─
+          </button>
+          <button 
+            onClick={handleMaximize}
+            className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors"
+            title="Maximize"
+          >
+            □
+          </button>
+          <button 
+            onClick={handleClose}
+            className="w-10 h-8 hover:bg-np-error hover:text-white flex items-center justify-center transition-colors"
+            title="Close"
+          >
+            ×
+          </button>
+        </div>
+      )}
     </div>
   )
 }

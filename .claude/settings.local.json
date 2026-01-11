@@ -19,7 +19,8 @@
       "Bash(npx tsc:*)",
       "Bash(wc:*)",
       "Bash(git rev-parse:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(ls:*)"
     ]
   }
 }
