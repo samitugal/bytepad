@@ -5,6 +5,7 @@ import { ChatWindow } from './components/chat'
 import { LevelUpModal, AchievementToast } from './components/gamification'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { initializeNotifications } from './services/notificationService'
+import { startAutoSync, stopAutoSync, syncWithGist, forcePushToGist } from './services/gistSyncService'
 import { useSettingsStore, FONT_SIZES } from './stores/settingsStore'
 import { useUIStore } from './stores/uiStore'
 import { useAuthStore } from './stores/authStore'
@@ -18,6 +19,7 @@ function App() {
   const setGlobalSearchOpen = useUIStore((state) => state.setGlobalSearchOpen)
   const initializeAuth = useAuthStore((state) => state.initialize)
   const { checkStreak, resetDailyStats, lastActiveDate } = useGamificationStore()
+  const gistSync = useSettingsStore((state) => state.gistSync)
 
   useKeyboardShortcuts()
 
@@ -49,6 +51,36 @@ function App() {
       }
     }
   }, [gamificationEnabled, checkStreak, resetDailyStats, lastActiveDate])
+
+  // Initialize Gist sync on mount
+  useEffect(() => {
+    if (gistSync.enabled && gistSync.githubToken && gistSync.gistId) {
+      // Pull from Gist on startup
+      syncWithGist().then(result => {
+        console.log('[Gist Sync] Startup sync:', result.message)
+      })
+
+      // Start auto-sync if enabled
+      if (gistSync.autoSync && gistSync.syncInterval > 0) {
+        startAutoSync()
+      }
+    }
+
+    // Push to Gist on app close
+    const handleBeforeUnload = () => {
+      if (gistSync.enabled && gistSync.githubToken && gistSync.gistId) {
+        // Use sendBeacon for reliable sync on close
+        forcePushToGist()
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      stopAutoSync()
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [gistSync.enabled, gistSync.githubToken, gistSync.gistId, gistSync.autoSync, gistSync.syncInterval])
 
   return (
     <ErrorBoundary>
