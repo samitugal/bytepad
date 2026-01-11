@@ -8,13 +8,16 @@ directories:
 
 files:
   - out/**/*
-  - resources/**/*
+
+extraResources:
+  - from: resources/icon.png
+    to: icon.png
 
 win:
   target:
     - nsis
     - portable
-  icon: resources/icon.ico
+  icon: resources/icon.png
   artifactName: ${productName}-${version}-${arch}.${ext}
 
 nsis:
@@ -28,7 +31,7 @@ mac:
   target:
     - dmg
     - zip
-  icon: resources/icon.icns
+  icon: resources/icon.png
   category: public.app-category.productivity
 
 linux:

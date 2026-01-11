@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Note } from '../types'
+import { useGamificationStore, XP_VALUES } from './gamificationStore'
 
 // Cross-tab sync channel
 const syncChannel = new BroadcastChannel('myflowspace-notes')
@@ -39,6 +40,12 @@ export const useNoteStore = create<NoteState>()(
           notes: [note, ...state.notes],
           activeNoteId: id,
         }))
+
+        // Award XP for note creation
+        const gamification = useGamificationStore.getState()
+        gamification.addXP(XP_VALUES.noteCreate, 'noteCreate')
+        gamification.incrementStat('notesCreated')
+
         return id
       },
 

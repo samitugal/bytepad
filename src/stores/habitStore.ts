@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Habit } from '../types'
+import { useGamificationStore, XP_VALUES } from './gamificationStore'
 
 // Cross-tab sync channel
 const syncChannel = new BroadcastChannel('myflowspace-habits')
@@ -94,18 +95,37 @@ export const useHabitStore = create<HabitState>()(
       },
 
       toggleCompletion: (id, date) => {
+        const habit = get().habits.find(h => h.id === id)
+        const wasCompleted = habit?.completions[date] || false
+
         set((state) => ({
-          habits: state.habits.map((habit) => {
-            if (habit.id !== id) return habit
-            const newCompletions = { ...habit.completions }
+          habits: state.habits.map((h) => {
+            if (h.id !== id) return h
+            const newCompletions = { ...h.completions }
             newCompletions[date] = !newCompletions[date]
             return {
-              ...habit,
+              ...h,
               completions: newCompletions,
               streak: calculateStreak(newCompletions),
             }
           }),
         }))
+
+        // Award XP for habit completion (not for un-completing)
+        const today = getToday()
+        if (!wasCompleted && date === today) {
+          const gamification = useGamificationStore.getState()
+          gamification.addXP(XP_VALUES.habitComplete, 'habitComplete')
+          gamification.incrementStat('habitsCompleted')
+          gamification.incrementStat('habitsCompletedToday')
+
+          // Check for "Perfect Day" achievement
+          const { habits } = get()
+          const allCompleted = habits.every(h => h.completions[today])
+          if (allCompleted && habits.length > 0) {
+            gamification.incrementStat('perfectDays')
+          }
+        }
       },
 
       getCompletedToday: () => {

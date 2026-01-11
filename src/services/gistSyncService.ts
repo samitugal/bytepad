@@ -8,6 +8,8 @@ import { useHabitStore } from '../stores/habitStore'
 import { useJournalStore } from '../stores/journalStore'
 import { useBookmarkStore } from '../stores/bookmarkStore'
 import { useDailyNotesStore } from '../stores/dailyNotesStore'
+import { useFocusStore } from '../stores/focusStore'
+import { useGamificationStore } from '../stores/gamificationStore'
 
 const GIST_FILENAME = 'myflowspace-data.json'
 
@@ -21,6 +23,29 @@ interface SyncData {
         journal: unknown[]
         bookmarks: unknown[]
         dailyNotes: unknown[]
+        focusSessions: unknown[]
+        gamification: {
+            level: number
+            currentXP: number
+            totalXP: number
+            tasksCompleted: number
+            tasksCompletedToday: number
+            habitsCompleted: number
+            habitsCompletedToday: number
+            pomodorosCompleted: number
+            notesCreated: number
+            journalEntries: number
+            perfectDays: number
+            currentStreak: number
+            bestStreak: number
+            lastActiveDate: string | null
+            achievements: string[]
+        } | null
+        focusStats: {
+            consecutiveSessions: number
+            focusStreak: number
+            lastFocusDate: string | null
+        } | null
     }
 }
 
@@ -32,6 +57,8 @@ function collectAllData(): SyncData {
     const journal = useJournalStore.getState().entries
     const bookmarks = useBookmarkStore.getState().bookmarks
     const dailyNotes = useDailyNotesStore.getState().dailyNotes
+    const focusState = useFocusStore.getState()
+    const gamificationState = useGamificationStore.getState()
 
     return {
         version: 1,
@@ -43,6 +70,29 @@ function collectAllData(): SyncData {
             journal,
             bookmarks,
             dailyNotes,
+            focusSessions: focusState.sessions,
+            gamification: {
+                level: gamificationState.level,
+                currentXP: gamificationState.currentXP,
+                totalXP: gamificationState.totalXP,
+                tasksCompleted: gamificationState.tasksCompleted,
+                tasksCompletedToday: gamificationState.tasksCompletedToday,
+                habitsCompleted: gamificationState.habitsCompleted,
+                habitsCompletedToday: gamificationState.habitsCompletedToday,
+                pomodorosCompleted: gamificationState.pomodorosCompleted,
+                notesCreated: gamificationState.notesCreated,
+                journalEntries: gamificationState.journalEntries,
+                perfectDays: gamificationState.perfectDays,
+                currentStreak: gamificationState.currentStreak,
+                bestStreak: gamificationState.bestStreak,
+                lastActiveDate: gamificationState.lastActiveDate,
+                achievements: gamificationState.achievements,
+            },
+            focusStats: {
+                consecutiveSessions: focusState.consecutiveSessions,
+                focusStreak: focusState.focusStreak,
+                lastFocusDate: focusState.lastFocusDate,
+            },
         },
     }
 }
@@ -68,6 +118,35 @@ function applyData(syncData: SyncData): void {
     }
     if (data.dailyNotes) {
         useDailyNotesStore.setState({ dailyNotes: data.dailyNotes as never[] })
+    }
+    if (data.focusSessions) {
+        useFocusStore.setState({ sessions: data.focusSessions as never[] })
+    }
+    if (data.focusStats) {
+        useFocusStore.setState({
+            consecutiveSessions: data.focusStats.consecutiveSessions,
+            focusStreak: data.focusStats.focusStreak,
+            lastFocusDate: data.focusStats.lastFocusDate,
+        })
+    }
+    if (data.gamification) {
+        useGamificationStore.setState({
+            level: data.gamification.level,
+            currentXP: data.gamification.currentXP,
+            totalXP: data.gamification.totalXP,
+            tasksCompleted: data.gamification.tasksCompleted,
+            tasksCompletedToday: data.gamification.tasksCompletedToday,
+            habitsCompleted: data.gamification.habitsCompleted,
+            habitsCompletedToday: data.gamification.habitsCompletedToday,
+            pomodorosCompleted: data.gamification.pomodorosCompleted,
+            notesCreated: data.gamification.notesCreated,
+            journalEntries: data.gamification.journalEntries,
+            perfectDays: data.gamification.perfectDays,
+            currentStreak: data.gamification.currentStreak,
+            bestStreak: data.gamification.bestStreak,
+            lastActiveDate: data.gamification.lastActiveDate,
+            achievements: data.gamification.achievements,
+        })
     }
 }
 
