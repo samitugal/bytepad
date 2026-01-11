@@ -130,6 +130,9 @@ interface SettingsState {
   // Focus Mode Settings
   focusPreferences: FocusPreferences
 
+  // Gamification
+  gamificationEnabled: boolean
+
   // Onboarding
   onboardingCompleted: boolean
 
@@ -143,6 +146,7 @@ interface SettingsState {
   setEmailPreferences: (prefs: Partial<EmailPreferences>) => void
   setGistSync: (prefs: Partial<GistSyncPreferences>) => void
   setFocusPreferences: (prefs: Partial<FocusPreferences>) => void
+  setGamificationEnabled: (enabled: boolean) => void
   completeOnboarding: () => void
 
   // Helpers
@@ -204,6 +208,7 @@ export const useSettingsStore = create<SettingsState>()(
         showTimeInTitle: true,
         dailyGoalSessions: 5,
       },
+      gamificationEnabled: true,
       onboardingCompleted: false,
 
       // Actions
@@ -239,6 +244,8 @@ export const useSettingsStore = create<SettingsState>()(
         focusPreferences: { ...state.focusPreferences, ...prefs }
       })),
 
+      setGamificationEnabled: (enabled) => set({ gamificationEnabled: enabled }),
+
       completeOnboarding: () => set({ onboardingCompleted: true }),
 
       // Helpers
@@ -265,6 +272,7 @@ export const useSettingsStore = create<SettingsState>()(
         emailPreferences: state.emailPreferences,
         gistSync: state.gistSync,
         focusPreferences: state.focusPreferences,
+        gamificationEnabled: state.gamificationEnabled,
         onboardingCompleted: state.onboardingCompleted,
       }),
       // Merge persisted state with initial state to handle new fields

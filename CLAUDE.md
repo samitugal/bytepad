@@ -1,6 +1,6 @@
 # MyFlowSpace - ADHD Productivity Super App
 
-## Sprint 17 Tamamlandı! Full i18n Support
+## Sprint 19 Tamamlandı! Enhanced Focus Mode + Gamification
 
 ### Tamamlanan Sprint'ler
 - [x] MVP1: Foundation + Notes ✓
@@ -12,10 +12,10 @@
 - [x] Sprint 15: Agent Tools Refactor ✓
 - [x] Sprint 16: Tasks UI Improvements ✓
 - [x] Sprint 17: Complete Localization (EN/TR) ✓
+- [x] Sprint 18: Gamification Core (XP, Levels, Achievements) ✓
+- [x] Sprint 19: Enhanced Focus Mode (Time logging, animated timer) ✓
 
 ### Planlanan Sprint'ler
-- [ ] Sprint 18: Gamification Core (XP, Levels, Achievements)
-- [x] Sprint 19: Enhanced Focus Mode (Time logging, animated timer) ✓
 - [ ] Sprint 20: AI Productivity Report (Strengths, weaknesses, advice)
 - [ ] Sprint 21: Electron Desktop App ⭐ (CRITICAL)
 
@@ -36,10 +36,11 @@ Tüm promptlar ve teknik kodlar ingilizce olmalıdır.
 | Tasks | Priority, subtasks, due dates, calendar view | ✅ |
 | Habits | Daily tracking, streaks, statistics | ✅ |
 | Journal | Daily notes, mood/energy tracking | ✅ |
-| Focus | Pomodoro timer, task selection | ✅ |
+| Focus | Pomodoro timer, task selection, session tracking | ✅ |
 | FlowBot | AI coach, tool calling, context-aware | ✅ |
 | Analysis | Weekly stats, AI insights | ✅ |
 | i18n | English (default) + Turkish | ✅ |
+| Gamification | XP, Levels, Achievements, Streak multipliers | ✅ |
 
 ## Tema
 ```css
@@ -129,6 +130,4 @@ Yeni bir sprint veya özellik planlandığında:
 
 ## Öncelik Sırası
 1. **Sprint 21** - Electron Desktop (günlük kullanım kolaylığı)
-2. **Sprint 18** - Gamification (motivasyon)
-3. **Sprint 19** - Focus Mode (time tracking)
-4. **Sprint 20** - AI Report (depends on 18 & 19)
+2. **Sprint 20** - AI Report (depends on 18 & 19, now ready)

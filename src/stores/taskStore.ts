@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Task, SubTask } from '../types'
+import { useGamificationStore, XP_VALUES } from './gamificationStore'
 
 // Cross-tab sync channel
 const syncChannel = new BroadcastChannel('myflowspace-tasks')
@@ -62,17 +63,31 @@ export const useTaskStore = create<TaskState>()(
       },
 
       toggleTask: (id) => {
+        const task = get().tasks.find(t => t.id === id)
+        const wasCompleted = task?.completed || false
+
         set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === id
+          tasks: state.tasks.map((t) =>
+            t.id === id
               ? {
-                  ...task,
-                  completed: !task.completed,
-                  completedAt: !task.completed ? new Date() : undefined,
+                  ...t,
+                  completed: !t.completed,
+                  completedAt: !t.completed ? new Date() : undefined,
                 }
-              : task
+              : t
           ),
         }))
+
+        // Award XP for task completion (not for un-completing)
+        if (task && !wasCompleted) {
+          const gamification = useGamificationStore.getState()
+          const xp = task.priority === 'P1' ? XP_VALUES.taskCompleteP1
+                   : task.priority === 'P2' ? XP_VALUES.taskCompleteP2
+                   : XP_VALUES.taskComplete
+          gamification.addXP(xp, 'taskComplete')
+          gamification.incrementStat('tasksCompleted')
+          gamification.incrementStat('tasksCompletedToday')
+        }
       },
 
       addSubtask: (taskId, title) => {

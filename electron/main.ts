@@ -10,6 +10,15 @@ let tray: Tray | null = null
 
 const isDev = process.env.NODE_ENV === 'development'
 
+// Get the correct icon path for both dev and production
+function getIconPath(): string {
+  if (isDev) {
+    return path.join(__dirname, '../../resources/icon.png')
+  }
+  // In production, resources are in the app's root
+  return path.join(process.resourcesPath, 'icon.png')
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -17,7 +26,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     title: 'MyFlowSpace',
-    icon: path.join(__dirname, '../../resources/icon.png'),
+    icon: getIconPath(),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
@@ -54,18 +63,15 @@ function createWindow() {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, '../resources/tray-icon.png')
-  
-  // Create a simple icon if file doesn't exist
-  let trayIcon
-  try {
-    trayIcon = nativeImage.createFromPath(iconPath)
-    if (trayIcon.isEmpty()) {
-      // Create a simple 16x16 icon
-      trayIcon = nativeImage.createEmpty()
-    }
-  } catch {
-    trayIcon = nativeImage.createEmpty()
+  const iconPath = getIconPath()
+
+  // Create tray icon (resize for tray - 16x16 on Windows, 22x22 on Mac)
+  let trayIcon = nativeImage.createFromPath(iconPath)
+
+  // Resize for tray if loaded successfully
+  if (!trayIcon.isEmpty()) {
+    const size = process.platform === 'darwin' ? 22 : 16
+    trayIcon = trayIcon.resize({ width: size, height: size })
   }
 
   tray = new Tray(trayIcon)

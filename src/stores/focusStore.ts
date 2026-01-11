@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useGamificationStore, XP_VALUES } from './gamificationStore'
 
 export interface FocusSession {
   id: string
@@ -104,12 +105,13 @@ export const useFocusStore = create<FocusState>()(
       },
 
       endSession: (completed) => {
+        const current = get().currentSession
+
         set((state) => {
-          const current = state.currentSession
-          if (!current) return state
+          if (!state.currentSession) return state
 
           const endedSession: FocusSession = {
-            ...current,
+            ...state.currentSession,
             endedAt: new Date(),
             completed,
             interrupted: !completed,
@@ -140,6 +142,13 @@ export const useFocusStore = create<FocusState>()(
             lastFocusDate: today,
           }
         })
+
+        // Award XP for completed focus session (only if completed and duration > 60 seconds)
+        if (current && completed && current.duration > 60) {
+          const gamification = useGamificationStore.getState()
+          gamification.addXP(XP_VALUES.pomodoroComplete, 'pomodoroComplete')
+          gamification.incrementStat('pomodorosCompleted')
+        }
       },
 
       cancelSession: () => {
