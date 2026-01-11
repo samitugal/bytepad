@@ -235,23 +235,29 @@ export function ChatWindow() {
 
       {/* Input */}
       <div className="p-3 border-t border-np-border">
-        <div className="flex gap-2">
-          <input
-            ref={inputRef}
-            type="text"
+        <div className="flex gap-2 items-end">
+          <textarea
+            ref={inputRef as React.RefObject<HTMLTextAreaElement>}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('flowbot.placeholder')}
             disabled={isLoading}
+            rows={1}
             className="flex-1 bg-np-bg-primary border border-np-border text-np-text-primary 
                        text-sm px-3 py-2 focus:outline-none focus:border-np-blue
-                       disabled:opacity-50"
+                       disabled:opacity-50 resize-none min-h-[38px] max-h-[120px]"
+            style={{ overflowY: 'auto' }}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement
+              target.style.height = 'auto'
+              target.style.height = Math.min(target.scrollHeight, 120) + 'px'
+            }}
           />
           <button
             onClick={() => handleSend(input)}
             disabled={isLoading || !input.trim()}
-            className="np-btn px-4 disabled:opacity-50"
+            className="np-btn px-4 disabled:opacity-50 h-[38px]"
           >
             →
           </button>
