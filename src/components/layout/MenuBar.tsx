@@ -34,9 +34,6 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
   const hasApiKey = llmProvider === 'ollama' || !!apiKeys[llmProvider]
   const requiresKey = PROVIDER_INFO[llmProvider].requiresKey
 
-  // Check if running in Electron
-  const isElectron = !!window.electronAPI?.isElectron
-
   return (
     <div className="h-8 bg-np-bg-secondary border-b border-np-border flex items-center justify-between px-2 text-sm select-none app-drag-region">
       <div className="flex items-center gap-4 app-no-drag">
@@ -75,31 +72,29 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
           </span>
         </div>
       </div>
-      {isElectron && (
-        <div className="flex items-center gap-0 text-np-text-secondary app-no-drag">
-          <button 
-            onClick={handleMinimize}
-            className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors"
-            title="Minimize"
-          >
-            ─
-          </button>
-          <button 
-            onClick={handleMaximize}
-            className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors"
-            title="Maximize"
-          >
-            □
-          </button>
-          <button 
-            onClick={handleClose}
-            className="w-10 h-8 hover:bg-np-error hover:text-white flex items-center justify-center transition-colors"
-            title="Close"
-          >
-            ×
-          </button>
-        </div>
-      )}
+      <div className="flex items-center gap-0 text-np-text-secondary app-no-drag">
+        <button 
+          onClick={handleMinimize}
+          className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors"
+          title="Minimize"
+        >
+          ─
+        </button>
+        <button 
+          onClick={handleMaximize}
+          className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors"
+          title="Maximize"
+        >
+          □
+        </button>
+        <button 
+          onClick={handleClose}
+          className="w-10 h-8 hover:bg-np-error hover:text-white flex items-center justify-center transition-colors"
+          title="Close"
+        >
+          ×
+        </button>
+      </div>
     </div>
   )
 }
