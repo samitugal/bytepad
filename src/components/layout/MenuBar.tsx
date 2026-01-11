@@ -40,7 +40,7 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
   return (
     <div className="h-8 bg-np-bg-secondary border-b border-np-border flex items-center justify-between px-2 text-sm select-none app-drag-region">
       <div className="flex items-center gap-4 app-no-drag">
-        <span className="text-np-text-primary font-medium">MyFlowSpace</span>
+        <span className="text-np-text-primary font-medium">BytePad</span>
         <div className="flex items-center gap-3 text-np-text-secondary">
           <span className="hover:text-np-text-primary cursor-pointer">File</span>
           <span className="hover:text-np-text-primary cursor-pointer">Edit</span>

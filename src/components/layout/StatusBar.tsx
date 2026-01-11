@@ -58,7 +58,7 @@ export function StatusBar() {
             <span>⚡</span> {language === 'tr' ? 'Çevrimdışı' : 'Offline'}
           </span>
         )}
-        <span>MyFlowSpace v0.1.0</span>
+        <span>BytePad v0.14.0</span>
       </div>
     </div>
   )
