@@ -10,7 +10,7 @@ type FocusPhase = 'select' | 'focus' | 'break' | 'stats'
 
 export function FocusMode() {
   const { t } = useTranslation()
-  const { focusMode, toggleFocusMode } = useUIStore()
+  const { focusMode, focusModeMinimized, toggleFocusMode, minimizeFocusMode, setFocusMode } = useUIStore()
   const { tasks, toggleTask } = useTaskStore()
   const { focusPreferences } = useSettingsStore()
   const {
@@ -206,7 +206,7 @@ export function FocusMode() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [focusMode, toggleFocusMode, isRunning, timeLeft, timerMinutes, phase])
 
-  // Reset state when focus mode is closed
+  // Reset state when focus mode is fully closed (not minimized)
   useEffect(() => {
     if (!focusMode) {
       if (isRunning && currentSession) {
@@ -221,6 +221,19 @@ export function FocusMode() {
       setShowStats(false)
     }
   }, [focusMode, isRunning, currentSession, endSession])
+
+  // Handle minimize - don't reset timer, just hide UI
+  const handleMinimize = useCallback(() => {
+    minimizeFocusMode()
+  }, [minimizeFocusMode])
+
+  // Handle full exit - stop timer and reset
+  const handleExit = useCallback(() => {
+    if (isRunning && currentSession) {
+      endSession(false)
+    }
+    setFocusMode(false)
+  }, [isRunning, currentSession, endSession, setFocusMode])
 
   const handleCompleteTask = () => {
     if (selectedTaskId) {
@@ -245,7 +258,8 @@ export function FocusMode() {
     setSelectedTaskId(taskId)
   }
 
-  if (!focusMode) return null
+  // Don't render full UI if minimized or not active
+  if (!focusMode || focusModeMinimized) return null
 
   return (
     <div className="fixed inset-0 bg-np-bg-primary z-50 flex flex-col">
@@ -276,8 +290,18 @@ export function FocusMode() {
           >
             📊 {t('focus.stats')}
           </button>
+          {/* Minimize button - only show when timer is running */}
+          {isRunning && (
+            <button
+              onClick={handleMinimize}
+              className="np-btn text-np-blue"
+              title="Minimize to mini timer"
+            >
+              ⬇ {t('focus.minimize') || 'Minimize'}
+            </button>
+          )}
           <button
-            onClick={toggleFocusMode}
+            onClick={handleExit}
             className="np-btn text-np-text-secondary"
           >
             {t('focus.exit')} (Esc)

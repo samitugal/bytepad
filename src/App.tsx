@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { MenuBar, Sidebar, TabBar, StatusBar, MainContent } from './components/layout'
-import { CommandPalette, FocusMode, SettingsPanel, ErrorBoundary, NotificationCenter, Onboarding, GlobalSearch } from './components/common'
+import { CommandPalette, FocusMode, MiniTimer, SettingsPanel, ErrorBoundary, NotificationCenter, Onboarding, GlobalSearch } from './components/common'
 import { ChatWindow } from './components/chat'
 import { LevelUpModal, AchievementToast } from './components/gamification'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
@@ -64,6 +64,7 @@ function App() {
         <StatusBar />
         <CommandPalette />
         <FocusMode />
+        <MiniTimer />
         <ChatWindow />
         <NotificationCenter />
         <Onboarding />
