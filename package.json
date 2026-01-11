@@ -15,6 +15,8 @@
     "package:win": "electron-vite build && electron-builder --win",
     "package:mac": "electron-vite build && electron-builder --mac",
     "package:linux": "electron-vite build && electron-builder --linux",
+    "package:all": "electron-vite build && electron-builder --win --mac",
+    "release": "electron-vite build && electron-builder --win --mac --publish never",
     "lint": "eslint ."
   },
   "dependencies": {
