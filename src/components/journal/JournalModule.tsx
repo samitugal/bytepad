@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useJournalStore } from '../../stores/journalStore'
+import { parseTags } from '../../utils/storage'
 
 const MOODS = [
   { value: 1, label: '😫', desc: 'Terrible' },
@@ -49,7 +50,7 @@ export function JournalModule() {
       content,
       mood,
       energy,
-      tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+      tags: parseTags(tags),
     }
 
     if (currentEntry) {

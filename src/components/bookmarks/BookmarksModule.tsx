@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useBookmarkStore, getFilteredBookmarks } from '../../stores/bookmarkStore'
 import { useTranslation } from '../../i18n'
 import type { Bookmark } from '../../types'
+import { parseTags } from '../../utils/storage'
 
 const COLLECTIONS = [
   { name: 'Gold', emoji: '🥇' },
@@ -55,7 +56,7 @@ export function BookmarksModule() {
     addBookmark({
       url: newBookmark.url.trim(),
       title,
-      tags: newBookmark.tags.split(',').map((t) => t.trim()).filter(Boolean),
+      tags: parseTags(newBookmark.tags),
       collection: newBookmark.collection,
     })
 
@@ -318,7 +319,7 @@ function BookmarkItem({
             onClick={() =>
               onUpdate({
                 title: editData.title,
-                tags: editData.tags.split(',').map((t) => t.trim()).filter(Boolean),
+                tags: parseTags(editData.tags),
                 collection: editData.collection,
               })
             }

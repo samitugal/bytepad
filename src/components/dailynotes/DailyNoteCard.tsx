@@ -3,6 +3,7 @@ import { useDailyNotesStore } from '../../stores/dailyNotesStore'
 import type { DailyNoteCard as DailyNoteCardType } from '../../types'
 import { ConfirmModal } from '../common'
 import { useTranslation } from '../../i18n'
+import { parseTags } from '../../utils/storage'
 
 interface Props {
   card: DailyNoteCardType
@@ -31,16 +32,11 @@ export function DailyNoteCard({ card, date }: Props) {
   }, [isEditing])
 
   const handleSave = () => {
-    const tags = tagsInput
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0)
-
     updateCard(date, card.id, {
       title: title.trim() || 'Untitled',
       content,
       icon,
-      tags,
+      tags: parseTags(tagsInput),
     })
     setIsEditing(false)
   }
