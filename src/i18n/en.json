@@ -27,7 +27,8 @@
         "today": "Today",
         "tomorrow": "Tomorrow",
         "previous": "Previous",
-        "next": "Next"
+        "next": "Next",
+        "tags": "Tags"
     },
     "nav": {
         "notes": "Notes",
@@ -36,6 +37,7 @@
         "journal": "Journal",
         "bookmarks": "Bookmarks",
         "calendar": "Calendar",
+        "graph": "Graph",
         "analysis": "Analyze"
     },
     "menu": {
@@ -341,5 +343,16 @@
     "shortcuts": {
         "title": "Keyboard Shortcuts",
         "hint": "Press Escape to close"
+    },
+    "graph": {
+        "title": "Knowledge Graph",
+        "nodes": "nodes",
+        "connections": "connections",
+        "filters": "Filters",
+        "legend": "Edge Types",
+        "wikilink": "Wikilink",
+        "tagConnection": "Tag connection",
+        "noNodes": "No nodes to display",
+        "enableFilters": "Enable filters to see your knowledge graph"
     }
 }

@@ -54,3 +54,17 @@ coverage/
 *.tmp
 *.temp
 .temp/
+
+.playwright*/
+.cursor*/
+.claude*/
+.cursorrules
+.cursorrules.md
+.cursorrules.txt
+.cursorrules.yml
+.cursorrules.yaml
+.cursorrules.json
+.cursorrules.jsonc
+.cursorrules.json5
+.cursorrules.jsonp
+.cursorrules.jsonp5

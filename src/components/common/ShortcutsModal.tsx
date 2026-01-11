@@ -42,7 +42,8 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
         { keys: 'Ctrl+5', description: 'Go to Journal' },
         { keys: 'Ctrl+6', description: 'Go to Bookmarks' },
         { keys: 'Ctrl+7', description: 'Go to Calendar' },
-        { keys: 'Ctrl+8', description: 'Go to Analysis' },
+        { keys: 'Ctrl+8', description: 'Go to Knowledge Graph' },
+        { keys: 'Ctrl+9', description: 'Go to Analysis' },
       ],
     },
     {

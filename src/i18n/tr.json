@@ -27,7 +27,8 @@
         "today": "Bugün",
         "tomorrow": "Yarın",
         "previous": "Önceki",
-        "next": "Sonraki"
+        "next": "Sonraki",
+        "tags": "Etiketler"
     },
     "nav": {
         "notes": "Notlar",
@@ -36,6 +37,7 @@
         "journal": "Günlük",
         "bookmarks": "Yer İmleri",
         "calendar": "Takvim",
+        "graph": "Graf",
         "analysis": "Analiz"
     },
     "menu": {
@@ -341,5 +343,16 @@
     "shortcuts": {
         "title": "Klavye Kısayolları",
         "hint": "Kapatmak için Escape'e basın"
+    },
+    "graph": {
+        "title": "Bilgi Grafiği",
+        "nodes": "düğüm",
+        "connections": "bağlantı",
+        "filters": "Filtreler",
+        "legend": "Kenar Türleri",
+        "wikilink": "Wikilink",
+        "tagConnection": "Etiket bağlantısı",
+        "noNodes": "Gösterilecek düğüm yok",
+        "enableFilters": "Bilgi grafiğinizi görmek için filtreleri etkinleştirin"
     }
 }

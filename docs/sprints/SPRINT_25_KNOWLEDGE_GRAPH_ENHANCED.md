@@ -2,7 +2,7 @@
 **Goal:** Move Knowledge Graph to sidebar, link all entities (notes, tasks, habits, tags)
 **Duration:** 5-7 days
 **Priority:** MEDIUM
-**Status:** PLANNED
+**Status:** ✅ COMPLETED (2026-01-11)
 
 ---
 
@@ -256,14 +256,14 @@ npm install vis-network
 
 ## Acceptance Criteria
 
-- [ ] Knowledge Graph accessible from sidebar
-- [ ] Shows notes, tasks, habits, tags as nodes
-- [ ] Tag connections visible
-- [ ] Wikilink connections visible
-- [ ] Can filter by entity type
-- [ ] Can search nodes
-- [ ] Click node opens entity
-- [ ] Responsive and performant with 100+ nodes
+- [x] Knowledge Graph accessible from sidebar (Ctrl+8)
+- [x] Shows notes, tasks, habits, tags as nodes
+- [x] Tag connections visible (yellowish lines)
+- [x] Wikilink connections visible (gray lines)
+- [x] Can filter by entity type (checkboxes)
+- [x] Can search nodes (with highlighting)
+- [x] Click node opens entity (navigates to module)
+- [x] Responsive and performant (canvas-based rendering)
 
 ---
 

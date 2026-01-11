@@ -8,7 +8,9 @@ interface UIState {
   focusModeMinimized: boolean
   isNotificationCenterOpen: boolean
   globalSearchOpen: boolean
+  globalSearchQuery: string
   shortcutsModalOpen: boolean
+  settingsOpen: boolean
   setActiveModule: (module: ModuleType) => void
   toggleCommandPalette: () => void
   setCommandPaletteOpen: (open: boolean) => void
@@ -20,8 +22,11 @@ interface UIState {
   setNotificationCenterOpen: (open: boolean) => void
   toggleGlobalSearch: () => void
   setGlobalSearchOpen: (open: boolean) => void
+  openGlobalSearchWithQuery: (query: string) => void
   toggleShortcutsModal: () => void
   setShortcutsModalOpen: (open: boolean) => void
+  toggleSettings: () => void
+  setSettingsOpen: (open: boolean) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -31,7 +36,9 @@ export const useUIStore = create<UIState>((set) => ({
   focusModeMinimized: false,
   isNotificationCenterOpen: false,
   globalSearchOpen: false,
+  globalSearchQuery: '',
   shortcutsModalOpen: false,
+  settingsOpen: false,
   setActiveModule: (module) => set({ activeModule: module }),
   toggleCommandPalette: () => set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
@@ -41,8 +48,11 @@ export const useUIStore = create<UIState>((set) => ({
   expandFocusMode: () => set({ focusModeMinimized: false }),
   toggleNotificationCenter: () => set((state) => ({ isNotificationCenterOpen: !state.isNotificationCenterOpen })),
   setNotificationCenterOpen: (open) => set({ isNotificationCenterOpen: open }),
-  toggleGlobalSearch: () => set((state) => ({ globalSearchOpen: !state.globalSearchOpen })),
-  setGlobalSearchOpen: (open) => set({ globalSearchOpen: open }),
+  toggleGlobalSearch: () => set((state) => ({ globalSearchOpen: !state.globalSearchOpen, globalSearchQuery: state.globalSearchOpen ? '' : state.globalSearchQuery })),
+  setGlobalSearchOpen: (open) => set({ globalSearchOpen: open, globalSearchQuery: open ? '' : '' }),
+  openGlobalSearchWithQuery: (query) => set({ globalSearchOpen: true, globalSearchQuery: query }),
   toggleShortcutsModal: () => set((state) => ({ shortcutsModalOpen: !state.shortcutsModalOpen })),
   setShortcutsModalOpen: (open) => set({ shortcutsModalOpen: open }),
+  toggleSettings: () => set((state) => ({ settingsOpen: !state.settingsOpen })),
+  setSettingsOpen: (open) => set({ settingsOpen: open }),
 }))

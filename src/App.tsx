@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { MenuBar, Sidebar, TabBar, StatusBar, MainContent } from './components/layout'
 import { CommandPalette, FocusMode, MiniTimer, SettingsPanel, ErrorBoundary, NotificationCenter, Onboarding, GlobalSearch, ShortcutsModal } from './components/common'
 import { ChatWindow } from './components/chat'
@@ -6,19 +6,21 @@ import { LevelUpModal, AchievementToast } from './components/gamification'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { initializeNotifications } from './services/notificationService'
 import { startAutoSync, stopAutoSync, syncWithGist, forcePushToGist } from './services/gistSyncService'
-import { useSettingsStore, FONT_SIZES } from './stores/settingsStore'
+import { useSettingsStore, FONT_SIZES, FONT_FAMILIES } from './stores/settingsStore'
 import { useUIStore } from './stores/uiStore'
 import { useAuthStore } from './stores/authStore'
 import { useGamificationStore } from './stores/gamificationStore'
 
 function App() {
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const fontSize = useSettingsStore((state) => state.fontSize)
+  const fontFamily = useSettingsStore((state) => state.fontFamily)
   const gamificationEnabled = useSettingsStore((state) => state.gamificationEnabled)
   const globalSearchOpen = useUIStore((state) => state.globalSearchOpen)
   const setGlobalSearchOpen = useUIStore((state) => state.setGlobalSearchOpen)
   const shortcutsModalOpen = useUIStore((state) => state.shortcutsModalOpen)
   const setShortcutsModalOpen = useUIStore((state) => state.setShortcutsModalOpen)
+  const settingsOpen = useUIStore((state) => state.settingsOpen)
+  const setSettingsOpen = useUIStore((state) => state.setSettingsOpen)
   const initializeAuth = useAuthStore((state) => state.initialize)
   const { checkStreak, resetDailyStats, lastActiveDate } = useGamificationStore()
   const gistSync = useSettingsStore((state) => state.gistSync)
@@ -29,6 +31,11 @@ function App() {
   useEffect(() => {
     document.documentElement.style.fontSize = FONT_SIZES[fontSize].value
   }, [fontSize])
+
+  // Apply font family to document root
+  useEffect(() => {
+    document.documentElement.style.fontFamily = FONT_FAMILIES[fontFamily].value
+  }, [fontFamily])
 
   // Initialize notifications on mount
   useEffect(() => {

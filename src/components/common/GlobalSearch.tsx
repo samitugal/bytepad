@@ -20,6 +20,7 @@ interface GlobalSearchProps {
 }
 
 export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
+  const globalSearchQuery = useUIStore((s) => s.globalSearchQuery)
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   
@@ -30,74 +31,112 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
   const setActiveModule = useUIStore((s) => s.setActiveModule)
   const setActiveNote = useNoteStore((s) => s.setActiveNote)
 
+  useEffect(() => {
+    if (isOpen && globalSearchQuery) {
+      setQuery(globalSearchQuery)
+    }
+  }, [isOpen, globalSearchQuery])
+
   // Search across all modules
   const results = useMemo(() => {
     if (!query.trim()) return []
     
-    const q = query.toLowerCase()
+    const rawQuery = query.toLowerCase()
+    const isTagSearch = rawQuery.startsWith('#')
+    const q = isTagSearch ? rawQuery.slice(1) : rawQuery
     const searchResults: SearchResult[] = []
 
     // Search Notes
     notes.forEach((note) => {
-      const titleMatch = note.title.toLowerCase().includes(q)
-      const contentMatch = note.content.toLowerCase().includes(q)
       const tagMatch = note.tags?.some(t => t.toLowerCase().includes(q))
       
-      if (titleMatch || contentMatch || tagMatch) {
-        searchResults.push({
-          id: note.id,
-          type: 'note',
-          title: note.title,
-          preview: note.content.substring(0, 100) + (note.content.length > 100 ? '...' : ''),
-          tags: note.tags,
-          meta: new Date(note.updatedAt).toLocaleDateString(),
-        })
+      if (isTagSearch) {
+        if (tagMatch) {
+          searchResults.push({
+            id: note.id,
+            type: 'note',
+            title: note.title,
+            preview: note.content.substring(0, 100) + (note.content.length > 100 ? '...' : ''),
+            tags: note.tags,
+            meta: new Date(note.updatedAt).toLocaleDateString(),
+          })
+        }
+      } else {
+        const titleMatch = note.title.toLowerCase().includes(q)
+        const contentMatch = note.content.toLowerCase().includes(q)
+        
+        if (titleMatch || contentMatch || tagMatch) {
+          searchResults.push({
+            id: note.id,
+            type: 'note',
+            title: note.title,
+            preview: note.content.substring(0, 100) + (note.content.length > 100 ? '...' : ''),
+            tags: note.tags,
+            meta: new Date(note.updatedAt).toLocaleDateString(),
+          })
+        }
       }
     })
 
-    // Search Tasks
-    tasks.forEach((task) => {
-      const titleMatch = task.title.toLowerCase().includes(q)
-      const descMatch = task.description?.toLowerCase().includes(q)
-      
-      if (titleMatch || descMatch) {
-        searchResults.push({
-          id: task.id,
-          type: 'task',
-          title: task.title,
-          preview: task.description || '',
-          meta: `[${task.priority}] ${task.completed ? '✓ Done' : 'Pending'}`,
-        })
-      }
-    })
+    // Search Tasks (skip if tag search - tasks don't have tags)
+    if (!isTagSearch) {
+      tasks.forEach((task) => {
+        const titleMatch = task.title.toLowerCase().includes(q)
+        const descMatch = task.description?.toLowerCase().includes(q)
+        
+        if (titleMatch || descMatch) {
+          searchResults.push({
+            id: task.id,
+            type: 'task',
+            title: task.title,
+            preview: task.description || '',
+            meta: `[${task.priority}] ${task.completed ? '✓ Done' : 'Pending'}`,
+          })
+        }
+      })
 
-    // Search Habits
-    habits.forEach((habit) => {
-      if (habit.name.toLowerCase().includes(q) || habit.category.toLowerCase().includes(q)) {
-        searchResults.push({
-          id: habit.id,
-          type: 'habit',
-          title: habit.name,
-          preview: `Category: ${habit.category}`,
-          meta: `🔥 ${habit.streak} day streak`,
-        })
-      }
-    })
+      // Search Habits (skip if tag search - habits don't have tags)
+      habits.forEach((habit) => {
+        if (habit.name.toLowerCase().includes(q) || habit.category.toLowerCase().includes(q)) {
+          searchResults.push({
+            id: habit.id,
+            type: 'habit',
+            title: habit.name,
+            preview: `Category: ${habit.category}`,
+            meta: `🔥 ${habit.streak} day streak`,
+          })
+        }
+      })
+    }
 
     // Search Journal
     journalEntries.forEach((entry) => {
-      const contentMatch = entry.content.toLowerCase().includes(q)
       const tagMatch = entry.tags?.some(t => t.toLowerCase().includes(q))
       
-      if (contentMatch || tagMatch) {
-        searchResults.push({
-          id: entry.id,
-          type: 'journal',
-          title: `Journal - ${entry.date}`,
-          preview: entry.content.substring(0, 100) + (entry.content.length > 100 ? '...' : ''),
-          tags: entry.tags,
-          meta: `Mood: ${entry.mood}/5 | Energy: ${entry.energy}/5`,
-        })
+      if (isTagSearch) {
+        if (tagMatch) {
+          searchResults.push({
+            id: entry.id,
+            type: 'journal',
+            title: `Journal - ${entry.date}`,
+            preview: entry.content.substring(0, 100) + (entry.content.length > 100 ? '...' : ''),
+            tags: entry.tags,
+            meta: `Mood: ${entry.mood}/5 | Energy: ${entry.energy}/5`,
+          })
+        }
+      } else {
+        const contentMatch = entry.content.toLowerCase().includes(q)
+        
+        if (contentMatch || tagMatch) {
+          searchResults.push({
+            id: entry.id,
+            type: 'journal',
+            title: `Journal - ${entry.date}`,
+            preview: entry.content.substring(0, 100) + (entry.content.length > 100 ? '...' : ''),
+            tags: entry.tags,
+            meta: `Mood: ${entry.mood}/5 | Energy: ${entry.energy}/5`,
+          })
+        }
       }
     })
 

@@ -1,4 +1,4 @@
-export type ModuleType = 'notes' | 'habits' | 'tasks' | 'journal' | 'analysis' | 'bookmarks' | 'calendar' | 'dailynotes'
+export type ModuleType = 'notes' | 'habits' | 'tasks' | 'journal' | 'analysis' | 'bookmarks' | 'calendar' | 'dailynotes' | 'graph'
 
 export interface Note {
   id: string
@@ -137,4 +137,26 @@ export interface Bookmark {
   isRead: boolean
   createdAt: Date
   domain: string // Extracted from URL
+}
+
+// Knowledge Graph types
+export type GraphEntityType = 'note' | 'task' | 'habit' | 'journal' | 'bookmark' | 'tag'
+
+export interface GraphNode {
+  id: string
+  type: GraphEntityType
+  label: string
+  tags: string[]
+  createdAt: string
+  x: number
+  y: number
+  vx: number
+  vy: number
+  connections: number
+}
+
+export interface GraphEdge {
+  source: string
+  target: string
+  type: 'wikilink' | 'tag' | 'reference'
 }
