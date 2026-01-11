@@ -22,7 +22,7 @@ export default defineConfig({
         },
         output: {
           format: 'cjs',
-          entryFileNames: '[name].js',
+          entryFileNames: '[name].cjs',
         },
       },
     },
