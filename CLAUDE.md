@@ -1,6 +1,6 @@
 # MyFlowSpace - ADHD Productivity Super App
 
-## Sprint 20 Tamamlandı! AI Productivity Report
+## Sprint 27 Tamamlandı! Wikilink Autocomplete
 
 ### Tamamlanan Sprint'ler
 - [x] MVP1: Foundation + Notes ✓
@@ -18,9 +18,9 @@
 - [x] Sprint 21: Electron Desktop App (System tray, shortcuts, portable EXE) ✓
 - [~] Sprint 22: Bug Fixes & UX (6/7 completed - multi-tab pending)
 - [x] Sprint 25: Knowledge Graph Enhanced (sidebar, unified entities, force-directed) ✓
+- [x] Sprint 27: Wikilink Autocomplete (typing [[]] shows entity suggestions) ✓
 
 ### Planlanan Sprint'ler
-- [ ] Sprint 27: Wikilink Autocomplete (typing [[]] shows entity suggestions)
 - [ ] Sprint 23: Multi-Tab Support
 - [ ] Sprint 24: FlowBot Note Tools (GetAllNotes, GetNoteDetail)
 - [ ] Sprint 26: Keyboard Shortcuts Fix (Ctrl+N, help modal)
@@ -38,7 +38,7 @@ Tüm promptlar ve teknik kodlar ingilizce olmalıdır.
 ## Özellikler
 | Modül | Özellikler | Durum |
 |-------|------------|-------|
-| Notes | Markdown, tags, backlinks | ✅ |
+| Notes | Markdown, tags, backlinks, wikilink autocomplete | ✅ |
 | Graph | Unified knowledge graph (notes, tasks, habits, tags) | ✅ |
 | Tasks | Priority, subtasks, due dates, calendar view | ✅ |
 | Habits | Daily tracking, streaks, statistics | ✅ |
@@ -90,7 +90,7 @@ docs/
 │   ├── SPRINT_24_FLOWBOT_NOTE_TOOLS.md
 │   ├── SPRINT_25_KNOWLEDGE_GRAPH_ENHANCED.md ✅
 │   ├── SPRINT_26_KEYBOARD_SHORTCUTS_FIX.md
-│   └── SPRINT_27_WIKILINK_AUTOCOMPLETE.md (planned)
+│   └── SPRINT_27_WIKILINK_AUTOCOMPLETE.md ✅
 ```
 
 ## i18n (Localization)
@@ -140,8 +140,7 @@ Yeni bir sprint veya özellik planlandığında:
 3. **Dosya isimlendirme:** `SPRINT_XX_UPPERCASE_NAME.md`
 
 ## Öncelik Sırası
-1. **Sprint 27** - Wikilink Autocomplete (1-2 gün, user request)
-2. **Sprint 26** - Keyboard Shortcuts Fix (1-2 gün, hızlı kazanım)
-3. **Sprint 24** - FlowBot Note Tools (2-3 gün, yüksek değer)
-4. **Sprint 23** - Multi-Tab Support (3-4 gün)
-5. **Sprint 22** - Code Splitting & Refactor (5-7 gün, bundle 1.56MB → <500KB)
+1. **Sprint 26** - Keyboard Shortcuts Fix (1-2 gün, hızlı kazanım)
+2. **Sprint 24** - FlowBot Note Tools (2-3 gün, yüksek değer)
+3. **Sprint 23** - Multi-Tab Support (3-4 gün)
+4. **Sprint 22** - Code Splitting & Refactor (5-7 gün, bundle 1.56MB → <500KB)

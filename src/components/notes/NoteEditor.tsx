@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import { useNoteStore } from '../../stores/noteStore'
 import { useTabStore } from '../../stores/tabStore'
 import { BacklinksPanel } from './BacklinksPanel'
+import { WikilinkAutocomplete, type WikilinkSuggestion } from './WikilinkAutocomplete'
 import { ConfirmModal } from '../common'
 import { useTranslation } from '../../i18n'
 
@@ -65,6 +66,25 @@ export function NoteEditor() {
       lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop
     }
   }, [])
+
+  // Handle wikilink insertion from autocomplete
+  const handleWikilinkInsert = useCallback((suggestion: WikilinkSuggestion, startPos: number, endPos: number) => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const wikilink = `[[${suggestion.title}]]`
+    const newContent = content.slice(0, startPos) + wikilink + content.slice(endPos)
+    setContent(newContent)
+
+    // Set cursor position after the inserted wikilink
+    requestAnimationFrame(() => {
+      if (textareaRef.current) {
+        const newCursorPos = startPos + wikilink.length
+        textareaRef.current.focus()
+        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos)
+      }
+    })
+  }, [content])
 
   const handleDelete = () => {
     if (!activeNoteId) return
@@ -182,10 +202,10 @@ export function NoteEditor() {
         {(viewMode === 'edit' || viewMode === 'split') && (
           <div className={`relative ${viewMode === 'split' ? 'w-1/2 border-r border-np-border' : 'flex-1'} overflow-hidden`}>
             {/* Line numbers - absolutely positioned, syncs scroll with textarea */}
-            <div 
+            <div
               ref={lineNumbersRef}
               className="absolute left-0 top-0 bottom-0 w-12 bg-np-bg-secondary border-r border-np-border
-                         text-np-text-secondary text-sm font-mono text-right pr-2 select-none 
+                         text-np-text-secondary text-sm font-mono text-right pr-2 select-none
                          overflow-y-auto scrollbar-hide"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
@@ -206,13 +226,20 @@ export function NoteEditor() {
               placeholder="Start writing in Markdown..."
               className="w-full h-full bg-np-bg-primary text-np-text-primary font-mono text-sm
                          pr-4 resize-none focus:outline-none"
-              style={{ 
-                lineHeight: '24px', 
-                paddingLeft: '56px', 
-                paddingTop: '12px', 
+              style={{
+                lineHeight: '24px',
+                paddingLeft: '56px',
+                paddingTop: '12px',
                 paddingBottom: '16px'
               }}
               spellCheck={false}
+            />
+
+            {/* Wikilink Autocomplete */}
+            <WikilinkAutocomplete
+              textareaRef={textareaRef}
+              content={content}
+              onInsert={handleWikilinkInsert}
             />
           </div>
         )}
