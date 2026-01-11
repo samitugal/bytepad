@@ -4,7 +4,7 @@
 - [x] Sprint 28: UX & Bug Fixes ✓
 - [x] Sprint 29: Knowledge Graph Interactivity ✓
 - [x] Sprint 30: Performance Optimization ✓
-- [x] Sprint 31: Image Support in Notes ✓
+- [x] Sprint 31: Image Support ❌ (CANCELLED - Gist storage limits)
 
 ### Tüm Tamamlanan Sprint'ler
 - [x] MVP1: Foundation + Notes ✓
@@ -25,7 +25,11 @@
 - [x] Sprint 28: UX & Bug Fixes (Subtask logic, FlowBot wrap, Wikilink preview) ✓
 - [x] Sprint 29: Graph Interactivity (Drag & drop nodes) ✓
 - [x] Sprint 30: Performance Optimization (80% bundle reduction) ✓
-- [x] Sprint 31: Image Support (Paste/drop images in notes) ✓
+- [ ] Sprint 31: Image Support ❌ CANCELLED (Gist storage limits)
+
+### Son Yapılan İyileştirmeler
+- Backlinks panel: Max 3 link gösterimi, "+X more" butonu ile genişletme
+- Image URL desteği: `![alt](https://url)` ile external image render
 
 > Detaylı görevler için: `docs/sprints/` klasörü
 
@@ -40,7 +44,7 @@ Tüm promptlar ve teknik kodlar ingilizce olmalıdır.
 ## Özellikler
 | Modül | Özellikler | Durum |
 |-------|------------|-------|
-| Notes | Markdown, tags, backlinks, wikilink autocomplete, image support | ✅ |
+| Notes | Markdown, tags, backlinks (max 3), wikilink autocomplete, image URL | ✅ |
 | Graph | Unified knowledge graph (notes, tasks, habits, tags), drag & drop | ✅ |
 | Tasks | Priority, subtasks, due dates, calendar view | ✅ |
 | Habits | Daily tracking, streaks, statistics | ✅ |
@@ -88,7 +92,7 @@ docs/
 │   ├── SPRINT_28_UX_BUG_FIXES.md ✅
 │   ├── SPRINT_29_GRAPH_INTERACTIVITY.md ✅
 │   ├── SPRINT_30_PERFORMANCE.md ✅
-│   └── SPRINT_31_IMAGE_SUPPORT.md ✅
+│   └── SPRINT_31_IMAGE_SUPPORT.md ❌ CANCELLED
 ```
 
 ## i18n (Localization)

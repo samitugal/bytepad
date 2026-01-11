@@ -3,40 +3,32 @@
 ## Overview
 Add ability to include and view images in notes.
 
-## Status: COMPLETED ✅
-- Completed: 2026-01-11
+## Status: CANCELLED ❌
+- Cancelled: 2026-01-11
 
-## Tasks
+## Cancellation Reason
+Image paste/drop feature was cancelled due to **Gist storage limitations**:
 
-### 1. Image Paste/Drop [HIGH] ✅
-- [x] Paste images from clipboard
-- [x] Drag & drop image files
-- [x] Convert to base64 for storage
+1. **Base64 encoding** - Pasted images are converted to base64, which increases file size by ~33%
+2. **Gist limits** - GitHub Gist has size limits (~100MB total, but practical limits are much lower)
+3. **Data bloat** - A few images could quickly fill the entire Gist storage quota
+4. **Sync issues** - Large base64 strings cause slow sync and potential data corruption
+5. **Note content pollution** - Base64 strings make note content unreadable in editor
 
-### 2. Image Storage [HIGH] ✅
-- [x] Strategy: Base64 embedded in note content
-- [x] Handle large images (5MB size limit with alert)
-- [x] Images stored as standard Markdown: ![alt](data:...)
+## Alternative Solution
+Users can add images via external URLs:
 
-### 3. Image Preview [MEDIUM] ✅
-- [x] Render images in preview mode
-- [x] Styled with border and max-height (400px)
-- [x] Click to view full size (opens in new tab)
-- [x] Alt text displayed as caption
-- [x] Lazy loading enabled for performance
+```markdown
+![My Image](https://example.com/image.png)
+```
 
-### 4. Image Markdown Syntax [MEDIUM] ✅
-- [x] Support standard markdown: ![alt](url)
-- [x] Support base64 images: ![alt](data:image/...)
+External URL images are rendered in preview mode with:
+- Max height: 400px
+- Click to open full size
+- Alt text as caption
+- Lazy loading
 
-## Implementation Details
-- Images pasted or dropped are converted to base64
-- Maximum file size: 5MB
-- Cursor positioned after inserted image
-- Images clickable to view full size
-- Alt text from filename shown as caption
-
-## Acceptance Criteria
-- [x] Images can be pasted/dropped into notes
-- [x] Images render correctly in preview
-- [x] Images persist across sessions (stored in note content)
+## Lessons Learned
+- Local-first apps with cloud sync need careful consideration of data size
+- Base64 image storage is not suitable for text-based sync backends
+- Consider dedicated image hosting (Imgur, Cloudinary) for future implementation

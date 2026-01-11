@@ -1,5 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNoteStore } from '../../stores/noteStore'
+
+const MAX_VISIBLE_LINKS = 3
 
 interface BacklinksPanelProps {
   noteId: string
@@ -42,9 +44,17 @@ export function BacklinksPanel({ noteId, noteTitle }: BacklinksPanelProps) {
     )
   }, [notes, noteId])
 
+  const [showAllBacklinks, setShowAllBacklinks] = useState(false)
+  const [showAllOutgoing, setShowAllOutgoing] = useState(false)
+
   if (backlinks.length === 0 && outgoingLinks.length === 0) {
     return null
   }
+
+  const visibleBacklinks = showAllBacklinks ? backlinks : backlinks.slice(0, MAX_VISIBLE_LINKS)
+  const visibleOutgoing = showAllOutgoing ? outgoingLinks : outgoingLinks.slice(0, MAX_VISIBLE_LINKS)
+  const hiddenBacklinksCount = backlinks.length - MAX_VISIBLE_LINKS
+  const hiddenOutgoingCount = outgoingLinks.length - MAX_VISIBLE_LINKS
 
   return (
     <div className="border-t border-np-border bg-np-bg-secondary">
@@ -55,7 +65,7 @@ export function BacklinksPanel({ noteId, noteTitle }: BacklinksPanelProps) {
             // {backlinks.length} Backlink{backlinks.length !== 1 ? 's' : ''}
           </div>
           <div className="space-y-1">
-            {backlinks.map((note) => (
+            {visibleBacklinks.map((note) => (
               <button
                 key={note.id}
                 onClick={() => setActiveNote(note.id)}
@@ -64,6 +74,14 @@ export function BacklinksPanel({ noteId, noteTitle }: BacklinksPanelProps) {
                 ← {note.title}
               </button>
             ))}
+            {hiddenBacklinksCount > 0 && (
+              <button
+                onClick={() => setShowAllBacklinks(!showAllBacklinks)}
+                className="text-xs text-np-text-secondary hover:text-np-text-primary px-2 py-1"
+              >
+                {showAllBacklinks ? '− Show less' : `+ ${hiddenBacklinksCount} more`}
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -75,7 +93,7 @@ export function BacklinksPanel({ noteId, noteTitle }: BacklinksPanelProps) {
             // {outgoingLinks.length} Outgoing Link{outgoingLinks.length !== 1 ? 's' : ''}
           </div>
           <div className="space-y-1">
-            {outgoingLinks.map((note) => (
+            {visibleOutgoing.map((note) => (
               <button
                 key={note.id}
                 onClick={() => setActiveNote(note.id)}
@@ -84,6 +102,14 @@ export function BacklinksPanel({ noteId, noteTitle }: BacklinksPanelProps) {
                 → {note.title}
               </button>
             ))}
+            {hiddenOutgoingCount > 0 && (
+              <button
+                onClick={() => setShowAllOutgoing(!showAllOutgoing)}
+                className="text-xs text-np-text-secondary hover:text-np-text-primary px-2 py-1"
+              >
+                {showAllOutgoing ? '− Show less' : `+ ${hiddenOutgoingCount} more`}
+              </button>
+            )}
           </div>
         </div>
       )}
