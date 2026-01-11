@@ -32,7 +32,7 @@ export default {
         'np-info': 'var(--info)',
       },
       fontFamily: {
-        'mono': ['JetBrains Mono', 'Consolas', 'Monaco', 'monospace'],
+        'mono': 'var(--font-family)',
       },
       fontSize: {
         'xs': '11px',

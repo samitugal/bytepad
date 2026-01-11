@@ -32,9 +32,9 @@ function App() {
     document.documentElement.style.fontSize = FONT_SIZES[fontSize].value
   }, [fontSize])
 
-  // Apply font family to document root
+  // Apply font family via CSS variable
   useEffect(() => {
-    document.documentElement.style.fontFamily = FONT_FAMILIES[fontFamily].value
+    document.documentElement.style.setProperty('--font-family', FONT_FAMILIES[fontFamily].value)
   }, [fontFamily])
 
   // Initialize notifications on mount
