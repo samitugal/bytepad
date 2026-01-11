@@ -81,16 +81,22 @@ docs/
 ├── CHANGELOG.md            # Değişiklik geçmişi
 ├── AUDIT_REPORT.md         # Code audit & recommendations
 ├── GAMIFICATION.md         # Gamification spec
+├── SPRINT_PLANNING.md      # Audit checklist & roadmap
 ├── sprints/
-│   ├── SPRINT_15-19        # Completed sprints
+│   ├── SPRINT_01-14        # Early sprints (MVP, Calendar, etc.)
+│   ├── SPRINT_15_AGENT_TOOLS_REFACTOR.md ✅
+│   ├── SPRINT_16_TASKS_UI_IMPROVEMENTS.md ✅
+│   ├── SPRINT_17_LOCALIZATION_COMPLETE.md ✅
+│   ├── SPRINT_18_GAMIFICATION_CORE.md ✅
+│   ├── SPRINT_19_FOCUS_MODE_ENHANCED.md ✅
 │   ├── SPRINT_20_AI_PRODUCTIVITY_REPORT.md ✅
 │   ├── SPRINT_21_ELECTRON_DESKTOP_APP.md ✅
-│   ├── SPRINT_22_BUG_FIXES_UX.md (in progress)
+│   ├── SPRINT_22_BUG_FIXES_UX.md (partial)
 │   ├── SPRINT_23_MULTI_TAB.md
 │   ├── SPRINT_24_FLOWBOT_NOTE_TOOLS.md
 │   ├── SPRINT_25_KNOWLEDGE_GRAPH_ENHANCED.md ✅
 │   ├── SPRINT_26_KEYBOARD_SHORTCUTS_FIX.md
-│   └── SPRINT_27_WIKILINK_AUTOCOMPLETE.md ✅
+│   └── SPRINT_27_NOTE_EDITOR.md ✅ (wikilink autocomplete)
 ```
 
 ## i18n (Localization)
