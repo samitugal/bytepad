@@ -337,5 +337,9 @@
         "achievement": {
             "unlocked": "Başarı Kazanıldı!"
         }
+    },
+    "shortcuts": {
+        "title": "Klavye Kısayolları",
+        "hint": "Kapatmak için Escape'e basın"
     }
 }
