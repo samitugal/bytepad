@@ -17,7 +17,9 @@
       "Bash(timeout 10 npm run dev:electron:*)",
       "Bash(npm run package:win:*)",
       "Bash(npx tsc:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(npm run lint:*)"
     ]
   }
 }

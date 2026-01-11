@@ -12,7 +12,7 @@ export function extractWikilinks(content: string): string[] {
 
 export function collectAllTags(
   notes: Note[],
-  tasks: Task[],
+  _tasks: Task[],
   habits: Habit[],
   journals: JournalEntry[],
   bookmarks: Bookmark[]

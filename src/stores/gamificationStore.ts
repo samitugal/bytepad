@@ -239,6 +239,7 @@ export const useGamificationStore = create<GamificationState>()(
       pendingLevelUp: null,
       pendingAchievements: [],
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       addXP: (baseAmount, _action) => {
         set((state) => {
           const multiplier = getStreakMultiplier(state.currentStreak)

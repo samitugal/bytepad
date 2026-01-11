@@ -1,5 +1,8 @@
 export type ModuleType = 'notes' | 'habits' | 'tasks' | 'journal' | 'analysis' | 'bookmarks' | 'calendar' | 'dailynotes' | 'graph'
 
+// Re-export report types
+export * from './report'
+
 export interface Note {
   id: string
   title: string
