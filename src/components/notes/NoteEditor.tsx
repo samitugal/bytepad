@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useNoteStore } from '../../stores/noteStore'
+import { useTabStore } from '../../stores/tabStore'
 import { BacklinksPanel } from './BacklinksPanel'
 import { ConfirmModal } from '../common'
 import { useTranslation } from '../../i18n'
@@ -8,6 +9,7 @@ import { useTranslation } from '../../i18n'
 export function NoteEditor() {
   const { t } = useTranslation()
   const { activeNoteId, notes, updateNote, deleteNote } = useNoteStore()
+  const { tabs, updateTabTitle } = useTabStore()
   const activeNote = notes.find(n => n.id === activeNoteId)
 
   const [title, setTitle] = useState('')
@@ -37,7 +39,13 @@ export function NoteEditor() {
       content,
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
     })
-  }, [activeNoteId, title, content, tags, updateNote])
+    
+    // Update tab title if exists
+    const tab = tabs.find(t => t.type === 'note' && t.entityId === activeNoteId)
+    if (tab && tab.title !== (title || 'Untitled')) {
+      updateTabTitle(tab.id, title || 'Untitled')
+    }
+  }, [activeNoteId, title, content, tags, updateNote, tabs, updateTabTitle])
 
   // Auto-save on blur or Ctrl+S
   useEffect(() => {

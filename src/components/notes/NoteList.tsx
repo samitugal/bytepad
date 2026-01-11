@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react'
 import { useNoteStore } from '../../stores/noteStore'
+import { useTabStore } from '../../stores/tabStore'
 import { ResizablePanel } from '../common/ResizablePanel'
 import { useTranslation } from '../../i18n'
 
 export function NoteList() {
   const { t, language } = useTranslation()
   const { notes, activeNoteId, searchQuery, setActiveNote, setSearchQuery, addNote } = useNoteStore()
+  const { addTab } = useTabStore()
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showTagCloud, setShowTagCloud] = useState(false)
 
@@ -55,11 +57,17 @@ export function NoteList() {
   }
 
   const handleNewNote = () => {
-    addNote({
-      title: 'Untitled',
+    const noteId = addNote({
+      title: '',
       content: '',
       tags: [],
     })
+    addTab('note', noteId, 'Untitled')
+  }
+
+  const handleNoteClick = (noteId: string, noteTitle: string) => {
+    setActiveNote(noteId)
+    addTab('note', noteId, noteTitle || 'Untitled')
   }
 
   const formatDate = (date: Date) => {
@@ -151,7 +159,7 @@ export function NoteList() {
           filteredNotes.map((note) => (
             <div
               key={note.id}
-              onClick={() => setActiveNote(note.id)}
+              onClick={() => handleNoteClick(note.id, note.title)}
               className={`px-3 py-2 border-b border-np-border cursor-pointer transition-colors
                 ${activeNoteId === note.id
                   ? 'bg-np-selection'
