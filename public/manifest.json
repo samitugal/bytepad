@@ -1,6 +1,6 @@
 {
-  "name": "MyFlowSpace",
-  "short_name": "FlowSpace",
+  "name": "BytePad",
+  "short_name": "BytePad",
   "description": "ADHD Productivity Super App - Notepad++ aesthetic, keyboard-first design",
   "start_url": "/",
   "display": "standalone",

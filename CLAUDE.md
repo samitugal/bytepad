@@ -1,8 +1,12 @@
-# MyFlowSpace - ADHD Productivity Super App
+# BytePad - ADHD Productivity Super App
 
-## Sprint 27 Tamamlandı! Wikilink Autocomplete
+## Son Tamamlanan Sprint'ler
+- [x] Sprint 28: UX & Bug Fixes ✓
+- [x] Sprint 29: Knowledge Graph Interactivity ✓
+- [x] Sprint 30: Performance Optimization ✓
+- [x] Sprint 31: Image Support in Notes ✓
 
-### Tamamlanan Sprint'ler
+### Tüm Tamamlanan Sprint'ler
 - [x] MVP1: Foundation + Notes ✓
 - [x] MVP2: Tasks, Habits, Journal, Pomodoro ✓
 - [x] Sprint 3.1: FlowBot AI Coach ✓
@@ -16,14 +20,12 @@
 - [x] Sprint 19: Enhanced Focus Mode (Time logging, animated timer) ✓
 - [x] Sprint 20: AI Productivity Report (Daily/Weekly, ADHD insights, i18n) ✓
 - [x] Sprint 21: Electron Desktop App (System tray, shortcuts, portable EXE) ✓
-- [~] Sprint 22: Bug Fixes & UX (6/7 completed - multi-tab pending)
-- [x] Sprint 25: Knowledge Graph Enhanced (sidebar, unified entities, force-directed) ✓
-- [x] Sprint 27: Wikilink Autocomplete (typing [[]] shows entity suggestions) ✓
-
-### Planlanan Sprint'ler
-- [ ] Sprint 23: Multi-Tab Support
-- [ ] Sprint 24: FlowBot Note Tools (GetAllNotes, GetNoteDetail)
-- [ ] Sprint 26: Keyboard Shortcuts Fix (Ctrl+N, help modal)
+- [x] Sprint 25: Knowledge Graph Enhanced ✓
+- [x] Sprint 27: Wikilink Autocomplete ✓
+- [x] Sprint 28: UX & Bug Fixes (Subtask logic, FlowBot wrap, Wikilink preview) ✓
+- [x] Sprint 29: Graph Interactivity (Drag & drop nodes) ✓
+- [x] Sprint 30: Performance Optimization (80% bundle reduction) ✓
+- [x] Sprint 31: Image Support (Paste/drop images in notes) ✓
 
 > Detaylı görevler için: `docs/sprints/` klasörü
 
@@ -38,8 +40,8 @@ Tüm promptlar ve teknik kodlar ingilizce olmalıdır.
 ## Özellikler
 | Modül | Özellikler | Durum |
 |-------|------------|-------|
-| Notes | Markdown, tags, backlinks, wikilink autocomplete | ✅ |
-| Graph | Unified knowledge graph (notes, tasks, habits, tags) | ✅ |
+| Notes | Markdown, tags, backlinks, wikilink autocomplete, image support | ✅ |
+| Graph | Unified knowledge graph (notes, tasks, habits, tags), drag & drop | ✅ |
 | Tasks | Priority, subtasks, due dates, calendar view | ✅ |
 | Habits | Daily tracking, streaks, statistics | ✅ |
 | Journal | Daily notes, mood/energy tracking | ✅ |
@@ -83,20 +85,10 @@ docs/
 ├── GAMIFICATION.md         # Gamification spec
 ├── SPRINT_PLANNING.md      # Audit checklist & roadmap
 ├── sprints/
-│   ├── SPRINT_01-14        # Early sprints (MVP, Calendar, etc.)
-│   ├── SPRINT_15_AGENT_TOOLS_REFACTOR.md ✅
-│   ├── SPRINT_16_TASKS_UI_IMPROVEMENTS.md ✅
-│   ├── SPRINT_17_LOCALIZATION_COMPLETE.md ✅
-│   ├── SPRINT_18_GAMIFICATION_CORE.md ✅
-│   ├── SPRINT_19_FOCUS_MODE_ENHANCED.md ✅
-│   ├── SPRINT_20_AI_PRODUCTIVITY_REPORT.md ✅
-│   ├── SPRINT_21_ELECTRON_DESKTOP_APP.md ✅
-│   ├── SPRINT_22_BUG_FIXES_UX.md (partial)
-│   ├── SPRINT_23_MULTI_TAB.md
-│   ├── SPRINT_24_FLOWBOT_NOTE_TOOLS.md
-│   ├── SPRINT_25_KNOWLEDGE_GRAPH_ENHANCED.md ✅
-│   ├── SPRINT_26_KEYBOARD_SHORTCUTS_FIX.md
-│   └── SPRINT_27_NOTE_EDITOR.md ✅ (wikilink autocomplete)
+│   ├── SPRINT_28_UX_BUG_FIXES.md ✅
+│   ├── SPRINT_29_GRAPH_INTERACTIVITY.md ✅
+│   ├── SPRINT_30_PERFORMANCE.md ✅
+│   └── SPRINT_31_IMAGE_SUPPORT.md ✅
 ```
 
 ## i18n (Localization)
@@ -109,7 +101,7 @@ docs/
 ## Electron Desktop
 - **Dev:** `npm run dev:electron`
 - **Build:** `npm run package:win`
-- **Output:** `dist-electron/MyFlowSpace-x.x.x-x64.exe`
+- **Output:** `dist-electron/BytePad-x.x.x-x64.exe`
 - **Features:** System tray, global shortcuts, auto-start
 
 ## Git Workflow
@@ -144,9 +136,3 @@ Yeni bir sprint veya özellik planlandığında:
    ```
 
 3. **Dosya isimlendirme:** `SPRINT_XX_UPPERCASE_NAME.md`
-
-## Öncelik Sırası
-1. **Sprint 26** - Keyboard Shortcuts Fix (1-2 gün, hızlı kazanım)
-2. **Sprint 24** - FlowBot Note Tools (2-3 gün, yüksek değer)
-3. **Sprint 23** - Multi-Tab Support (3-4 gün)
-4. **Sprint 22** - Code Splitting & Refactor (5-7 gün, bundle 1.56MB → <500KB)

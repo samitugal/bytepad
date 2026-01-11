@@ -1,6 +1,6 @@
-appId: com.myflowspace.app
-productName: MyFlowSpace
-copyright: Copyright © 2026 MyFlowSpace
+appId: com.bytepad.app
+productName: BytePad
+copyright: Copyright © 2026 BytePad
 
 directories:
   output: dist-electron
@@ -30,8 +30,8 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: MyFlowSpace
-  uninstallDisplayName: MyFlowSpace
+  shortcutName: BytePad
+  uninstallDisplayName: BytePad
 
 # macOS Configuration
 mac:
