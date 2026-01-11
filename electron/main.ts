@@ -20,7 +20,7 @@ function getIconPath(): string {
 }
 
 function createWindow() {
-  const preloadPath = path.join(__dirname, '../preload/index.js')
+  const preloadPath = path.join(__dirname, '../preload/index.cjs')
   console.log('[Main] Preload path:', preloadPath)
   console.log('[Main] __dirname:', __dirname)
   
