@@ -183,7 +183,7 @@ export function useKeyboardShortcuts() {
           })
           break
         }
-        default:
+        default: {
           // For other modules, switch to notes and create new note
           setActiveModule('notes')
           const newNoteId = useNoteStore.getState().addNote({
@@ -192,6 +192,7 @@ export function useKeyboardShortcuts() {
             tags: [],
           })
           useNoteStore.getState().setActiveNote(newNoteId)
+        }
       }
       return
     }

@@ -1,6 +1,6 @@
 # MyFlowSpace - ADHD Productivity Super App
 
-## Sprint 25 Tamamlandı! Knowledge Graph Enhanced
+## Sprint 20 Tamamlandı! AI Productivity Report
 
 ### Tamamlanan Sprint'ler
 - [x] MVP1: Foundation + Notes ✓
@@ -14,12 +14,13 @@
 - [x] Sprint 17: Complete Localization (EN/TR) ✓
 - [x] Sprint 18: Gamification Core (XP, Levels, Achievements) ✓
 - [x] Sprint 19: Enhanced Focus Mode (Time logging, animated timer) ✓
+- [x] Sprint 20: AI Productivity Report (Daily/Weekly, ADHD insights, i18n) ✓
 - [x] Sprint 21: Electron Desktop App (System tray, shortcuts, portable EXE) ✓
 - [~] Sprint 22: Bug Fixes & UX (6/7 completed - multi-tab pending)
 - [x] Sprint 25: Knowledge Graph Enhanced (sidebar, unified entities, force-directed) ✓
 
 ### Planlanan Sprint'ler
-- [ ] Sprint 20: AI Productivity Report
+- [ ] Sprint 27: Wikilink Autocomplete (typing [[]] shows entity suggestions)
 - [ ] Sprint 23: Multi-Tab Support
 - [ ] Sprint 24: FlowBot Note Tools (GetAllNotes, GetNoteDetail)
 - [ ] Sprint 26: Keyboard Shortcuts Fix (Ctrl+N, help modal)
@@ -44,7 +45,8 @@ Tüm promptlar ve teknik kodlar ingilizce olmalıdır.
 | Journal | Daily notes, mood/energy tracking | ✅ |
 | Focus | Pomodoro timer, task selection, mini timer widget | ✅ |
 | FlowBot | AI coach, tool calling, context-aware | ✅ |
-| Analysis | Weekly stats, AI insights | ✅ |
+| Analysis | Weekly stats, AI insights, Productivity Reports | ✅ |
+| Reports | AI productivity reports (daily/weekly), ADHD insights | ✅ |
 | i18n | English (default) + Turkish | ✅ |
 | Gamification | XP, Levels, Achievements, Streak multipliers | ✅ |
 | Desktop | Electron app, system tray, global shortcuts | ✅ |
@@ -81,13 +83,14 @@ docs/
 ├── GAMIFICATION.md         # Gamification spec
 ├── sprints/
 │   ├── SPRINT_15-19        # Completed sprints
-│   ├── SPRINT_20_AI_PRODUCTIVITY_REPORT.md
+│   ├── SPRINT_20_AI_PRODUCTIVITY_REPORT.md ✅
 │   ├── SPRINT_21_ELECTRON_DESKTOP_APP.md ✅
 │   ├── SPRINT_22_BUG_FIXES_UX.md (in progress)
 │   ├── SPRINT_23_MULTI_TAB.md
 │   ├── SPRINT_24_FLOWBOT_NOTE_TOOLS.md
 │   ├── SPRINT_25_KNOWLEDGE_GRAPH_ENHANCED.md ✅
-│   └── SPRINT_26_KEYBOARD_SHORTCUTS_FIX.md
+│   ├── SPRINT_26_KEYBOARD_SHORTCUTS_FIX.md
+│   └── SPRINT_27_WIKILINK_AUTOCOMPLETE.md (planned)
 ```
 
 ## i18n (Localization)
@@ -137,7 +140,8 @@ Yeni bir sprint veya özellik planlandığında:
 3. **Dosya isimlendirme:** `SPRINT_XX_UPPERCASE_NAME.md`
 
 ## Öncelik Sırası
-1. **Sprint 26** - Keyboard Shortcuts Fix (1-2 gün, hızlı kazanım)
-2. **Sprint 24** - FlowBot Note Tools (2-3 gün, yüksek değer)
-3. **Sprint 23** - Multi-Tab Support (3-4 gün)
-4. **Sprint 20** - AI Productivity Report (7-10 gün)
+1. **Sprint 27** - Wikilink Autocomplete (1-2 gün, user request)
+2. **Sprint 26** - Keyboard Shortcuts Fix (1-2 gün, hızlı kazanım)
+3. **Sprint 24** - FlowBot Note Tools (2-3 gün, yüksek değer)
+4. **Sprint 23** - Multi-Tab Support (3-4 gün)
+5. **Sprint 22** - Code Splitting & Refactor (5-7 gün, bundle 1.56MB → <500KB)

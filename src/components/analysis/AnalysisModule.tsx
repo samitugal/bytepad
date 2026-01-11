@@ -3,8 +3,12 @@ import { useHabitStore } from '../../stores/habitStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useJournalStore } from '../../stores/journalStore'
 import { calculateWeeklyStats, getWeekRange, generateAIInsights, type WeeklyStats } from '../../services/analysisService'
+import { useTranslation } from '../../i18n'
+import { ProductivityReport } from './ProductivityReport'
 
 const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+type ViewMode = 'stats' | 'report'
 
 function MiniChart({ data, color, label }: { data: number[]; color: string; label: string }) {
   const max = Math.max(...data.filter(d => d > 0), 5)
@@ -52,10 +56,12 @@ function ProgressBar({ value, max, color }: { value: number; max: number; color:
 }
 
 export function AnalysisModule() {
+  const { t } = useTranslation()
   const { habits } = useHabitStore()
   const { tasks } = useTaskStore()
   const { entries } = useJournalStore()
 
+  const [viewMode, setViewMode] = useState<ViewMode>('stats')
   const [weekOffset, setWeekOffset] = useState(0)
   const [aiInsights, setAiInsights] = useState<{
     insights: string[]
@@ -97,29 +103,70 @@ export function AnalysisModule() {
     return `${s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${e.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
   }
 
+  // Show ProductivityReport view
+  if (viewMode === 'report') {
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* View Mode Tabs */}
+        <div className="flex items-center gap-2 p-4 pb-0">
+          <button
+            onClick={() => setViewMode('stats')}
+            className="px-4 py-2 text-sm bg-np-bg-secondary text-np-text-secondary hover:text-np-text-primary border border-np-border"
+          >
+            {t('analysis.weeklyStats')}
+          </button>
+          <button
+            onClick={() => setViewMode('report')}
+            className="px-4 py-2 text-sm bg-np-purple text-white"
+          >
+            {t('report.title')}
+          </button>
+        </div>
+        <ProductivityReport />
+      </div>
+    )
+  }
+
+  // Stats view (viewMode === 'stats')
   return (
     <div className="flex-1 flex flex-col p-4 overflow-y-auto">
+      {/* View Mode Tabs */}
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          onClick={() => setViewMode('stats')}
+          className="px-4 py-2 text-sm bg-np-green text-white"
+        >
+          {t('analysis.weeklyStats')}
+        </button>
+        <button
+          onClick={() => setViewMode('report')}
+          className="px-4 py-2 text-sm bg-np-bg-secondary text-np-text-secondary hover:text-np-text-primary border border-np-border"
+        >
+          {t('report.title')}
+        </button>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-lg text-np-text-primary">
-            <span className="text-np-green">// </span>Weekly Analysis
+            <span className="text-np-green">// </span>{t('analysis.weeklyStats')}
           </h2>
           <p className="text-sm text-np-text-secondary mt-1">
             {formatDateRange(stats.weekStart, stats.weekEnd)}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setWeekOffset(w => w + 1)} className="np-btn">← Prev</button>
+          <button onClick={() => setWeekOffset(w => w + 1)} className="np-btn">{t('common.previous')}</button>
           <button onClick={() => setWeekOffset(0)} className="np-btn" disabled={weekOffset === 0}>
-            This Week
+            {t('common.today')}
           </button>
           <button
             onClick={() => setWeekOffset(w => Math.max(0, w - 1))}
             className="np-btn"
             disabled={weekOffset === 0}
           >
-            Next →
+            {t('common.next')}
           </button>
         </div>
       </div>
