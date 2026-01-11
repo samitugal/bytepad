@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { MenuBar, Sidebar, TabBar, StatusBar, MainContent } from './components/layout'
-import { CommandPalette, FocusMode, MiniTimer, SettingsPanel, ErrorBoundary, NotificationCenter, Onboarding, GlobalSearch } from './components/common'
+import { CommandPalette, FocusMode, MiniTimer, SettingsPanel, ErrorBoundary, NotificationCenter, Onboarding, GlobalSearch, ShortcutsModal } from './components/common'
 import { ChatWindow } from './components/chat'
 import { LevelUpModal, AchievementToast } from './components/gamification'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
@@ -17,6 +17,8 @@ function App() {
   const gamificationEnabled = useSettingsStore((state) => state.gamificationEnabled)
   const globalSearchOpen = useUIStore((state) => state.globalSearchOpen)
   const setGlobalSearchOpen = useUIStore((state) => state.setGlobalSearchOpen)
+  const shortcutsModalOpen = useUIStore((state) => state.shortcutsModalOpen)
+  const setShortcutsModalOpen = useUIStore((state) => state.setShortcutsModalOpen)
   const initializeAuth = useAuthStore((state) => state.initialize)
   const { checkStreak, resetDailyStats, lastActiveDate } = useGamificationStore()
   const gistSync = useSettingsStore((state) => state.gistSync)
@@ -105,6 +107,7 @@ function App() {
           onClose={() => setGlobalSearchOpen(false)} 
         />
         <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+        <ShortcutsModal isOpen={shortcutsModalOpen} onClose={() => setShortcutsModalOpen(false)} />
         {gamificationEnabled && (
           <>
             <LevelUpModal />

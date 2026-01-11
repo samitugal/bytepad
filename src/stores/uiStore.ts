@@ -8,6 +8,7 @@ interface UIState {
   focusModeMinimized: boolean
   isNotificationCenterOpen: boolean
   globalSearchOpen: boolean
+  shortcutsModalOpen: boolean
   setActiveModule: (module: ModuleType) => void
   toggleCommandPalette: () => void
   setCommandPaletteOpen: (open: boolean) => void
@@ -19,6 +20,8 @@ interface UIState {
   setNotificationCenterOpen: (open: boolean) => void
   toggleGlobalSearch: () => void
   setGlobalSearchOpen: (open: boolean) => void
+  toggleShortcutsModal: () => void
+  setShortcutsModalOpen: (open: boolean) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -28,6 +31,7 @@ export const useUIStore = create<UIState>((set) => ({
   focusModeMinimized: false,
   isNotificationCenterOpen: false,
   globalSearchOpen: false,
+  shortcutsModalOpen: false,
   setActiveModule: (module) => set({ activeModule: module }),
   toggleCommandPalette: () => set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
@@ -39,4 +43,6 @@ export const useUIStore = create<UIState>((set) => ({
   setNotificationCenterOpen: (open) => set({ isNotificationCenterOpen: open }),
   toggleGlobalSearch: () => set((state) => ({ globalSearchOpen: !state.globalSearchOpen })),
   setGlobalSearchOpen: (open) => set({ globalSearchOpen: open }),
+  toggleShortcutsModal: () => set((state) => ({ shortcutsModalOpen: !state.shortcutsModalOpen })),
+  setShortcutsModalOpen: (open) => set({ shortcutsModalOpen: open }),
 }))
