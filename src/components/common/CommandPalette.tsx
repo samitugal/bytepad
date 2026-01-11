@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useUIStore } from '../../stores/uiStore'
 
 interface Command {
@@ -14,6 +14,8 @@ export function CommandPalette() {
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
   const commands: Command[] = useMemo(() => [
     // Navigation
@@ -58,6 +60,22 @@ export function CommandPalette() {
   useEffect(() => {
     setSelectedIndex(0)
   }, [query])
+
+  // Scroll selected item into view
+  useEffect(() => {
+    const selectedElement = itemRefs.current.get(selectedIndex)
+    if (selectedElement) {
+      selectedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [selectedIndex])
+
+  const setItemRef = useCallback((index: number, el: HTMLDivElement | null) => {
+    if (el) {
+      itemRefs.current.set(index, el)
+    } else {
+      itemRefs.current.delete(index)
+    }
+  }, [])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     switch (e.key) {
@@ -128,7 +146,7 @@ export function CommandPalette() {
         </div>
 
         {/* Command list */}
-        <div className="max-h-80 overflow-y-auto">
+        <div ref={listRef} className="max-h-80 overflow-y-auto">
           {filteredCommands.length === 0 ? (
             <div className="p-4 text-np-text-secondary text-sm text-center">
               No commands found
@@ -146,6 +164,7 @@ export function CommandPalette() {
                   return (
                     <div
                       key={cmd.id}
+                      ref={(el) => setItemRef(currentIndex, el)}
                       onClick={() => executeCommand(cmd)}
                       onMouseEnter={() => setSelectedIndex(currentIndex)}
                       className={`px-3 py-2 flex items-center justify-between cursor-pointer text-sm

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useNoteStore } from '../../stores/noteStore'
 import { BacklinksPanel } from './BacklinksPanel'
@@ -15,6 +15,8 @@ export function NoteEditor() {
   const [tags, setTags] = useState('')
   const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('edit')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const lineNumbersRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (activeNote) {
@@ -49,6 +51,13 @@ export function NoteEditor() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleSave])
 
+  // Sync line numbers scroll with textarea
+  const handleScroll = useCallback(() => {
+    if (textareaRef.current && lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop
+    }
+  }, [])
+
   const handleDelete = () => {
     if (!activeNoteId) return
     setShowDeleteConfirm(true)
@@ -77,7 +86,7 @@ export function NoteEditor() {
     <div className="flex-1 flex flex-col">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-np-border bg-np-bg-secondary">
-        <div className="flex items-center gap-2">
+        <div className="flex-1 min-w-0 mr-4">
           <input
             type="text"
             value={title}
@@ -85,7 +94,7 @@ export function NoteEditor() {
             onBlur={handleSave}
             placeholder={t('notes.untitled') + '...'}
             className="bg-transparent border-none text-np-text-primary text-lg font-mono
-                       focus:outline-none w-64"
+                       focus:outline-none w-full"
           />
         </div>
         <div className="flex items-center gap-4">
@@ -163,10 +172,13 @@ export function NoteEditor() {
       <div className="flex-1 flex overflow-hidden">
         {/* Editor Panel */}
         {(viewMode === 'edit' || viewMode === 'split') && (
-          <div className={`relative ${viewMode === 'split' ? 'w-1/2 border-r border-np-border' : 'flex-1'}`}>
+          <div className={`relative ${viewMode === 'split' ? 'w-1/2 border-r border-np-border' : 'flex-1'} overflow-hidden`}>
             {/* Line numbers */}
-            <div className="absolute left-0 top-0 bottom-0 w-12 bg-np-bg-secondary border-r border-np-border
-                            text-np-text-secondary text-sm font-mono text-right pr-2 pt-3 select-none overflow-hidden">
+            <div 
+              ref={lineNumbersRef}
+              className="absolute left-0 top-0 bottom-0 w-12 bg-np-bg-secondary border-r border-np-border
+                         text-np-text-secondary text-sm font-mono text-right pr-2 pt-3 select-none overflow-hidden"
+            >
               {content.split('\n').map((_, i) => (
                 <div key={i} className="leading-6">{i + 1}</div>
               ))}
@@ -174,9 +186,11 @@ export function NoteEditor() {
 
             {/* Editor */}
             <textarea
+              ref={textareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               onBlur={handleSave}
+              onScroll={handleScroll}
               placeholder="Start writing in Markdown..."
               className="w-full h-full bg-np-bg-primary text-np-text-primary font-mono text-sm
                          pl-14 pr-4 pt-3 pb-4 resize-none focus:outline-none leading-6"

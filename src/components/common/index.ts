@@ -1,5 +1,6 @@
 export { CommandPalette } from './CommandPalette'
 export { FocusMode } from './FocusMode'
+export { MiniTimer } from './MiniTimer'
 export { SettingsPanel } from './SettingsPanel'
 export { ErrorBoundary } from './ErrorBoundary'
 export { GlobalSearch } from './GlobalSearch'

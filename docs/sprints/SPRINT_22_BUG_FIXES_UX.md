@@ -118,7 +118,27 @@
 
 ---
 
-### 22.6: Gist Sync Issues
+### 22.6: Command Palette Arrow Key Scroll Bug
+**Type:** Bug
+**Severity:** Medium
+**Description:** When navigating Command Palette with arrow keys, the selected item doesn't auto-scroll into view. Cursor/selection disappears when going beyond visible area.
+
+**Current Behavior:**
+- Arrow down moves selection
+- List doesn't scroll to follow selection
+- Selected item becomes invisible
+
+**Expected Behavior:**
+- Selected item always visible
+- List auto-scrolls to keep selection in view
+- `scrollIntoView()` on selection change
+
+**Files to Check:**
+- `src/components/common/CommandPalette.tsx`
+
+---
+
+### 22.7: Gist Sync Issues
 **Type:** Bug
 **Severity:** High
 **Description:** Multiple Gist sync problems:
@@ -152,7 +172,8 @@
 ### Phase 1: Critical Bugs (Day 1)
 - [ ] 22.2: Fix line numbers not updating
 - [ ] 22.4: Fix Focus Mode reset issue
-- [ ] 22.6: Fix Gist sync (startup/close/interval)
+- [ ] 22.6: Fix Command Palette scroll
+- [ ] 22.7: Fix Gist sync (startup/close/interval)
 
 ### Phase 2: UI Improvements (Day 2)
 - [ ] 22.1: Expand note title area
