@@ -20,6 +20,10 @@ export default defineConfig({
         input: {
           index: resolve(__dirname, 'electron/preload.ts'),
         },
+        output: {
+          format: 'cjs',
+          entryFileNames: '[name].js',
+        },
       },
     },
   },

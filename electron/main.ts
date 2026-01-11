@@ -20,6 +20,10 @@ function getIconPath(): string {
 }
 
 function createWindow() {
+  const preloadPath = path.join(__dirname, '../preload/index.js')
+  console.log('[Main] Preload path:', preloadPath)
+  console.log('[Main] __dirname:', __dirname)
+  
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -30,9 +34,10 @@ function createWindow() {
     frame: false, // Remove native title bar
     titleBarStyle: 'hidden',
     webPreferences: {
-      preload: path.join(__dirname, '../preload/index.mjs'),
+      preload: preloadPath,
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: false,
     },
     backgroundColor: '#1E1E1E',
     show: false, // Show when ready

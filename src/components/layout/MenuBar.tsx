@@ -6,7 +6,7 @@ interface MenuBarProps {
   onSettingsClick?: () => void
 }
 
-// Window control functions - call Electron API if available
+// Window control functions - call Electron API if available, fallback to window.close()
 const handleMinimize = () => {
   if (window.electronAPI?.minimize) {
     window.electronAPI.minimize()
@@ -22,6 +22,9 @@ const handleMaximize = () => {
 const handleClose = () => {
   if (window.electronAPI?.close) {
     window.electronAPI.close()
+  } else {
+    // Fallback for when electronAPI is not available
+    window.close()
   }
 }
 
