@@ -47,17 +47,13 @@ function MarkdownWithPreview({ content, notes, onNavigate }: {
 }) {
   const [hoverNote, setHoverNote] = useState<Note | null>(null)
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 })
-  const [isHovering, setIsHovering] = useState(false)
-
-  useEffect(() => {
-    if (!isHovering) {
-      const timer = setTimeout(() => setHoverNote(null), 50)
-      return () => clearTimeout(timer)
-    }
-  }, [isHovering])
+  const hideTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const handleMouseEnter = (noteId: string, e: React.MouseEvent) => {
-    setIsHovering(true)
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current)
+      hideTimerRef.current = null
+    }
     const note = notes.find(n => n.id === noteId)
     if (note) {
       setHoverNote(note)
@@ -66,8 +62,18 @@ function MarkdownWithPreview({ content, notes, onNavigate }: {
   }
 
   const handleMouseLeave = () => {
-    setIsHovering(false)
+    hideTimerRef.current = setTimeout(() => {
+      setHoverNote(null)
+    }, 150)
   }
+
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current)
+      }
+    }
+  }, [])
 
   return (
     <>
