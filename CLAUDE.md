@@ -1,4 +1,4 @@
-# BytePad - ADHD Productivity Super App
+# bytepad - productivity app
 
 ## Son Tamamlanan Sprint'ler
 - [x] Sprint 28: UX & Bug Fixes ✓
@@ -32,7 +32,7 @@
 ---
 
 ## Proje Özeti
-Notepad++ estetiğinde, keyboard-first, ADHD-friendly productivity app.
+Notepad++ estetiğinde, keyboard-first productivity app.
 Tüm promptlar ve teknik kodlar ingilizce olmalıdır.
 
 **Platform:** PWA + Electron Desktop | **Stack:** React + TypeScript + Tailwind + Zustand
@@ -101,7 +101,7 @@ docs/
 ## Electron Desktop
 - **Dev:** `npm run dev:electron`
 - **Build:** `npm run package:win`
-- **Output:** `dist-electron/BytePad-x.x.x-x64.exe`
+- **Output:** `dist-electron/bytepad-x.x.x-x64.exe`
 - **Features:** System tray, global shortcuts, auto-start
 
 ## Git Workflow

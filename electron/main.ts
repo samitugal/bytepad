@@ -29,7 +29,7 @@ function createWindow() {
     height: 900,
     minWidth: 900,
     minHeight: 600,
-    title: 'BytePad',
+    title: 'bytepad',
     icon: getIconPath(),
     frame: false, // Remove native title bar
     titleBarStyle: 'hidden',
@@ -85,7 +85,7 @@ function createTray() {
 
   const contextMenu = Menu.buildFromTemplate([
     { 
-      label: 'Open BytePad', 
+      label: 'Open bytepad', 
       click: () => {
         mainWindow?.show()
         mainWindow?.focus()
@@ -126,7 +126,7 @@ function createTray() {
     }
   ])
 
-  tray.setToolTip('BytePad')
+  tray.setToolTip('bytepad')
   tray.setContextMenu(contextMenu)
 
   // Click to show/hide

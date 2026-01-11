@@ -1,6 +1,6 @@
 appId: com.bytepad.app
-productName: BytePad
-copyright: Copyright © 2026 BytePad
+productName: bytepad
+copyright: Copyright © 2026 bytepad
 
 directories:
   output: dist-electron
@@ -30,8 +30,8 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: BytePad
-  uninstallDisplayName: BytePad
+  shortcutName: bytepad
+  uninstallDisplayName: bytepad
 
 # macOS Configuration
 mac:
