@@ -10,12 +10,36 @@ import { useTranslation } from '../../i18n'
 import { parseTags } from '../../utils/storage'
 import type { Note } from '../../types'
 
+function ImageRenderer({ src, alt }: { src?: string; alt?: string }) {
+  // Only support external URLs - no local storage due to Gist size limits
+  if (!src || src.startsWith('local:') || src.startsWith('img:') || src.startsWith('stored:') || src.startsWith('data:')) {
+    return <span className="text-np-text-secondary italic">[Use image URL: ![alt](https://...)]</span>
+  }
+  
+  return (
+    <span className="block my-2">
+      <img 
+        src={src} 
+        alt={alt || 'image'} 
+        className="max-w-full h-auto rounded border border-np-border cursor-pointer
+                   hover:border-np-blue transition-colors"
+        style={{ maxHeight: '400px', objectFit: 'contain' }}
+        onClick={(e) => {
+          e.preventDefault()
+          window.open(src, '_blank')
+        }}
+        loading="lazy"
+      />
+      {alt && <span className="block text-xs text-np-text-secondary mt-1 italic">{alt}</span>}
+    </span>
+  )
+}
+
 function MarkdownWithPreview({ content, notes, onNavigate }: {
   content: string
   notes: Note[]
   onNavigate: (type: 'note' | 'task', id: string) => void
 }) {
-
   return (
     <>
       <ReactMarkdown
@@ -55,23 +79,7 @@ function MarkdownWithPreview({ content, notes, onNavigate }: {
             }
             return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
           },
-          img: ({ src, alt }) => (
-            <span className="block my-2">
-              <img 
-                src={src} 
-                alt={alt || 'image'} 
-                className="max-w-full h-auto rounded border border-np-border cursor-pointer
-                           hover:border-np-blue transition-colors"
-                style={{ maxHeight: '400px', objectFit: 'contain' }}
-                onClick={(e) => {
-                  e.preventDefault()
-                  window.open(src, '_blank')
-                }}
-                loading="lazy"
-              />
-              {alt && <span className="block text-xs text-np-text-secondary mt-1 italic">{alt}</span>}
-            </span>
-          )
+          img: ({ src, alt }) => <ImageRenderer src={src} alt={alt} />
         }}
       >{content}</ReactMarkdown>
     </>
@@ -138,68 +146,6 @@ export function NoteEditor() {
       lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop
     }
   }, [])
-
-  // Handle image paste from clipboard
-  const handlePaste = useCallback((e: React.ClipboardEvent) => {
-    const items = e.clipboardData.items
-    for (const item of items) {
-      if (item.type.startsWith('image/')) {
-        e.preventDefault()
-        const file = item.getAsFile()
-        if (file) {
-          processImageFile(file)
-        }
-        break
-      }
-    }
-  }, [])
-
-  // Handle image drop
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    const files = e.dataTransfer.files
-    for (const file of files) {
-      if (file.type.startsWith('image/')) {
-        processImageFile(file)
-        break
-      }
-    }
-  }, [])
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-  }, [])
-
-  // Process and insert image as base64
-  const processImageFile = useCallback((file: File) => {
-    const maxSize = 5 * 1024 * 1024 // 5MB limit
-    if (file.size > maxSize) {
-      alert('Image too large. Maximum size is 5MB.')
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string
-      const textarea = textareaRef.current
-      if (!textarea) return
-
-      const cursorPos = textarea.selectionStart
-      const fileName = file.name.replace(/\.[^/.]+$/, '') || 'image'
-      const imageMarkdown = `![${fileName}](${base64})\n`
-      
-      const newContent = content.substring(0, cursorPos) + imageMarkdown + content.substring(cursorPos)
-      setContent(newContent)
-
-      // Move cursor after inserted image
-      setTimeout(() => {
-        const newPos = cursorPos + imageMarkdown.length
-        textarea.setSelectionRange(newPos, newPos)
-        textarea.focus()
-      }, 0)
-    }
-    reader.readAsDataURL(file)
-  }, [content])
 
   // Handle wikilink insertion from autocomplete
   const handleWikilinkInsert = useCallback((suggestion: WikilinkSuggestion, startPos: number, endPos: number) => {
@@ -377,10 +323,7 @@ export function NoteEditor() {
               onChange={(e) => setContent(e.target.value)}
               onBlur={handleSave}
               onScroll={handleScroll}
-              onPaste={handlePaste}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              placeholder="Start writing in Markdown... (Paste or drop images here)"
+              placeholder="Start writing in Markdown..."
               className="w-full h-full bg-np-bg-primary text-np-text-primary font-mono text-sm
                          pr-4 resize-none focus:outline-none"
               style={{
