@@ -65,17 +65,22 @@ export const useTaskStore = create<TaskState>()(
       toggleTask: (id) => {
         const task = get().tasks.find(t => t.id === id)
         const wasCompleted = task?.completed || false
+        const willBeCompleted = !wasCompleted
 
         set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.id === id
-              ? {
-                  ...t,
-                  completed: !t.completed,
-                  completedAt: !t.completed ? new Date() : undefined,
-                }
-              : t
-          ),
+          tasks: state.tasks.map((t) => {
+            if (t.id === id) {
+              return {
+                ...t,
+                completed: willBeCompleted,
+                completedAt: willBeCompleted ? new Date() : undefined,
+                subtasks: willBeCompleted 
+                  ? t.subtasks 
+                  : t.subtasks.map(st => ({ ...st, completed: false })),
+              }
+            }
+            return t
+          }),
         }))
 
         // Award XP for task completion (not for un-completing)
