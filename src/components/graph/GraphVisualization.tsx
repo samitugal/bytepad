@@ -20,6 +20,8 @@ export function GraphVisualization({
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null)
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
+  const [draggedNode, setDraggedNode] = useState<GraphNode | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const animationRef = useRef<number>()
   const nodesRef = useRef<GraphNode[]>([])
 
@@ -56,6 +58,8 @@ export function GraphVisualization({
 
     const simulate = () => {
       simNodes.forEach((node) => {
+        if (draggedNode?.id === node.id) return
+        
         node.vx += (centerX - node.x) * 0.0008
         node.vy += (centerY - node.y) * 0.0008
 
@@ -74,6 +78,7 @@ export function GraphVisualization({
         const source = simNodes.find((n) => n.id === edge.source)
         const target = simNodes.find((n) => n.id === edge.target)
         if (!source || !target) return
+        if (draggedNode?.id === source.id || draggedNode?.id === target.id) return
 
         const dx = target.x - source.x
         const dy = target.y - source.y
@@ -87,6 +92,8 @@ export function GraphVisualization({
       })
 
       simNodes.forEach((node) => {
+        if (draggedNode?.id === node.id) return
+        
         node.vx *= 0.92
         node.vy *= 0.92
         node.x += node.vx
@@ -156,7 +163,7 @@ export function GraphVisualization({
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [dimensions, edges, searchQuery, hoveredNode, selectedNode])
+  }, [dimensions, edges, searchQuery, hoveredNode, selectedNode, draggedNode])
 
   const findNodeAtPosition = useCallback((x: number, y: number): GraphNode | null => {
     const simNodes = nodesRef.current
@@ -180,12 +187,25 @@ export function GraphVisualization({
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
 
+    if (isDragging && draggedNode) {
+      const simNodes = nodesRef.current
+      const node = simNodes.find(n => n.id === draggedNode.id)
+      if (node) {
+        node.x = x
+        node.y = y
+        node.vx = 0
+        node.vy = 0
+      }
+      canvas.style.cursor = 'grabbing'
+      return
+    }
+
     const hovered = findNodeAtPosition(x, y)
     setHoveredNode(hovered)
-    canvas.style.cursor = hovered ? 'pointer' : 'default'
+    canvas.style.cursor = hovered ? 'grab' : 'default'
   }
 
-  const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -195,11 +215,40 @@ export function GraphVisualization({
 
     const clicked = findNodeAtPosition(x, y)
     if (clicked) {
+      setDraggedNode(clicked)
+      setIsDragging(true)
       setSelectedNode(clicked.id)
-      const [type] = clicked.id.split(':') as [GraphEntityType]
-      onNodeClick(clicked.id, type)
+      canvas.style.cursor = 'grabbing'
+    }
+  }
+
+  const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    if (isDragging && draggedNode) {
+      setIsDragging(false)
+      setDraggedNode(null)
+      canvas.style.cursor = 'grab'
     } else {
-      setSelectedNode(null)
+      const rect = canvas.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+
+      const clicked = findNodeAtPosition(x, y)
+      if (clicked) {
+        const [type] = clicked.id.split(':') as [GraphEntityType]
+        onNodeClick(clicked.id, type)
+      } else {
+        setSelectedNode(null)
+      }
+    }
+  }
+
+  const handleMouseLeave = () => {
+    if (isDragging) {
+      setIsDragging(false)
+      setDraggedNode(null)
     }
   }
 
@@ -210,7 +259,9 @@ export function GraphVisualization({
         width={dimensions.width}
         height={dimensions.height}
         onMouseMove={handleMouseMove}
-        onClick={handleClick}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
         className="w-full h-full"
       />
 

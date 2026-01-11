@@ -46,17 +46,6 @@ export function TasksModule() {
     title: ''
   })
 
-  // Auto-complete parent task when all subtasks are done
-  useEffect(() => {
-    allTasks.forEach(task => {
-      if (!task.completed && task.subtasks.length > 0) {
-        const allSubtasksDone = task.subtasks.every(s => s.completed)
-        if (allSubtasksDone) {
-          toggleTask(task.id)
-        }
-      }
-    })
-  }, [allTasks, toggleTask])
 
   const handleAdd = () => {
     if (!newTask.title.trim()) return
