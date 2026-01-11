@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useNoteStore } from '../../stores/noteStore'
+import { useTaskStore } from '../../stores/taskStore'
 import { useTabStore } from '../../stores/tabStore'
 import { BacklinksPanel } from './BacklinksPanel'
 import { WikilinkAutocomplete, type WikilinkSuggestion } from './WikilinkAutocomplete'
@@ -8,9 +9,67 @@ import { ConfirmModal } from '../common'
 import { useTranslation } from '../../i18n'
 import { parseTags } from '../../utils/storage'
 
+function WikilinkRenderer({ content, notes, tasks, onNavigate }: {
+  content: string
+  notes: { id: string; title: string }[]
+  tasks: { id: string; title: string }[]
+  onNavigate: (type: 'note' | 'task', id: string) => void
+}) {
+  const parts = content.split(/(\[\[[^\]]+\]\])/g)
+  
+  return (
+    <>
+      {parts.map((part, i) => {
+        const match = part.match(/^\[\[([^\]]+)\]\]$/)
+        if (match) {
+          const linkText = match[1]
+          const linkedNote = notes.find(n => n.title.toLowerCase() === linkText.toLowerCase())
+          const linkedTask = tasks.find(t => t.title.toLowerCase() === linkText.toLowerCase())
+          
+          if (linkedNote) {
+            return (
+              <span
+                key={i}
+                onClick={() => onNavigate('note', linkedNote.id)}
+                className="text-np-cyan cursor-pointer hover:underline hover:text-np-blue transition-colors"
+                title={`Go to note: ${linkedNote.title}`}
+              >
+                📝 {linkText}
+              </span>
+            )
+          } else if (linkedTask) {
+            return (
+              <span
+                key={i}
+                onClick={() => onNavigate('task', linkedTask.id)}
+                className="text-np-orange cursor-pointer hover:underline hover:text-np-yellow transition-colors"
+                title={`Go to task: ${linkedTask.title}`}
+              >
+                ✓ {linkText}
+              </span>
+            )
+          } else {
+            return (
+              <span
+                key={i}
+                className="text-np-purple/70 italic"
+                title={`Link not found: ${linkText}`}
+              >
+                ⚠ {linkText}
+              </span>
+            )
+          }
+        }
+        return <span key={i}>{part}</span>
+      })}
+    </>
+  )
+}
+
 export function NoteEditor() {
   const { t } = useTranslation()
-  const { activeNoteId, notes, updateNote, deleteNote } = useNoteStore()
+  const { activeNoteId, notes, updateNote, deleteNote, setActiveNoteId } = useNoteStore()
+  const tasks = useTaskStore((s) => s.tasks)
   const { tabs, updateTabTitle } = useTabStore()
   const activeNote = notes.find(n => n.id === activeNoteId)
 
@@ -86,6 +145,26 @@ export function NoteEditor() {
       }
     })
   }, [content])
+
+  const handleWikilinkNavigate = useCallback((type: 'note' | 'task', id: string) => {
+    if (type === 'note') {
+      setActiveNoteId(id)
+    }
+  }, [setActiveNoteId])
+
+  const processedContent = useMemo(() => {
+    return content.replace(/\[\[([^\]]+)\]\]/g, (_, linkText) => {
+      const linkedNote = notes.find(n => n.title.toLowerCase() === linkText.toLowerCase())
+      const linkedTask = tasks.find(t => t.title.toLowerCase() === linkText.toLowerCase())
+      
+      if (linkedNote) {
+        return `**[📝 ${linkText}](#note-${linkedNote.id})**`
+      } else if (linkedTask) {
+        return `**[✓ ${linkText}](#task-${linkedTask.id})**`
+      }
+      return `*⚠ ${linkText}*`
+    })
+  }, [content, notes, tasks])
 
   const handleDelete = () => {
     if (!activeNoteId) return
@@ -264,7 +343,31 @@ export function NoteEditor() {
                             prose-li:marker:text-np-green prose-li:my-1
                             prose-hr:border-np-border">
               {content ? (
-                <ReactMarkdown>{content}</ReactMarkdown>
+                <ReactMarkdown
+                  components={{
+                    a: ({ href, children }) => {
+                      if (href?.startsWith('#note-')) {
+                        const noteId = href.replace('#note-', '')
+                        return (
+                          <span
+                            onClick={() => handleWikilinkNavigate('note', noteId)}
+                            className="text-np-cyan cursor-pointer hover:underline no-underline"
+                          >
+                            {children}
+                          </span>
+                        )
+                      }
+                      if (href?.startsWith('#task-')) {
+                        return (
+                          <span className="text-np-orange cursor-pointer hover:underline no-underline">
+                            {children}
+                          </span>
+                        )
+                      }
+                      return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
+                    }
+                  }}
+                >{processedContent}</ReactMarkdown>
               ) : (
                 <div className="text-np-text-secondary italic">
                   // Preview will appear here...

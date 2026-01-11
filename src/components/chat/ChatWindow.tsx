@@ -188,7 +188,7 @@ export function ChatWindow() {
                 : 'bg-np-bg-tertiary text-np-text-primary border-l-2 border-np-green'
                 }`}
             >
-              <div className="whitespace-pre-wrap">{msg.content}</div>
+              <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{msg.content}</div>
               <div className="text-[10px] text-np-text-secondary mt-1">
                 {new Date(msg.timestamp).toLocaleTimeString('tr-TR', {
                   hour: '2-digit',
