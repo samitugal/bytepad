@@ -6,6 +6,7 @@ import { useTaskStore } from '../stores/taskStore'
 import { useDailyNotesStore } from '../stores/dailyNotesStore'
 import { useJournalStore } from '../stores/journalStore'
 import { useBookmarkStore } from '../stores/bookmarkStore'
+import { useTabStore } from '../stores/tabStore'
 import type { ModuleType } from '../types'
 
 const MODULE_MAP: Record<string, ModuleType> = {
@@ -72,6 +73,56 @@ export function useKeyboardShortcuts() {
     if (e.altKey && e.key === 'u') {
       e.preventDefault()
       useUIStore.getState().toggleGlobalSearch()
+      return
+    }
+
+    // Ctrl+T - New tab (in notes module)
+    if (e.ctrlKey && e.key === 't') {
+      e.preventDefault()
+      e.stopPropagation()
+      
+      const { activeModule } = useUIStore.getState()
+      if (activeModule === 'notes') {
+        const noteId = useNoteStore.getState().addNote({
+          title: '',
+          content: '',
+          tags: [],
+        })
+        useNoteStore.getState().setActiveNote(noteId)
+        useTabStore.getState().addTab('note', noteId, 'Untitled')
+      }
+      return
+    }
+
+    // Ctrl+W - Close current tab
+    if (e.ctrlKey && e.key === 'w') {
+      e.preventDefault()
+      e.stopPropagation()
+      
+      const { activeTabId, closeTab } = useTabStore.getState()
+      if (activeTabId) {
+        closeTab(activeTabId)
+      }
+      return
+    }
+
+    // Ctrl+Tab - Next tab
+    if (e.ctrlKey && e.key === 'Tab') {
+      e.preventDefault()
+      const { tabs, activeTabId, setActiveTab } = useTabStore.getState()
+      if (tabs.length > 1 && activeTabId) {
+        const currentIndex = tabs.findIndex(t => t.id === activeTabId)
+        const nextIndex = e.shiftKey 
+          ? (currentIndex - 1 + tabs.length) % tabs.length 
+          : (currentIndex + 1) % tabs.length
+        setActiveTab(tabs[nextIndex].id)
+        
+        // Also set active note if it's a note tab
+        const nextTab = tabs[nextIndex]
+        if (nextTab.type === 'note' && nextTab.entityId) {
+          useNoteStore.getState().setActiveNote(nextTab.entityId)
+        }
+      }
       return
     }
 
