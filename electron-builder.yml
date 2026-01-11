@@ -13,12 +13,17 @@ extraResources:
   - from: resources/icon.png
     to: icon.png
 
+# Windows Configuration
 win:
   target:
-    - nsis
-    - portable
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
   icon: resources/icon.png
-  artifactName: ${productName}-${version}-${arch}.${ext}
+  artifactName: ${productName}-${version}-win-${arch}.${ext}
 
 nsis:
   oneClick: false
@@ -26,20 +31,45 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: MyFlowSpace
+  uninstallDisplayName: MyFlowSpace
 
+# macOS Configuration
 mac:
   target:
-    - dmg
-    - zip
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
   icon: resources/icon.png
   category: public.app-category.productivity
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: resources/entitlements.mac.plist
+  entitlementsInherit: resources/entitlements.mac.plist
 
+dmg:
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+# Linux Configuration
 linux:
   target:
     - AppImage
     - deb
   icon: resources/icon.png
   category: Office
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}
 
 publish:
   provider: github
