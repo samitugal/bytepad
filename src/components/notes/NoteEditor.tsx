@@ -10,70 +10,11 @@ import { useTranslation } from '../../i18n'
 import { parseTags } from '../../utils/storage'
 import type { Note } from '../../types'
 
-function LinkPreviewTooltip({ note, position }: { note: Note; position: { x: number; y: number } }) {
-  const preview = note.content.substring(0, 120) + (note.content.length > 120 ? '...' : '')
-  const date = new Date(note.updatedAt).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })
-  
-  return (
-    <div
-      className="fixed z-50 bg-np-bg-tertiary border border-np-border shadow-xl p-3 max-w-xs pointer-events-none"
-      style={{
-        left: Math.min(position.x, window.innerWidth - 280),
-        top: position.y + 20,
-      }}
-    >
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-np-text-primary font-medium">{note.title || 'Untitled'}</span>
-        <span className="text-xs bg-np-green/20 text-np-green px-1.5 py-0.5 rounded">note</span>
-      </div>
-      <div className="flex items-start gap-2 text-xs text-np-text-secondary mb-2">
-        <span>📝</span>
-        <span>{preview || 'No content'}</span>
-      </div>
-      <div className="flex items-center gap-2 text-xs">
-        {note.tags.length > 0 && (
-          <span className="text-np-purple">#{note.tags[0]}</span>
-        )}
-        <span className="text-np-text-secondary">{date}</span>
-      </div>
-    </div>
-  )
-}
-
 function MarkdownWithPreview({ content, notes, onNavigate }: {
   content: string
   notes: Note[]
   onNavigate: (type: 'note' | 'task', id: string) => void
 }) {
-  const [hoverNote, setHoverNote] = useState<Note | null>(null)
-  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 })
-  const hideTimerRef = useRef<NodeJS.Timeout | null>(null)
-
-  const handleMouseEnter = (noteId: string, e: React.MouseEvent) => {
-    if (hideTimerRef.current) {
-      clearTimeout(hideTimerRef.current)
-      hideTimerRef.current = null
-    }
-    const note = notes.find(n => n.id === noteId)
-    if (note) {
-      setHoverNote(note)
-      setHoverPosition({ x: e.clientX, y: e.clientY })
-    }
-  }
-
-  const handleMouseLeave = () => {
-    hideTimerRef.current = setTimeout(() => {
-      setHoverNote(null)
-    }, 150)
-  }
-
-  useEffect(() => {
-    return () => {
-      if (hideTimerRef.current) {
-        clearTimeout(hideTimerRef.current)
-      }
-    }
-  }, [])
 
   return (
     <>
@@ -82,14 +23,26 @@ function MarkdownWithPreview({ content, notes, onNavigate }: {
           a: ({ href, children }) => {
             if (href?.startsWith('#note-')) {
               const noteId = href.replace('#note-', '')
+              const linkedNote = notes.find(n => n.id === noteId)
+              const preview = linkedNote?.content.substring(0, 80) || ''
               return (
-                <span
+                <span 
                   onClick={() => onNavigate('note', noteId)}
-                  onMouseEnter={(e) => handleMouseEnter(noteId, e)}
-                  onMouseLeave={handleMouseLeave}
-                  className="text-np-cyan cursor-pointer hover:underline no-underline"
+                  className="text-np-cyan cursor-pointer hover:underline no-underline relative group inline-block"
                 >
                   {children}
+                  {linkedNote && (
+                    <span className="invisible group-hover:visible opacity-0 group-hover:opacity-100 
+                                    absolute z-50 bg-np-bg-tertiary border border-np-border shadow-xl 
+                                    p-2 text-xs w-56 left-0 top-full mt-1 transition-opacity duration-150
+                                    pointer-events-none">
+                      <span className="flex items-center gap-1 text-np-text-primary font-medium mb-1">
+                        {linkedNote.title || 'Untitled'}
+                        <span className="text-[10px] bg-np-green/20 text-np-green px-1 rounded">note</span>
+                      </span>
+                      <span className="text-np-text-secondary block">{preview}...</span>
+                    </span>
+                  )}
                 </span>
               )
             }
@@ -121,7 +74,6 @@ function MarkdownWithPreview({ content, notes, onNavigate }: {
           )
         }}
       >{content}</ReactMarkdown>
-      {hoverNote && <LinkPreviewTooltip note={hoverNote} position={hoverPosition} />}
     </>
   )
 }
