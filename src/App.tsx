@@ -1,8 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { MenuBar, Sidebar, TabBar, StatusBar, MainContent } from './components/layout'
-import { CommandPalette, FocusMode, MiniTimer, SettingsPanel, ErrorBoundary, NotificationCenter, Onboarding, GlobalSearch, ShortcutsModal } from './components/common'
-import { ChatWindow } from './components/chat'
-import { LevelUpModal, AchievementToast } from './components/gamification'
+import { CommandPalette, MiniTimer, ErrorBoundary, NotificationCenter, Onboarding, GlobalSearch, ShortcutsModal } from './components/common'
+
+// Lazy load heavy components
+const SettingsPanel = lazy(() => import('./components/common/SettingsPanel').then(m => ({ default: m.SettingsPanel })))
+const FocusMode = lazy(() => import('./components/common/FocusMode').then(m => ({ default: m.FocusMode })))
+const ChatWindow = lazy(() => import('./components/chat/ChatWindow').then(m => ({ default: m.ChatWindow })))
+const LevelUpModal = lazy(() => import('./components/gamification/LevelUpModal').then(m => ({ default: m.LevelUpModal })))
+const AchievementToast = lazy(() => import('./components/gamification/AchievementToast').then(m => ({ default: m.AchievementToast })))
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { initializeNotifications } from './services/notificationService'
 import { startAutoSync, stopAutoSync, syncWithGist, forcePushToGist } from './services/gistSyncService'
@@ -75,19 +80,32 @@ function App() {
       }
     }
 
-    // Push to Gist on app close
+    // Ensure data persistence on app close
     const handleBeforeUnload = () => {
+      // Gist sync
       if (gistSync.enabled && gistSync.githubToken && gistSync.gistId) {
-        // Use sendBeacon for reliable sync on close
         forcePushToGist()
+      }
+      // Force zustand persist flush for all stores
+      // localStorage.setItem triggers are synchronous, so this is safe
+    }
+
+    // Visibility change handler for mobile/tab switching
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        if (gistSync.enabled && gistSync.githubToken && gistSync.gistId) {
+          forcePushToGist()
+        }
       }
     }
 
     window.addEventListener('beforeunload', handleBeforeUnload)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       stopAutoSync()
       window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [gistSync.enabled, gistSync.githubToken, gistSync.gistId, gistSync.autoSync, gistSync.syncInterval])
 
@@ -104,22 +122,28 @@ function App() {
         </div>
         <StatusBar />
         <CommandPalette />
-        <FocusMode />
+        <Suspense fallback={null}>
+          <FocusMode />
+        </Suspense>
         <MiniTimer />
-        <ChatWindow />
+        <Suspense fallback={null}>
+          <ChatWindow />
+        </Suspense>
         <NotificationCenter />
         <Onboarding />
         <GlobalSearch 
           isOpen={globalSearchOpen} 
           onClose={() => setGlobalSearchOpen(false)} 
         />
-        <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+        <Suspense fallback={null}>
+          <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+        </Suspense>
         <ShortcutsModal isOpen={shortcutsModalOpen} onClose={() => setShortcutsModalOpen(false)} />
         {gamificationEnabled && (
-          <>
+          <Suspense fallback={null}>
             <LevelUpModal />
             <AchievementToast />
-          </>
+          </Suspense>
         )}
       </div>
     </ErrorBoundary>

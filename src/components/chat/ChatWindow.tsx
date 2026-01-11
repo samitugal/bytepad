@@ -66,7 +66,7 @@ export function ChatWindow() {
   const { messages, isOpen, isLoading, error, addMessage, setOpen, setLoading, setError, clearMessages } = useChatStore()
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const quickActions = getQuickActions()
 
@@ -237,7 +237,7 @@ export function ChatWindow() {
       <div className="p-3 border-t border-np-border">
         <div className="flex gap-2 items-end">
           <textarea
-            ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
