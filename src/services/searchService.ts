@@ -222,7 +222,7 @@ export function globalSearch(query: string, options: SearchOptions = {}): Search
   if (!query.trim()) return []
   
   const { limit = 20, types } = options
-  let results: SearchResult[] = []
+  const results: SearchResult[] = []
   
   // Search all modules or specific types
   const searchTypes = types || ['note', 'task', 'habit', 'journal', 'bookmark', 'dailynote']

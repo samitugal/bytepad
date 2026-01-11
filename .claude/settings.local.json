@@ -15,7 +15,9 @@
       "Bash(npm install:*)",
       "Bash(npm run build:electron:*)",
       "Bash(timeout 10 npm run dev:electron:*)",
-      "Bash(npm run package:win:*)"
+      "Bash(npm run package:win:*)",
+      "Bash(npx tsc:*)",
+      "Bash(wc:*)"
     ]
   }
 }

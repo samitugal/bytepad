@@ -119,7 +119,7 @@ export const useFocusStore = create<FocusState>()(
 
           const today = getDateString()
           let newStreak = state.focusStreak
-          let newConsecutive = state.consecutiveSessions + 1
+          const newConsecutive = state.consecutiveSessions + 1
 
           // Update focus streak
           if (state.lastFocusDate !== today) {
