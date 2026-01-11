@@ -1,6 +1,6 @@
 # MyFlowSpace - ADHD Productivity Super App
 
-## Sprint 19 Tamamlandı! Enhanced Focus Mode + Gamification
+## Sprint 22 Devam Ediyor! Bug Fixes & UX Improvements
 
 ### Tamamlanan Sprint'ler
 - [x] MVP1: Foundation + Notes ✓
@@ -14,10 +14,15 @@
 - [x] Sprint 17: Complete Localization (EN/TR) ✓
 - [x] Sprint 18: Gamification Core (XP, Levels, Achievements) ✓
 - [x] Sprint 19: Enhanced Focus Mode (Time logging, animated timer) ✓
+- [x] Sprint 21: Electron Desktop App (System tray, shortcuts, portable EXE) ✓
+- [~] Sprint 22: Bug Fixes & UX (6/7 completed - multi-tab pending)
 
 ### Planlanan Sprint'ler
-- [ ] Sprint 20: AI Productivity Report (Strengths, weaknesses, advice)
-- [ ] Sprint 21: Electron Desktop App ⭐ (CRITICAL)
+- [ ] Sprint 20: AI Productivity Report
+- [ ] Sprint 23: Multi-Tab Support
+- [ ] Sprint 24: FlowBot Note Tools (GetAllNotes, GetNoteDetail)
+- [ ] Sprint 25: Knowledge Graph Enhanced (sidebar, all entities)
+- [ ] Sprint 26: Keyboard Shortcuts Fix (Ctrl+N, help modal)
 
 > Detaylı görevler için: `docs/sprints/` klasörü
 
@@ -27,7 +32,7 @@
 Notepad++ estetiğinde, keyboard-first, ADHD-friendly productivity app.
 Tüm promptlar ve teknik kodlar ingilizce olmalıdır.
 
-**Platform:** PWA (Electron Desktop planned) | **Stack:** React + TypeScript + Tailwind + Zustand
+**Platform:** PWA + Electron Desktop | **Stack:** React + TypeScript + Tailwind + Zustand
 
 ## Özellikler
 | Modül | Özellikler | Durum |
@@ -36,11 +41,13 @@ Tüm promptlar ve teknik kodlar ingilizce olmalıdır.
 | Tasks | Priority, subtasks, due dates, calendar view | ✅ |
 | Habits | Daily tracking, streaks, statistics | ✅ |
 | Journal | Daily notes, mood/energy tracking | ✅ |
-| Focus | Pomodoro timer, task selection, session tracking | ✅ |
+| Focus | Pomodoro timer, task selection, mini timer widget | ✅ |
 | FlowBot | AI coach, tool calling, context-aware | ✅ |
 | Analysis | Weekly stats, AI insights | ✅ |
 | i18n | English (default) + Turkish | ✅ |
 | Gamification | XP, Levels, Achievements, Streak multipliers | ✅ |
+| Desktop | Electron app, system tray, global shortcuts | ✅ |
+| Gist Sync | Auto pull/push, interval sync | ✅ |
 
 ## Tema
 ```css
@@ -55,10 +62,12 @@ Tüm promptlar ve teknik kodlar ingilizce olmalıdır.
 ## Temel Shortcuts
 ```
 Ctrl+K        → Command Palette
-Ctrl+1-6      → Module navigation
+Ctrl+1-8      → Module navigation
 Ctrl+/        → FlowBot AI Coach
-Ctrl+Shift+F  → Focus Mode
+Ctrl+Shift+F  → Focus Mode (global in Electron)
 Ctrl+Shift+N  → Notification Center
+Ctrl+Shift+T  → Quick add task (Electron)
+Ctrl+Shift+P  → Start focus mode (Electron)
 Escape        → Close modals
 ```
 
@@ -67,15 +76,17 @@ Escape        → Close modals
 docs/
 ├── ROADMAP.md              # MVP ve Sprint özeti
 ├── CHANGELOG.md            # Değişiklik geçmişi
+├── AUDIT_REPORT.md         # Code audit & recommendations
 ├── GAMIFICATION.md         # Gamification spec
 ├── sprints/
-│   ├── SPRINT_15_AGENT_TOOLS_REFACTOR.md
-│   ├── SPRINT_16_TASKS_UI_IMPROVEMENTS.md
-│   ├── SPRINT_17_LOCALIZATION_COMPLETE.md
-│   ├── SPRINT_18_GAMIFICATION_CORE.md
-│   ├── SPRINT_19_FOCUS_MODE_ENHANCED.md
+│   ├── SPRINT_15-19        # Completed sprints
 │   ├── SPRINT_20_AI_PRODUCTIVITY_REPORT.md
-│   └── SPRINT_21_ELECTRON_DESKTOP_APP.md
+│   ├── SPRINT_21_ELECTRON_DESKTOP_APP.md ✅
+│   ├── SPRINT_22_BUG_FIXES_UX.md (in progress)
+│   ├── SPRINT_23_MULTI_TAB.md
+│   ├── SPRINT_24_FLOWBOT_NOTE_TOOLS.md
+│   ├── SPRINT_25_KNOWLEDGE_GRAPH_ENHANCED.md
+│   └── SPRINT_26_KEYBOARD_SHORTCUTS_FIX.md
 ```
 
 ## i18n (Localization)
@@ -84,6 +95,12 @@ docs/
 - **Files:** `src/i18n/en.json`, `src/i18n/tr.json`
 - **Hook:** `useTranslation()` → `{ t, language, setLanguage }`
 - **Setting:** Settings → General → Language
+
+## Electron Desktop
+- **Dev:** `npm run dev:electron`
+- **Build:** `npm run package:win`
+- **Output:** `dist-electron/MyFlowSpace-x.x.x-x64.exe`
+- **Features:** System tray, global shortcuts, auto-start
 
 ## Git Workflow
 ```bash
@@ -114,20 +131,13 @@ Yeni bir sprint veya özellik planlandığında:
    **Duration:** X gün
    **Priority:** HIGH/MEDIUM/LOW
    **Status:** PLANNED/IN_PROGRESS/COMPLETED
-   
-   ---
-   
-   ## XX.1: Alt görev başlığı
-   - [ ] Task 1
-   - [ ] Task 2
-   
-   ## Acceptance Criteria
-   - [ ] Kriter 1
-   - [ ] Kriter 2
    ```
 
 3. **Dosya isimlendirme:** `SPRINT_XX_UPPERCASE_NAME.md`
 
 ## Öncelik Sırası
-1. **Sprint 21** - Electron Desktop (günlük kullanım kolaylığı)
-2. **Sprint 20** - AI Report (depends on 18 & 19, now ready)
+1. **Sprint 26** - Keyboard Shortcuts Fix (1-2 gün, hızlı kazanım)
+2. **Sprint 24** - FlowBot Note Tools (2-3 gün, yüksek değer)
+3. **Sprint 23** - Multi-Tab Support (3-4 gün)
+4. **Sprint 25** - Knowledge Graph Enhanced (5-7 gün)
+5. **Sprint 20** - AI Productivity Report (7-10 gün)
