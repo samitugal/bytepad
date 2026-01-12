@@ -21,6 +21,18 @@ interface TaskState {
   setSortBy: (sortBy: 'priority' | 'deadline' | 'created' | 'manual') => void
   reorderTasks: (taskIds: string[]) => void
   getPendingCount: () => number
+  // Tag management
+  addTag: (taskId: string, tag: string) => void
+  removeTag: (taskId: string, tag: string) => void
+  setTags: (taskId: string, tags: string[]) => void
+  // Link management
+  linkBookmark: (taskId: string, bookmarkId: string) => void
+  unlinkBookmark: (taskId: string, bookmarkId: string) => void
+  linkNote: (taskId: string, noteId: string) => void
+  unlinkNote: (taskId: string, noteId: string) => void
+  // Getters
+  getAllTags: () => string[]
+  getTasksByTag: (tag: string) => Task[]
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 15)
@@ -162,6 +174,104 @@ export const useTaskStore = create<TaskState>()(
       },
 
       getPendingCount: () => get().tasks.filter(t => !t.completed).length,
+
+      // Tag management
+      addTag: (taskId, tag) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) => {
+            if (task.id === taskId) {
+              const currentTags = task.tags || []
+              if (!currentTags.includes(tag)) {
+                return { ...task, tags: [...currentTags, tag] }
+              }
+            }
+            return task
+          }),
+        }))
+      },
+
+      removeTag: (taskId, tag) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) => {
+            if (task.id === taskId) {
+              return { ...task, tags: (task.tags || []).filter(t => t !== tag) }
+            }
+            return task
+          }),
+        }))
+      },
+
+      setTags: (taskId, tags) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === taskId ? { ...task, tags } : task
+          ),
+        }))
+      },
+
+      // Link management
+      linkBookmark: (taskId, bookmarkId) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) => {
+            if (task.id === taskId) {
+              const currentLinks = task.linkedBookmarkIds || []
+              if (!currentLinks.includes(bookmarkId)) {
+                return { ...task, linkedBookmarkIds: [...currentLinks, bookmarkId] }
+              }
+            }
+            return task
+          }),
+        }))
+      },
+
+      unlinkBookmark: (taskId, bookmarkId) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) => {
+            if (task.id === taskId) {
+              return { ...task, linkedBookmarkIds: (task.linkedBookmarkIds || []).filter(id => id !== bookmarkId) }
+            }
+            return task
+          }),
+        }))
+      },
+
+      linkNote: (taskId, noteId) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) => {
+            if (task.id === taskId) {
+              const currentLinks = task.linkedNoteIds || []
+              if (!currentLinks.includes(noteId)) {
+                return { ...task, linkedNoteIds: [...currentLinks, noteId] }
+              }
+            }
+            return task
+          }),
+        }))
+      },
+
+      unlinkNote: (taskId, noteId) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) => {
+            if (task.id === taskId) {
+              return { ...task, linkedNoteIds: (task.linkedNoteIds || []).filter(id => id !== noteId) }
+            }
+            return task
+          }),
+        }))
+      },
+
+      // Getters
+      getAllTags: () => {
+        const allTags = new Set<string>()
+        get().tasks.forEach(task => {
+          (task.tags || []).forEach(tag => allTags.add(tag))
+        })
+        return Array.from(allTags).sort()
+      },
+
+      getTasksByTag: (tag) => {
+        return get().tasks.filter(task => (task.tags || []).includes(tag))
+      },
     }),
     {
       name: 'bytepad-tasks',

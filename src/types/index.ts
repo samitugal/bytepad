@@ -47,6 +47,10 @@ export interface Task {
   // Reminder settings
   reminderEnabled?: boolean
   reminderMinutesBefore?: number // minutes before deadline to remind
+  // Cross-linking and organization
+  tags?: string[] // Tags for organization and filtering
+  linkedBookmarkIds?: string[] // IDs of linked bookmarks
+  linkedNoteIds?: string[] // IDs of linked notes
 }
 
 export interface SubTask {

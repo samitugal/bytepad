@@ -33,6 +33,7 @@ export const FLOWBOT_TOOLS: ToolDefinition[] = [
         description: { type: 'string', description: 'Optional detailed description' },
         deadline: { type: 'string', description: 'Deadline date in YYYY-MM-DD format (optional)' },
         deadlineTime: { type: 'string', description: 'Deadline time in HH:mm format (optional)' },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Tags for organization and filtering' },
       },
       required: ['title', 'priority'],
     },

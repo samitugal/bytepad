@@ -133,6 +133,7 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
   // Task Management
   create_task: async (args) => {
     const { addTask } = useTaskStore.getState()
+    const tags = (args.tags as string[]) || []
     const taskId = addTask({
       title: args.title as string,
       priority: args.priority as 'P1'|'P2'|'P3'|'P4',
@@ -140,13 +141,17 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
       deadline: args.deadline ? new Date(args.deadline as string) : undefined,
       startTime: args.startTime as string | undefined,
       deadlineTime: args.endTime as string | undefined,
+      tags,
     })
+    let message = `Task "${args.title}" created with priority ${args.priority}`
+    if (tags.length > 0) message += ` [tags: ${tags.map(t => `#${t}`).join(' ')}]`
     return JSON.stringify({
       success: true,
       taskId,
       title: args.title,
       priority: args.priority,
-      message: `Task "${args.title}" created with priority ${args.priority}`,
+      tags,
+      message,
     })
   },
 
@@ -701,7 +706,7 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
 
   // Research and Plan - creates task with linked bookmarks
   research_and_plan: async (args) => {
-    const { addTask, addSubtask } = useTaskStore.getState()
+    const { addTask, addSubtask, updateTask } = useTaskStore.getState()
     const { addBookmark } = useBookmarkStore.getState()
     
     const topic = args.topic as string
@@ -711,11 +716,12 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
     const tags = (args.tags as string[]) || [topic.toLowerCase().replace(/\s+/g, '-')]
     const priority = (args.priority as 'P1'|'P2'|'P3'|'P4') || 'P2'
     
-    // Create main task
+    // Create main task with tags
     const taskId = addTask({
       title: taskTitle,
       priority,
       description: `Research plan for: ${topic}`,
+      tags: [...tags],
     })
     
     // Add subtasks
@@ -738,13 +744,18 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
       bookmarkIds.push(bookmarkId)
     }
     
+    // Link bookmarks to task (bidirectional)
+    if (bookmarkIds.length > 0) {
+      updateTask(taskId, { linkedBookmarkIds: bookmarkIds })
+    }
+    
     return JSON.stringify({
       success: true,
       taskId,
       taskTitle,
       subtaskCount: subtasks.length,
       bookmarkCount: bookmarkIds.length,
-      tags,
+      tags: [...tags, 'research'],
       message: `Research plan "${taskTitle}" created with ${subtasks.length} subtasks and ${bookmarkIds.length} linked resources`,
     })
   },
@@ -811,6 +822,7 @@ function getToolDefinitions() {
         deadline: z.string().optional().describe('Due date in YYYY-MM-DD format (e.g., "2026-01-15")'),
         startTime: z.string().optional().describe('Start time in HH:mm format for time-blocking (e.g., "14:00")'),
         endTime: z.string().optional().describe('End time in HH:mm format (e.g., "15:30")'),
+        tags: z.array(z.string()).optional().describe('Tags for organization and filtering (e.g., ["work", "urgent"])'),
       }),
     }),
 
