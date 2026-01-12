@@ -152,24 +152,21 @@ export function NoteEditor() {
     const textarea = textareaRef.current
     if (!textarea) return
 
-    const wikilink = `[[${suggestion.title}]]`
-    
-    // Check if there's already ]] after cursor - skip it to avoid ]]]]
-    let actualEndPos = endPos
     const afterCursor = content.slice(endPos)
-    if (afterCursor.startsWith(']]')) {
-      actualEndPos = endPos + 2
-    } else if (afterCursor.startsWith(']')) {
-      actualEndPos = endPos + 1
-    }
+    // Check if there's already ]] after cursor
+    const hasClosingBrackets = afterCursor.startsWith(']]')
     
-    const newContent = content.slice(0, startPos) + wikilink + content.slice(actualEndPos)
+    // Only add ]] if not already present
+    const wikilink = hasClosingBrackets ? `[[${suggestion.title}` : `[[${suggestion.title}]]`
+    const skipChars = hasClosingBrackets ? 0 : (afterCursor.startsWith(']') ? 1 : 0)
+    
+    const newContent = content.slice(0, startPos) + wikilink + content.slice(endPos + skipChars)
     setContent(newContent)
 
     // Set cursor position after the inserted wikilink
     requestAnimationFrame(() => {
       if (textareaRef.current) {
-        const newCursorPos = startPos + wikilink.length
+        const newCursorPos = startPos + wikilink.length + (hasClosingBrackets ? 2 : 0)
         textareaRef.current.focus()
         textareaRef.current.setSelectionRange(newCursorPos, newCursorPos)
       }
