@@ -662,7 +662,7 @@ function buildMarkdownReportPrompt(stats: WeeklyStats): string {
 - Ortalama tamamlama: %${Math.round(stats.habits.avgCompletion)}
 - En iyi gün: ${stats.habits.bestDay || 'N/A'}
 - En kötü gün: ${stats.habits.worstDay || 'N/A'}
-- Aktif streak'ler: ${stats.habits.streaks.map(s => \`\${s.name} (\${s.streak} gün)\`).join(', ') || 'Yok'}
+- Aktif streak'ler: ${stats.habits.streaks.map(s => `${s.name} (${s.streak} gün)`).join(', ') || 'Yok'}
 
 ### Tasks
 - Toplam task: ${stats.tasks.total}
@@ -707,12 +707,12 @@ function parseMarkdownReportResponse(response: string, stats: WeeklyStats): stri
 
   // Try to extract markdown from response
   // Sometimes AI might wrap it in code blocks
-  const codeBlockMatch = response.match(/\`\`\`markdown\n?([\s\S]*?)\`\`\`/)
+  const codeBlockMatch = response.match(/```markdown\n?([\s\S]*?)```/)
   if (codeBlockMatch) {
     return codeBlockMatch[1].trim()
   }
 
-  const mdMatch = response.match(/\`\`\`\n?([\s\S]*?)\`\`\`/)
+  const mdMatch = response.match(/```\n?([\s\S]*?)```/)
   if (mdMatch) {
     return mdMatch[1].trim()
   }
@@ -730,34 +730,42 @@ function generateFallbackMarkdownReport(stats: WeeklyStats): string {
   const completionEmoji = stats.habits.avgCompletion >= 70 ? '🎉' : stats.habits.avgCompletion >= 40 ? '💪' : '🌱'
   const taskEmoji = stats.tasks.completionRate >= 70 ? '✅' : stats.tasks.completionRate >= 40 ? '📝' : '🎯'
 
-  return \`# bytepad Haftalık Rapor ${completionEmoji}
+  const streaksList = stats.habits.streaks.length > 0
+    ? stats.habits.streaks.map(s => `- **${s.name}** streak'ini ${s.streak} güne taşıdın!`).join('\n')
+    : '- Düzenli alışkanlıklar oluşturmaya başlıyorsun'
 
-**Tarih:** \${stats.weekStart} - \${stats.weekEnd}
-**Oluşturulma:** \${new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+  const journalNote = stats.journal.entries > 0
+    ? `Günlüğüne ${stats.journal.entries} kez yazdın ve ortalama mood seviyeni ${stats.journal.avgMood.toFixed(1)}/5 olarak kaydettın.`
+    : 'Bu hafta günlük tutmadın - düşüncelerini yazmayı deneyebilirsin.'
+
+  return `# bytepad Haftalık Rapor ${completionEmoji}
+
+**Tarih:** ${stats.weekStart} - ${stats.weekEnd}
+**Oluşturulma:** ${new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
 
 ---
 
 ## Haftalık Özet
 
-Bu hafta \${stats.habits.total} habit takip ettin ve ortalama %\${Math.round(stats.habits.avgCompletion)} tamamlama oranına ulaştın. \${stats.tasks.total} görevden \${stats.tasks.completed} tanesini tamamladın (%\${Math.round(stats.tasks.completionRate)}).
+Bu hafta ${stats.habits.total} habit takip ettin ve ortalama %${Math.round(stats.habits.avgCompletion)} tamamlama oranına ulaştın. ${stats.tasks.total} görevden ${stats.tasks.completed} tanesini tamamladın (%${Math.round(stats.tasks.completionRate)}).
 
-\${stats.journal.entries > 0 ? \`Günlüğüne \${stats.journal.entries} kez yazdın ve ortalama mood seviyeni \${stats.journal.avgMood.toFixed(1)}/5 olarak kaydettın.\` : 'Bu hafta günlük tutmadın - düşüncelerini yazmayı deneyebilirsin.'}
+${journalNote}
 
 ---
 
 ## Güçlü Yönlerin ${taskEmoji}
 
-\${stats.habits.streaks.length > 0 ? stats.habits.streaks.map(s => \`- **\${s.name}** streak'ini \${s.streak} güne taşıdın!\`).join('\\n') : '- Düzenli alışkanlıklar oluşturmaya başlıyorsun'}
-\${stats.tasks.completionRate >= 50 ? '- Görevlerini tamamlama konusunda iyi ilerleme kaydediyorsun' : ''}
-\${stats.journal.entries >= 3 ? '- Düzenli günlük tutma alışkanlığı geliştiriyorsun' : ''}
+${streaksList}
+${stats.tasks.completionRate >= 50 ? '- Görevlerini tamamlama konusunda iyi ilerleme kaydediyorsun' : ''}
+${stats.journal.entries >= 3 ? '- Düzenli günlük tutma alışkanlığı geliştiriyorsun' : ''}
 
 ---
 
 ## Gelişim Alanların
 
-\${stats.habits.avgCompletion < 70 ? '- Habit tamamlama oranını artırmak için daha küçük hedefler koyabilirsin' : ''}
-\${stats.tasks.byPriority.P1.completed < stats.tasks.byPriority.P1.total ? '- P1 (kritik) görevlere öncelik vermeyi dene' : ''}
-\${stats.journal.entries < 5 ? '- Günlük yazma alışkanlığını güçlendirebilirsin' : ''}
+${stats.habits.avgCompletion < 70 ? '- Habit tamamlama oranını artırmak için daha küçük hedefler koyabilirsin' : ''}
+${stats.tasks.byPriority.P1.completed < stats.tasks.byPriority.P1.total ? '- P1 (kritik) görevlere öncelik vermeyi dene' : ''}
+${stats.journal.entries < 5 ? '- Günlük yazma alışkanlığını güçlendirebilirsin' : ''}
 - Her gün en az bir küçük kazanım hedefle
 
 ---
@@ -805,8 +813,8 @@ Unutma, büyük başarılar küçük adımların toplamıdır. Bu hafta attığ�
 
 ## Sonraki Hafta Hedefleri
 
-- [ ] Habit tamamlama oranını %\${Math.min(Math.round(stats.habits.avgCompletion) + 10, 100)}'e çıkar
-- [ ] En az \${Math.min(stats.tasks.completed + 2, stats.tasks.total + 5)} görevi tamamla
+- [ ] Habit tamamlama oranını %${Math.min(Math.round(stats.habits.avgCompletion) + 10, 100)}'e çıkar
+- [ ] En az ${Math.min(stats.tasks.completed + 2, stats.tasks.total + 5)} görevi tamamla
 - [ ] Her gün günlük yaz
 - [ ] Yeni bir alışkanlık ekle veya mevcut birini güçlendir
 - [ ] Haftanın sonunda bu raporu tekrar gözden geçir
@@ -814,5 +822,5 @@ Unutma, büyük başarılar küçük adımların toplamıdır. Bu hafta attığ�
 ---
 
 *Bu rapor bytepad tarafından otomatik oluşturulmuştur. AI destekli analiz için API key ekleyin.*
-\`
+`
 }
