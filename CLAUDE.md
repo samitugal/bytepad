@@ -1,11 +1,14 @@
 # bytepad - productivity app
 
+## Aktif Sprint
+- [ ] Sprint 34: Refactor & Open Source Preparation 📋 (PLANNED)
+
 ## Son Tamamlanan Sprint'ler
-- [x] Sprint 28: UX & Bug Fixes ✓
-- [x] Sprint 29: Knowledge Graph Interactivity ✓
+- [x] Sprint 33: Sync & UX (Task tags, entity linking, graph connections) ✓
+- [x] Sprint 32: UX Enhancements & Sync Improvements ✓
 - [x] Sprint 30: Performance Optimization ✓
-- [x] Sprint 31: Image Support ❌ (CANCELLED - Gist storage limits)
-- [ ] Sprint 32: UX Enhancements & Sync Improvements 🔄 (PLANNED)
+- [x] Sprint 29: Knowledge Graph Interactivity ✓
+- [x] Sprint 28: UX & Bug Fixes ✓
 
 ### Tüm Tamamlanan Sprint'ler
 - [x] MVP1: Foundation + Notes ✓
@@ -26,14 +29,20 @@
 - [x] Sprint 28: UX & Bug Fixes (Subtask logic, FlowBot wrap, Wikilink preview) ✓
 - [x] Sprint 29: Graph Interactivity (Drag & drop nodes) ✓
 - [x] Sprint 30: Performance Optimization (80% bundle reduction) ✓
-- [ ] Sprint 31: Image Support ❌ CANCELLED (Gist storage limits)
-- [ ] Sprint 32: UX Enhancements & Sync Improvements 🔄 (PLANNED)
+- [x] Sprint 31: Image Support ❌ CANCELLED (Gist storage limits)
+- [x] Sprint 32: UX Enhancements & Sync Improvements ✓
+- [x] Sprint 33: Sync & UX (Task tags, entity linking, graph connections) ✓
 
-### Son Yapılan İyileştirmeler
-- Backlinks panel: Max 3 link gösterimi, "+X more" butonu ile genişletme
-- Image URL desteği: `![alt](https://url)` ile external image render
+### Son Yapılan İyileştirmeler (v0.19.0)
+- Task'lara tag ve linkedBookmarkIds desteği
+- Task UI'da tag gösterimi ve düzenleme
+- Description'da [[entity]] autocomplete
+- Linked Resources editor (bookmark linkleme)
+- Knowledge Graph'ta Task-Bookmark ve Task-Tag bağlantıları
+- Graph filtreleri localStorage'da persist
+- Autocomplete'de ]] duplikasyon fix
 
-> Detaylı görevler için: `docs/sprints/` klasörü
+> Detaylı görevler için: `docs/internal/sprints/` klasörü
 
 ---
 
@@ -85,17 +94,18 @@ Escape        → Close modals
 ## Dokümanlar
 ```
 docs/
-├── ROADMAP.md              # MVP ve Sprint özeti
-├── CHANGELOG.md            # Değişiklik geçmişi
-├── AUDIT_REPORT.md         # Code audit & recommendations
-├── GAMIFICATION.md         # Gamification spec
-├── SPRINT_PLANNING.md      # Audit checklist & roadmap
-├── sprints/
-│   ├── SPRINT_28_UX_BUG_FIXES.md ✅
-│   ├── SPRINT_29_GRAPH_INTERACTIVITY.md ✅
-│   ├── SPRINT_30_PERFORMANCE.md ✅
-│   ├── SPRINT_31_IMAGE_SUPPORT.md ❌ CANCELLED
-│   └── SPRINT_32_UX_ENHANCEMENTS.md 🔄 PLANNED
+├── README.md                    # Docs index (TODO)
+├── getting-started/             # User guides (TODO)
+├── features/                    # Feature documentation (TODO)
+├── development/                 # Developer guides (TODO)
+├── internal/                    # Internal docs (Sprint 34'te taşınacak)
+│   ├── sprints/                 # Sprint history
+│   ├── CHANGELOG.md
+│   ├── AUDIT_REPORT.md
+│   └── ROADMAP.md
+└── sprints/                     # Current location (will move to internal/)
+    ├── SPRINT_33_SYNC_AND_UX.md ✅
+    └── SPRINT_34_REFACTOR_AND_OPENSOURCE.md 📋 PLANNED
 ```
 
 ## i18n (Localization)
