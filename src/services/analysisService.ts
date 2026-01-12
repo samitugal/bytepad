@@ -496,3 +496,323 @@ function parseAIInsightsResponse(
     summary: response.slice(0, 200),
   }
 }
+
+// Generate comprehensive MD report with AI insights
+export interface AIMarkdownReport {
+  markdown: string
+  generatedAt: string
+}
+
+export async function generateAIMarkdownReport(stats: WeeklyStats): Promise<AIMarkdownReport> {
+  const settings = useSettingsStore.getState()
+  const { llmProvider, llmModel, apiKeys, ollamaBaseUrl } = settings
+
+  // Check if API key is available
+  if (PROVIDER_INFO[llmProvider].requiresKey && !apiKeys[llmProvider]) {
+    return {
+      markdown: generateFallbackMarkdownReport(stats),
+      generatedAt: new Date().toISOString(),
+    }
+  }
+
+  const prompt = buildMarkdownReportPrompt(stats)
+
+  try {
+    const response = await callLLMForMarkdownReport(
+      prompt,
+      llmProvider,
+      llmModel,
+      apiKeys[llmProvider],
+      ollamaBaseUrl
+    )
+
+    return {
+      markdown: response,
+      generatedAt: new Date().toISOString(),
+    }
+  } catch (error) {
+    console.error('AI Markdown Report error:', error)
+    return {
+      markdown: generateFallbackMarkdownReport(stats),
+      generatedAt: new Date().toISOString(),
+    }
+  }
+}
+
+async function callLLMForMarkdownReport(
+  prompt: string,
+  provider: string,
+  model: string,
+  apiKey: string,
+  ollamaBaseUrl: string
+): Promise<string> {
+  const systemMessage = `Sen bir verimlilik koçu ve hayat mentorüsün. Kullanıcının haftalık verilerini analiz edip, detaylı ve motive edici bir Markdown rapor oluşturuyorsun.
+
+Raporun şunları içermeli:
+- Motive edici ve kişiselleştirilmiş bir ton
+- Kullanıcının güçlü yönlerini vurgula
+- Gelişim alanlarını yapıcı bir şekilde belirt
+- Kitap önerileri (yazar adı ve kısa açıklama ile)
+- Hayat tavsiyeleri ve pratik öneriler
+- Sonraki hafta için hedefler
+
+Markdown formatında yaz. Her bölüm için ## başlık kullan. Türkçe yaz.`
+
+  const messages = [
+    { role: 'system', content: systemMessage },
+    { role: 'user', content: prompt },
+  ]
+
+  if (provider === 'openai') {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: 2000,
+        temperature: 0.8,
+      }),
+    })
+    const data = await response.json()
+    return data.choices[0].message.content
+  }
+
+  if (provider === 'anthropic') {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 2000,
+        system: systemMessage,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+    const data = await response.json()
+    return data.content[0].text
+  }
+
+  if (provider === 'google') {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: `${systemMessage}\n\n${prompt}` }] }],
+          generationConfig: { maxOutputTokens: 2000, temperature: 0.8 },
+        }),
+      }
+    )
+    const data = await response.json()
+    return data.candidates[0].content.parts[0].text
+  }
+
+  if (provider === 'groq') {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: 2000,
+        temperature: 0.8,
+      }),
+    })
+    const data = await response.json()
+    return data.choices[0].message.content
+  }
+
+  if (provider === 'ollama') {
+    const response = await fetch(`${ollamaBaseUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        messages,
+        stream: false,
+      }),
+    })
+    const data = await response.json()
+    return data.message.content
+  }
+
+  throw new Error('Unsupported provider')
+}
+
+function buildMarkdownReportPrompt(stats: WeeklyStats): string {
+  return `Sen bir verimlilik koçu ve hayat mentorüsün. Aşağıdaki haftalık verileri analiz et ve kapsamlı bir Markdown rapor oluştur.
+
+## Haftalık Veriler (${stats.weekStart} - ${stats.weekEnd})
+
+### Habits
+- Toplam habit: ${stats.habits.total}
+- Ortalama tamamlama: %${Math.round(stats.habits.avgCompletion)}
+- En iyi gün: ${stats.habits.bestDay || 'N/A'}
+- En kötü gün: ${stats.habits.worstDay || 'N/A'}
+- Aktif streak'ler: ${stats.habits.streaks.map(s => \`\${s.name} (\${s.streak} gün)\`).join(', ') || 'Yok'}
+
+### Tasks
+- Toplam task: ${stats.tasks.total}
+- Tamamlanan: ${stats.tasks.completed}
+- Tamamlama oranı: %${Math.round(stats.tasks.completionRate)}
+- P1 (Kritik): ${stats.tasks.byPriority.P1.completed}/${stats.tasks.byPriority.P1.total}
+- P2 (Yüksek): ${stats.tasks.byPriority.P2.completed}/${stats.tasks.byPriority.P2.total}
+
+### Journal
+- Günlük sayısı: ${stats.journal.entries}/7
+- Ortalama mood: ${stats.journal.avgMood.toFixed(1)}/5
+- Ortalama enerji: ${stats.journal.avgEnergy.toFixed(1)}/5
+
+## Görevin
+
+Aşağıdaki başlıklarla detaylı bir Markdown rapor yaz:
+
+1. **Haftalık Özet** - Bu haftanın genel değerlendirmesi (2-3 paragraf)
+
+2. **Güçlü Yönlerin** - Bu hafta iyi gittiğin noktalar (bullet list)
+
+3. **Gelişim Alanların** - Eksik kalan veya geliştirilmesi gereken noktalar (bullet list)
+
+4. **Motivasyon Mesajı** - Kişiselleştirilmiş, motive edici bir paragraf
+
+5. **Pratik Öneriler** - Bu hafta uygulayabileceğin somut adımlar (bullet list)
+
+6. **Kitap Önerileri** - Durumuna uygun 2-3 kitap önerisi (yazar ve kısa açıklama ile)
+
+7. **Hayat Tavsiyeleri** - Genel yaşam kalitesini artıracak tavsiyeler (bullet list)
+
+8. **Sonraki Hafta Hedefleri** - Önerilen hedefler (bullet list)
+
+Format: Düz Markdown olarak yaz, JSON değil. Her bölüm için ## başlık kullan. Türkçe yaz.`
+}
+
+function parseMarkdownReportResponse(response: string, stats: WeeklyStats): string {
+  // Check if response is already markdown (not JSON)
+  if (response.includes('##') || response.includes('**')) {
+    return response
+  }
+
+  // Try to extract markdown from response
+  // Sometimes AI might wrap it in code blocks
+  const codeBlockMatch = response.match(/\`\`\`markdown\n?([\s\S]*?)\`\`\`/)
+  if (codeBlockMatch) {
+    return codeBlockMatch[1].trim()
+  }
+
+  const mdMatch = response.match(/\`\`\`\n?([\s\S]*?)\`\`\`/)
+  if (mdMatch) {
+    return mdMatch[1].trim()
+  }
+
+  // If response is plain text, return it as is
+  if (response.length > 100) {
+    return response
+  }
+
+  // Fallback
+  return generateFallbackMarkdownReport(stats)
+}
+
+function generateFallbackMarkdownReport(stats: WeeklyStats): string {
+  const completionEmoji = stats.habits.avgCompletion >= 70 ? '🎉' : stats.habits.avgCompletion >= 40 ? '💪' : '🌱'
+  const taskEmoji = stats.tasks.completionRate >= 70 ? '✅' : stats.tasks.completionRate >= 40 ? '📝' : '🎯'
+
+  return \`# bytepad Haftalık Rapor ${completionEmoji}
+
+**Tarih:** \${stats.weekStart} - \${stats.weekEnd}
+**Oluşturulma:** \${new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+
+---
+
+## Haftalık Özet
+
+Bu hafta \${stats.habits.total} habit takip ettin ve ortalama %\${Math.round(stats.habits.avgCompletion)} tamamlama oranına ulaştın. \${stats.tasks.total} görevden \${stats.tasks.completed} tanesini tamamladın (%\${Math.round(stats.tasks.completionRate)}).
+
+\${stats.journal.entries > 0 ? \`Günlüğüne \${stats.journal.entries} kez yazdın ve ortalama mood seviyeni \${stats.journal.avgMood.toFixed(1)}/5 olarak kaydettın.\` : 'Bu hafta günlük tutmadın - düşüncelerini yazmayı deneyebilirsin.'}
+
+---
+
+## Güçlü Yönlerin ${taskEmoji}
+
+\${stats.habits.streaks.length > 0 ? stats.habits.streaks.map(s => \`- **\${s.name}** streak'ini \${s.streak} güne taşıdın!\`).join('\\n') : '- Düzenli alışkanlıklar oluşturmaya başlıyorsun'}
+\${stats.tasks.completionRate >= 50 ? '- Görevlerini tamamlama konusunda iyi ilerleme kaydediyorsun' : ''}
+\${stats.journal.entries >= 3 ? '- Düzenli günlük tutma alışkanlığı geliştiriyorsun' : ''}
+
+---
+
+## Gelişim Alanların
+
+\${stats.habits.avgCompletion < 70 ? '- Habit tamamlama oranını artırmak için daha küçük hedefler koyabilirsin' : ''}
+\${stats.tasks.byPriority.P1.completed < stats.tasks.byPriority.P1.total ? '- P1 (kritik) görevlere öncelik vermeyi dene' : ''}
+\${stats.journal.entries < 5 ? '- Günlük yazma alışkanlığını güçlendirebilirsin' : ''}
+- Her gün en az bir küçük kazanım hedefle
+
+---
+
+## Motivasyon Mesajı
+
+Unutma, büyük başarılar küçük adımların toplamıdır. Bu hafta attığın her adım, gelecekteki başarılarının temelidir. Kendine karşı sabırlı ol ve ilerlemeni kutla - ne kadar küçük olursa olsun.
+
+**"Mükemmel anı bekleyenler asla başlayamaz. Başlayanlar ise mükemmelleşir."**
+
+---
+
+## Pratik Öneriler
+
+- Sabah rutinine 5 dakikalık bir planlama ekle
+- En zor görevi günün enerjinin yüksek olduğu saatte yap
+- Her tamamlanan görevden sonra kendine küçük bir ödül ver
+- Gece yatmadan önce yarınki 3 önceliğini belirle
+- Haftada bir gün tam dinlenme günü ayır
+
+---
+
+## Kitap Önerileri
+
+1. **"Atomic Habits"** - James Clear
+   *Küçük alışkanlıkların nasıl büyük değişimlere yol açtığını anlatıyor.*
+
+2. **"Deep Work"** - Cal Newport
+   *Odaklanma ve derin çalışma becerisini geliştirmek için pratik stratejiler.*
+
+3. **"The 5 AM Club"** - Robin Sharma
+   *Sabah rutininin gücünü ve günü nasıl verimli başlatacağını öğretiyor.*
+
+---
+
+## Hayat Tavsiyeleri
+
+- Her gün 10 dakika sessizlik veya meditasyon yap
+- Telefonu yatmadan 1 saat önce bırak
+- Günde en az 8 bardak su iç
+- Haftada 3 gün fiziksel aktivite yap
+- Minnettarlık listesi tut - her gün 3 şey yaz
+
+---
+
+## Sonraki Hafta Hedefleri
+
+- [ ] Habit tamamlama oranını %\${Math.min(Math.round(stats.habits.avgCompletion) + 10, 100)}'e çıkar
+- [ ] En az \${Math.min(stats.tasks.completed + 2, stats.tasks.total + 5)} görevi tamamla
+- [ ] Her gün günlük yaz
+- [ ] Yeni bir alışkanlık ekle veya mevcut birini güçlendir
+- [ ] Haftanın sonunda bu raporu tekrar gözden geçir
+
+---
+
+*Bu rapor bytepad tarafından otomatik oluşturulmuştur. AI destekli analiz için API key ekleyin.*
+\`
+}
