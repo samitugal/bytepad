@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { useHabitStore } from '../../stores/habitStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useJournalStore } from '../../stores/journalStore'
-import { calculateWeeklyStats, getWeekRange, generateAIInsights, generateAIMarkdownReport, type WeeklyStats, type AIMarkdownReport } from '../../services/analysisService'
+import { calculateWeeklyStats, getWeekRange, generateAIInsights, type WeeklyStats } from '../../services/analysisService'
+import { generateReportWithAgent } from '../../services/reportAgentService'
 import { useTranslation } from '../../i18n'
 import { ProductivityReport } from './ProductivityReport'
 
@@ -69,7 +70,7 @@ export function AnalysisModule() {
     summary: string
   } | null>(null)
   const [isLoadingAI, setIsLoadingAI] = useState(false)
-  const [mdReport, setMdReport] = useState<AIMarkdownReport | null>(null)
+  const [mdReport, setMdReport] = useState<{ markdown: string; generatedAt: string } | null>(null)
   const [isLoadingMdReport, setIsLoadingMdReport] = useState(false)
   const [showMdPreview, setShowMdPreview] = useState(false)
 
@@ -100,8 +101,8 @@ export function AnalysisModule() {
     setIsLoadingMdReport(true)
     setMdReport(null)
     try {
-      const result = await generateAIMarkdownReport(stats)
-      setMdReport(result)
+      const result = await generateReportWithAgent(weekOffset)
+      setMdReport({ markdown: result.markdown, generatedAt: result.generatedAt })
       setShowMdPreview(true)
     } catch (error) {
       console.error('MD Report error:', error)
