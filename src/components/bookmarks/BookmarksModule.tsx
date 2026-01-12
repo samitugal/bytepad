@@ -8,7 +8,7 @@ import { useTranslation } from '../../i18n'
 import type { Bookmark } from '../../types'
 import { parseTags } from '../../utils/storage'
 
-// Wikilink autocomplete textarea component
+// Wikilink autocomplete textarea component with Note, Task, Habit support
 interface WikilinkTextareaProps {
   value: string
   onChange: (value: string) => void
@@ -16,10 +16,25 @@ interface WikilinkTextareaProps {
   className?: string
 }
 
+type SuggestionType = 'note' | 'task' | 'habit'
+interface Suggestion {
+  title: string
+  type: SuggestionType
+  prefix: string
+}
+
+const TYPE_CONFIG: Record<SuggestionType, { icon: string; color: string; prefix: string }> = {
+  note: { icon: '[N]', color: 'text-np-cyan', prefix: '' },
+  task: { icon: '[T]', color: 'text-np-orange', prefix: '' },
+  habit: { icon: '[H]', color: 'text-np-green', prefix: '' },
+}
+
 function WikilinkTextarea({ value, onChange, placeholder, className }: WikilinkTextareaProps) {
   const notes = useNoteStore((s) => s.notes)
+  const tasks = useTaskStore((s) => s.tasks)
+  const habits = useHabitStore((s) => s.habits)
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [suggestions, setSuggestions] = useState<Array<{ title: string; type: 'note' }>>([])
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [cursorPosition, setCursorPosition] = useState(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -39,24 +54,41 @@ function WikilinkTextarea({ value, onChange, placeholder, className }: WikilinkT
 
     const searchTerm = checkForWikilink(newValue, pos)
     if (searchTerm !== null) {
-      const filtered = notes
-        .filter(n => n.title.toLowerCase().includes(searchTerm.toLowerCase()))
-        .slice(0, 5)
-        .map(n => ({ title: n.title, type: 'note' as const }))
-      setSuggestions(filtered)
-      setShowSuggestions(filtered.length > 0)
+      const q = searchTerm.toLowerCase()
+      const results: Suggestion[] = []
+
+      // Search notes
+      notes
+        .filter(n => n.title && n.title.toLowerCase().includes(q))
+        .slice(0, 3)
+        .forEach(n => results.push({ title: n.title, type: 'note', prefix: '' }))
+
+      // Search tasks
+      tasks
+        .filter(t => t.title && t.title.toLowerCase().includes(q))
+        .slice(0, 3)
+        .forEach(t => results.push({ title: t.title, type: 'task', prefix: '' }))
+
+      // Search habits
+      habits
+        .filter(h => h.name && h.name.toLowerCase().includes(q))
+        .slice(0, 3)
+        .forEach(h => results.push({ title: h.name, type: 'habit', prefix: '' }))
+
+      setSuggestions(results.slice(0, 8))
+      setShowSuggestions(results.length > 0)
       setSelectedIndex(0)
     } else {
       setShowSuggestions(false)
     }
   }
 
-  const insertSuggestion = (title: string) => {
+  const insertSuggestion = (suggestion: Suggestion) => {
     const beforeCursor = value.slice(0, cursorPosition)
     const afterCursor = value.slice(cursorPosition)
     const match = beforeCursor.match(/\[\[([^\]]*?)$/)
     if (match) {
-      const newBefore = beforeCursor.slice(0, match.index) + `[[${title}]]`
+      const newBefore = beforeCursor.slice(0, match.index) + `[[${suggestion.title}]]`
       onChange(newBefore + afterCursor)
       setShowSuggestions(false)
       // Focus back on textarea
@@ -81,7 +113,7 @@ function WikilinkTextarea({ value, onChange, placeholder, className }: WikilinkT
       setSelectedIndex(i => Math.max(i - 1, 0))
     } else if (e.key === 'Enter' && suggestions[selectedIndex]) {
       e.preventDefault()
-      insertSuggestion(suggestions[selectedIndex].title)
+      insertSuggestion(suggestions[selectedIndex])
     } else if (e.key === 'Escape') {
       setShowSuggestions(false)
     }
@@ -99,19 +131,22 @@ function WikilinkTextarea({ value, onChange, placeholder, className }: WikilinkT
         className={className}
       />
       {showSuggestions && (
-        <div className="absolute left-0 right-0 top-full mt-1 bg-np-bg-secondary border border-np-border shadow-lg z-50 max-h-40 overflow-y-auto">
-          {suggestions.map((s, i) => (
-            <button
-              key={s.title}
-              onClick={() => insertSuggestion(s.title)}
-              className={`w-full text-left px-2 py-1 text-sm flex items-center gap-2 ${
-                i === selectedIndex ? 'bg-np-selection' : 'hover:bg-np-bg-tertiary'
-              }`}
-            >
-              <span className="text-np-cyan">📝</span>
-              <span className="text-np-text-primary truncate">{s.title}</span>
-            </button>
-          ))}
+        <div className="absolute left-0 right-0 top-full mt-1 bg-np-bg-secondary border border-np-border shadow-lg z-50 max-h-48 overflow-y-auto">
+          {suggestions.map((s, i) => {
+            const config = TYPE_CONFIG[s.type]
+            return (
+              <button
+                key={`${s.type}-${s.title}`}
+                onClick={() => insertSuggestion(s)}
+                className={`w-full text-left px-2 py-1.5 text-sm flex items-center gap-2 ${
+                  i === selectedIndex ? 'bg-np-selection' : 'hover:bg-np-bg-tertiary'
+                }`}
+              >
+                <span className={`font-mono text-xs ${config.color}`}>{config.icon}</span>
+                <span className="text-np-text-primary truncate">{s.title}</span>
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
