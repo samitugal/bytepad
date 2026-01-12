@@ -180,7 +180,9 @@
         "createFirst": "Create your first task or check Done section",
         "moreCompleted": "+{count} more completed tasks",
         "clickExpand": "Click to expand",
-        "enterAddSubtask": "Enter to add subtask"
+        "enterAddSubtask": "Enter to add subtask",
+        "editTask": "Edit Task",
+        "save": "Save"
     },
     "habits": {
         "newHabit": "New Habit",

@@ -180,7 +180,9 @@
         "createFirst": "İlk görevini oluştur veya Tamamlanan bölümüne bak",
         "moreCompleted": "+{count} tamamlanmış görev daha",
         "clickExpand": "Genişletmek için tıkla",
-        "enterAddSubtask": "Alt görev eklemek için Enter"
+        "enterAddSubtask": "Alt görev eklemek için Enter",
+        "editTask": "Görevi Düzenle",
+        "save": "Kaydet"
     },
     "habits": {
         "newHabit": "Yeni Alışkanlık",
