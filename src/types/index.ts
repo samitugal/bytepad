@@ -42,6 +42,7 @@ export interface Task {
   completedAt?: Date
   subtasks: SubTask[]
   createdAt: Date
+  order?: number // Manual sort order for drag & drop (lower = higher in list)
   // Reminder settings
   reminderEnabled?: boolean
   reminderMinutesBefore?: number // minutes before deadline to remind

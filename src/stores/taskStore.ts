@@ -9,7 +9,7 @@ const syncChannel = new BroadcastChannel('myflowspace-tasks')
 interface TaskState {
   tasks: Task[]
   filter: 'all' | 'active' | 'completed'
-  sortBy: 'priority' | 'deadline' | 'created'
+  sortBy: 'priority' | 'deadline' | 'created' | 'manual'
   addTask: (task: Omit<Task, 'id' | 'completed' | 'completedAt' | 'subtasks' | 'createdAt'>) => string
   updateTask: (id: string, updates: Partial<Task>) => void
   deleteTask: (id: string) => void
@@ -18,7 +18,8 @@ interface TaskState {
   toggleSubtask: (taskId: string, subtaskId: string) => void
   deleteSubtask: (taskId: string, subtaskId: string) => void
   setFilter: (filter: 'all' | 'active' | 'completed') => void
-  setSortBy: (sortBy: 'priority' | 'deadline' | 'created') => void
+  setSortBy: (sortBy: 'priority' | 'deadline' | 'created' | 'manual') => void
+  reorderTasks: (taskIds: string[]) => void
   getPendingCount: () => number
 }
 
@@ -141,11 +142,27 @@ export const useTaskStore = create<TaskState>()(
       setFilter: (filter) => set({ filter }),
       setSortBy: (sortBy) => set({ sortBy }),
 
+      reorderTasks: (taskIds) => {
+        set((state) => {
+          // Create a map of task id to new order
+          const orderMap = new Map(taskIds.map((id, index) => [id, index]))
+
+          return {
+            tasks: state.tasks.map(task => ({
+              ...task,
+              order: orderMap.has(task.id) ? orderMap.get(task.id) : task.order,
+            })),
+            // Switch to manual sort when reordering
+            sortBy: 'manual' as const,
+          }
+        })
+      },
+
       getPendingCount: () => get().tasks.filter(t => !t.completed).length,
     }),
     {
       name: 'myflowspace-tasks',
-      partialize: (state) => ({ tasks: state.tasks }),
+      partialize: (state) => ({ tasks: state.tasks, sortBy: state.sortBy }),
     }
   )
 )
@@ -173,6 +190,14 @@ export const getFilteredTasks = (state: TaskState) => {
 
   // Apply sort
   filtered.sort((a, b) => {
+    if (state.sortBy === 'manual') {
+      // Manual sort by order field (lower order = higher in list)
+      const orderA = a.order ?? Number.MAX_SAFE_INTEGER
+      const orderB = b.order ?? Number.MAX_SAFE_INTEGER
+      if (orderA !== orderB) return orderA - orderB
+      // Fallback to createdAt for tasks without order
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    }
     if (state.sortBy === 'priority') {
       return priorityOrder[a.priority] - priorityOrder[b.priority]
     }
