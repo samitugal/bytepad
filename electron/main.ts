@@ -280,6 +280,10 @@ app.on('will-quit', () => {
   globalShortcut.unregisterAll()
 })
 
-app.on('before-quit', () => {
+app.on('before-quit', (event) => {
   app.isQuitting = true
+  // Send signal to renderer to push data before quitting
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('app:before-quit')
+  }
 })

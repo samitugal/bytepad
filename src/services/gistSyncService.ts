@@ -556,81 +556,110 @@ export async function forcePullFromGist(): Promise<{ success: boolean; message: 
     }
 }
 
-// Auto-sync interval manager
-let syncIntervalId: number | null = null
-let debouncedSyncTimeoutId: number | null = null
-let isInitialSyncDone = false
-const DEBOUNCE_DELAY_MS = 30000 // 30 seconds debounce for data change sync
-const INITIAL_SYNC_DELAY_MS = 5000 // Wait 5 seconds before first sync to let stores hydrate
+// Simple sync: Pull on app start, Push on app close
+// No auto-sync intervals, no debounced sync
+const INITIAL_SYNC_DELAY_MS = 3000 // Wait 3 seconds for stores to hydrate
 
-export function startAutoSync(): void {
-    stopAutoSync()
-
+// Pull data from Gist on app startup
+export async function pullOnStartup(): Promise<{ success: boolean; message: string }> {
     const settings = useSettingsStore.getState()
-    const { gistSync } = settings
+    const { gistSync, setGistSync } = settings
 
-    if (!gistSync.enabled || !gistSync.autoSync || gistSync.syncInterval <= 0) {
-        return
+    if (!gistSync.enabled || !gistSync.githubToken || !gistSync.gistId) {
+        return { success: false, message: 'Gist sync not configured' }
     }
 
-    const intervalMs = gistSync.syncInterval * 60 * 1000 // Convert minutes to ms
+    console.log('[GistSync] Pulling data on startup...')
+    setGistSync({ lastSyncStatus: 'pending' })
 
-    // On app start, do a PULL-ONLY sync first to get latest data
-    // This prevents pushing potentially corrupted/incomplete local data
-    if (!isInitialSyncDone) {
-        console.log('[GistSync] Waiting for stores to hydrate before initial sync...')
-        setTimeout(async () => {
-            console.log('[GistSync] Performing initial pull-only sync...')
-            try {
-                const remoteData = await readFromGist(gistSync.githubToken, gistSync.gistId)
-                if (remoteData) {
-                    // Only apply remote data, don't push anything
-                    applyData(remoteData, false)
-                    console.log('[GistSync] Initial pull completed successfully')
-                }
-            } catch (error) {
-                console.error('[GistSync] Initial pull failed:', error)
-            }
-            isInitialSyncDone = true
-        }, INITIAL_SYNC_DELAY_MS)
-    }
-
-    syncIntervalId = window.setInterval(() => {
-        syncWithGist()
-    }, intervalMs)
-}
-
-export function stopAutoSync(): void {
-    if (syncIntervalId !== null) {
-        window.clearInterval(syncIntervalId)
-        syncIntervalId = null
-    }
-    if (debouncedSyncTimeoutId !== null) {
-        window.clearTimeout(debouncedSyncTimeoutId)
-        debouncedSyncTimeoutId = null
+    try {
+        const remoteData = await readFromGist(gistSync.githubToken, gistSync.gistId)
+        
+        if (remoteData) {
+            applyData(remoteData, false)
+            setGistSync({
+                lastSyncAt: new Date().toISOString(),
+                lastSyncStatus: 'success',
+                lastSyncError: null,
+            })
+            console.log('[GistSync] Startup pull completed successfully')
+            return { success: true, message: 'Pulled data from Gist' }
+        }
+        
+        return { success: true, message: 'No remote data found' }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.error('[GistSync] Startup pull failed:', error)
+        setGistSync({
+            lastSyncStatus: 'error',
+            lastSyncError: errorMessage,
+        })
+        return { success: false, message: errorMessage }
     }
 }
 
-// Debounced sync triggered by data changes
-export function triggerDebouncedSync(): void {
+// Push data to Gist on app close
+export async function pushOnClose(): Promise<{ success: boolean; message: string }> {
+    const settings = useSettingsStore.getState()
+    const { gistSync, setGistSync } = settings
+
+    if (!gistSync.enabled || !gistSync.githubToken || !gistSync.gistId) {
+        return { success: false, message: 'Gist sync not configured' }
+    }
+
+    console.log('[GistSync] Pushing data on close...')
+    setGistSync({ lastSyncStatus: 'pending' })
+
+    try {
+        // Skip validation for close push - we want to save user's work
+        await writeToGist(gistSync.githubToken, gistSync.gistId, true)
+        
+        setGistSync({
+            lastSyncAt: new Date().toISOString(),
+            lastSyncStatus: 'success',
+            lastSyncError: null,
+        })
+        console.log('[GistSync] Close push completed successfully')
+        return { success: true, message: 'Pushed data to Gist' }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.error('[GistSync] Close push failed:', error)
+        setGistSync({
+            lastSyncStatus: 'error',
+            lastSyncError: errorMessage,
+        })
+        return { success: false, message: errorMessage }
+    }
+}
+
+// Initialize sync on app start (called from App.tsx)
+export function initializeSync(): void {
     const settings = useSettingsStore.getState()
     const { gistSync } = settings
 
-    // Only trigger if sync is enabled
     if (!gistSync.enabled || !gistSync.githubToken || !gistSync.gistId) {
         return
     }
 
-    // Clear existing debounce timer
-    if (debouncedSyncTimeoutId !== null) {
-        window.clearTimeout(debouncedSyncTimeoutId)
-    }
+    // Wait for stores to hydrate, then pull
+    console.log('[GistSync] Waiting for stores to hydrate...')
+    setTimeout(() => {
+        pullOnStartup()
+    }, INITIAL_SYNC_DELAY_MS)
+}
 
-    // Set new debounce timer
-    debouncedSyncTimeoutId = window.setTimeout(() => {
-        syncWithGist()
-        debouncedSyncTimeoutId = null
-    }, DEBOUNCE_DELAY_MS)
+// Legacy functions - kept for compatibility but do nothing
+export function startAutoSync(): void {
+    // Auto-sync removed - use initializeSync() instead
+    initializeSync()
+}
+
+export function stopAutoSync(): void {
+    // No-op - auto-sync removed
+}
+
+export function triggerDebouncedSync(): void {
+    // No-op - debounced sync removed
 }
 
 // Validate GitHub token

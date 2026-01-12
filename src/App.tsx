@@ -10,7 +10,7 @@ const LevelUpModal = lazy(() => import('./components/gamification/LevelUpModal')
 const AchievementToast = lazy(() => import('./components/gamification/AchievementToast').then(m => ({ default: m.AchievementToast })))
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { initializeNotifications } from './services/notificationService'
-import { startAutoSync, stopAutoSync, syncWithGist, forcePushToGist } from './services/gistSyncService'
+import { initializeSync, pushOnClose } from './services/gistSyncService'
 import { useSettingsStore, FONT_SIZES, FONT_FAMILIES } from './stores/settingsStore'
 import { useUIStore } from './stores/uiStore'
 import { useAuthStore } from './stores/authStore'
@@ -66,52 +66,49 @@ function App() {
     }
   }, [gamificationEnabled, checkStreak, resetDailyStats, lastActiveDate])
 
-  // Initialize Gist sync on mount
+  // Initialize Gist sync on mount - simplified: pull on open, push on close
   useEffect(() => {
     if (gistSync.enabled && gistSync.githubToken && gistSync.gistId) {
-      // Pull from Gist on startup
-      syncWithGist().then(result => {
-        console.log('[Gist Sync] Startup sync:', result.message)
-      })
-
-      // Start auto-sync if enabled
-      if (gistSync.autoSync && gistSync.syncInterval > 0) {
-        startAutoSync()
-      }
+      // Pull from Gist on startup (with delay for store hydration)
+      initializeSync()
     }
 
-    // Ensure data persistence on app close
+    // Push on browser/tab close
     const handleBeforeUnload = () => {
-      // Gist sync
       if (gistSync.enabled && gistSync.githubToken && gistSync.gistId) {
-        forcePushToGist()
+        pushOnClose()
       }
-      // Force zustand persist flush for all stores
-      // localStorage.setItem triggers are synchronous, so this is safe
     }
 
-    // Visibility change handler for mobile/tab switching
+    // Push on visibility hidden (tab switch, minimize)
     const handleVisibilityChange = () => {
       if (gistSync.enabled && gistSync.githubToken && gistSync.gistId) {
         if (document.visibilityState === 'hidden') {
-          // User is leaving - push local data
-          forcePushToGist()
-        } else if (document.visibilityState === 'visible') {
-          // User returned - pull remote data (debounced to avoid rapid syncs)
-          syncWithGist()
+          pushOnClose()
         }
       }
+    }
+
+    // Listen for Electron app quit event
+    if (window.electronAPI?.onBeforeQuit) {
+      window.electronAPI.onBeforeQuit(() => {
+        if (gistSync.enabled && gistSync.githubToken && gistSync.gistId) {
+          pushOnClose()
+        }
+      })
     }
 
     window.addEventListener('beforeunload', handleBeforeUnload)
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      stopAutoSync()
       window.removeEventListener('beforeunload', handleBeforeUnload)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (window.electronAPI?.removeBeforeQuitListener) {
+        window.electronAPI.removeBeforeQuitListener()
+      }
     }
-  }, [gistSync.enabled, gistSync.githubToken, gistSync.gistId, gistSync.autoSync, gistSync.syncInterval])
+  }, [gistSync.enabled, gistSync.githubToken, gistSync.gistId])
 
   return (
     <ErrorBoundary>
