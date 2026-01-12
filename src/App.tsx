@@ -92,9 +92,13 @@ function App() {
 
     // Visibility change handler for mobile/tab switching
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        if (gistSync.enabled && gistSync.githubToken && gistSync.gistId) {
+      if (gistSync.enabled && gistSync.githubToken && gistSync.gistId) {
+        if (document.visibilityState === 'hidden') {
+          // User is leaving - push local data
           forcePushToGist()
+        } else if (document.visibilityState === 'visible') {
+          // User returned - pull remote data (debounced to avoid rapid syncs)
+          syncWithGist()
         }
       }
     }

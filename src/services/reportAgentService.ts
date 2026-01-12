@@ -196,16 +196,18 @@ export function executeReportTool(name: string, args: Record<string, unknown>): 
 
     case 'get_focus_data': {
       const focusState = useFocusStore.getState()
-      const sessions = focusState.completedSessions || []
+      const sessions = focusState.sessions.filter(s => s.completed)
+      const totalSeconds = sessions.reduce((sum, s) => sum + (s.duration || 0), 0)
+      const totalMinutes = Math.round(totalSeconds / 60)
 
       return {
         success: true,
         data: {
-          totalMinutes: focusState.totalFocusMinutes || 0,
+          totalMinutes,
           totalSessions: sessions.length,
           focusStreak: focusState.focusStreak || 0,
           avgSessionMinutes: sessions.length > 0
-            ? Math.round(sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / sessions.length)
+            ? Math.round(totalMinutes / sessions.length)
             : 0,
         }
       }
@@ -217,15 +219,13 @@ export function executeReportTool(name: string, args: Record<string, unknown>): 
       return {
         success: true,
         data: {
-          xp: gamification.xp,
+          xp: gamification.currentXP,
+          totalXP: gamification.totalXP,
           level: gamification.level,
           currentStreak: gamification.currentStreak,
           bestStreak: gamification.bestStreak,
-          achievements: gamification.achievements
-            .filter(a => a.unlockedAt)
-            .map(a => ({ id: a.id, name: a.name })),
-          totalAchievements: gamification.achievements.length,
-          unlockedAchievements: gamification.achievements.filter(a => a.unlockedAt).length,
+          unlockedAchievementIds: gamification.achievements,
+          unlockedAchievements: gamification.achievements.length,
         }
       }
     }
