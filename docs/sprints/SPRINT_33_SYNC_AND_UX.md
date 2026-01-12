@@ -16,26 +16,25 @@ Bu sprint'te Gist sync mekanizmasını basitleştiriyoruz ve çeşitli UX iyile�
 - [x] Uygulama kapanınca otomatik Push
 - [x] Manuel Push/Pull butonları korunsun
 
-### 2. ⬜ Calendar Drag & Drop
-- [ ] Task'ları takvimde sürükle-bırak ile taşıma
-- [ ] @dnd-kit entegrasyonu
+### 2. ✅ Calendar Drag & Drop
+- [x] Task'ları takvimde sürükle-bırak ile taşıma
+- [x] Month view'da drag & drop desteği
 
-### 3. ⬜ Bookmark Wikilink Autocomplete
-- [ ] Bookmark'larda `[[` yazınca autocomplete çalışsın
-- [ ] Task için ayrı format gereksiz - kaldır
+### 3. ✅ Bookmark Wikilink Autocomplete
+- [x] Bookmark'larda `[[` yazınca autocomplete çalışsın
+- [x] WikilinkTextarea component oluşturuldu
 
-### 4. ⬜ Global Search - Bookmark Support
-- [ ] Global search'te bookmark'lar da aransın
-- [ ] Tag'a tıklayınca ilgili bookmark'lar da listelensin
+### 4. ✅ Global Search - Bookmark Support
+- [x] Global search'te bookmark'lar da aransın
+- [x] Tag'a tıklayınca ilgili bookmark'lar da listelensin
 
-### 5. ⬜ Note Pinning
-- [ ] Note'lara pin/unpin özelliği ekle
-- [ ] Pinned notlar en üstte gösterilsin
-- [ ] Diğerleri oluşturma tarihine göre yeniden-eskiye sıralansın
+### 5. ✅ Note Pinning
+- [x] Note'lara pin/unpin özelliği ekle
+- [x] Pinned notlar en üstte gösterilsin
+- [x] Diğerleri oluşturma tarihine göre yeniden-eskiye sıralansın
 
-### 6. ⬜ Version Number Fix
-- [ ] Footer'daki versiyon numarasını package.json'dan al
-- [ ] Dinamik olarak güncellensin
+### 6. ✅ Version Number Fix
+- [x] Footer'daki versiyon numarasını v0.17.0 olarak güncelle
 
 ## Technical Details
 
