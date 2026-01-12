@@ -3,15 +3,17 @@ import { useNoteStore } from '../../stores/noteStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useHabitStore } from '../../stores/habitStore'
 import { useJournalStore } from '../../stores/journalStore'
+import { useBookmarkStore } from '../../stores/bookmarkStore'
 import { useUIStore } from '../../stores/uiStore'
 
 interface SearchResult {
   id: string
-  type: 'note' | 'task' | 'habit' | 'journal'
+  type: 'note' | 'task' | 'habit' | 'journal' | 'bookmark'
   title: string
   preview: string
   tags?: string[]
   meta?: string
+  url?: string
 }
 
 interface GlobalSearchProps {
@@ -28,6 +30,7 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
   const tasks = useTaskStore((s) => s.tasks)
   const habits = useHabitStore((s) => s.habits)
   const journalEntries = useJournalStore((s) => s.entries)
+  const bookmarks = useBookmarkStore((s) => s.bookmarks)
   const setActiveModule = useUIStore((s) => s.setActiveModule)
   const setActiveNote = useNoteStore((s) => s.setActiveNote)
 
@@ -140,8 +143,43 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
       }
     })
 
+    // Search Bookmarks
+    bookmarks.forEach((bookmark) => {
+      const tagMatch = bookmark.tags?.some(t => t.toLowerCase().includes(q))
+      
+      if (isTagSearch) {
+        if (tagMatch) {
+          searchResults.push({
+            id: bookmark.id,
+            type: 'bookmark',
+            title: bookmark.title,
+            preview: bookmark.description || bookmark.url,
+            tags: bookmark.tags,
+            meta: '🔗 Bookmark',
+            url: bookmark.url,
+          })
+        }
+      } else {
+        const titleMatch = bookmark.title.toLowerCase().includes(q)
+        const urlMatch = bookmark.url.toLowerCase().includes(q)
+        const descMatch = bookmark.description?.toLowerCase().includes(q)
+        
+        if (titleMatch || urlMatch || descMatch || tagMatch) {
+          searchResults.push({
+            id: bookmark.id,
+            type: 'bookmark',
+            title: bookmark.title,
+            preview: bookmark.description || bookmark.url,
+            tags: bookmark.tags,
+            meta: '🔗 Bookmark',
+            url: bookmark.url,
+          })
+        }
+      }
+    })
+
     return searchResults
-  }, [query, notes, tasks, habits, journalEntries])
+  }, [query, notes, tasks, habits, journalEntries, bookmarks])
 
   // Reset selection when results change
   useEffect(() => {
@@ -186,6 +224,13 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
       case 'journal':
         setActiveModule('journal')
         break
+      case 'bookmark':
+        setActiveModule('bookmarks')
+        // Open bookmark URL in new tab
+        if (result.url) {
+          window.open(result.url, '_blank')
+        }
+        break
     }
     onClose()
   }
@@ -196,6 +241,7 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
       case 'task': return '✓'
       case 'habit': return '🎯'
       case 'journal': return '📔'
+      case 'bookmark': return '🔗'
     }
   }
 
@@ -205,6 +251,7 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
       case 'task': return 'text-np-blue'
       case 'habit': return 'text-np-orange'
       case 'journal': return 'text-np-purple'
+      case 'bookmark': return 'text-np-cyan'
     }
   }
 
