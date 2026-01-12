@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { exportAllData, downloadAsJson, importData, readFileAsJson, clearAllData, getDataStats } from '../../services/dataService'
 import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider, FONT_SIZES, FontSize, FONT_FAMILIES, FontFamily, ApiKeyType, GistSyncPreferences } from '../../stores/settingsStore'
 import { useI18nStore, LANGUAGES, Language } from '../../i18n'
@@ -15,11 +15,18 @@ import {
     startAutoSync,
     stopAutoSync
 } from '../../services/gistSyncService'
+import {
+    useKeybindingsStore,
+    formatKeybinding,
+    normalizeKeys,
+    type Keybinding
+} from '../../stores/keybindingsStore'
 
-type SettingsTab = 'general' | 'ai' | 'integrations' | 'sync' | 'data'
+type SettingsTab = 'general' | 'keyboard' | 'ai' | 'integrations' | 'sync' | 'data'
 
 const TABS: { id: SettingsTab; label: string; icon: string }[] = [
     { id: 'general', label: 'General', icon: '⚙️' },
+    { id: 'keyboard', label: 'Keyboard', icon: '⌨️' },
     { id: 'ai', label: 'AI', icon: '🤖' },
     { id: 'integrations', label: 'Integrations', icon: '🔌' },
     { id: 'sync', label: 'Sync', icon: '☁️' },
@@ -228,6 +235,10 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                         />
                     )}
 
+                    {activeTab === 'keyboard' && (
+                        <KeyboardTab />
+                    )}
+
                     {activeTab === 'ai' && (
                         <AITab
                             llmProvider={llmProvider}
@@ -422,35 +433,6 @@ function GeneralTab({ fontSize, setFontSize, fontFamily, setFontFamily }: {
                 </div>
             </div>
 
-            <div>
-                <h3 className="text-sm text-np-green mb-3">// Keyboard Shortcuts</h3>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="flex justify-between bg-np-bg-tertiary p-2">
-                        <span className="text-np-text-secondary">Command Palette</span>
-                        <kbd className="text-np-cyan">Ctrl+K</kbd>
-                    </div>
-                    <div className="flex justify-between bg-np-bg-tertiary p-2">
-                        <span className="text-np-text-secondary">Toggle Chat</span>
-                        <kbd className="text-np-cyan">Ctrl+/</kbd>
-                    </div>
-                    <div className="flex justify-between bg-np-bg-tertiary p-2">
-                        <span className="text-np-text-secondary">Global Search</span>
-                        <kbd className="text-np-cyan">Alt+U</kbd>
-                    </div>
-                    <div className="flex justify-between bg-np-bg-tertiary p-2">
-                        <span className="text-np-text-secondary">Focus Mode</span>
-                        <kbd className="text-np-cyan">Ctrl+Shift+F</kbd>
-                    </div>
-                    <div className="flex justify-between bg-np-bg-tertiary p-2">
-                        <span className="text-np-text-secondary">Settings</span>
-                        <kbd className="text-np-cyan">Ctrl+,</kbd>
-                    </div>
-                    <div className="flex justify-between bg-np-bg-tertiary p-2">
-                        <span className="text-np-text-secondary">Notifications</span>
-                        <kbd className="text-np-cyan">Ctrl+Shift+N</kbd>
-                    </div>
-                </div>
-            </div>
         </div>
     )
 }
@@ -1058,6 +1040,209 @@ function DataTab({
                 <p className="text-xs text-np-text-secondary mt-2">
                     This will permanently delete all your notes, tasks, habits, and journal entries.
                 </p>
+            </div>
+        </div>
+    )
+}
+
+// ============ KEYBOARD TAB ============
+
+const CATEGORY_LABELS: Record<string, { label: string; icon: string }> = {
+    navigation: { label: 'Navigation', icon: '🧭' },
+    system: { label: 'System', icon: '⚙️' },
+    focus: { label: 'Focus', icon: '🎯' },
+    actions: { label: 'Actions', icon: '⚡' },
+}
+
+function KeyboardTab() {
+    const { keybindings, customKeybindings, setKeybinding, resetKeybinding, resetAllKeybindings, isKeysConflict } = useKeybindingsStore()
+    const [editingId, setEditingId] = useState<string | null>(null)
+    const [editingKeys, setEditingKeys] = useState('')
+    const [conflictWarning, setConflictWarning] = useState<string | null>(null)
+
+    // Group keybindings by category
+    const groupedKeybindings = keybindings.reduce((acc, kb) => {
+        if (!acc[kb.category]) acc[kb.category] = []
+        acc[kb.category].push({
+            ...kb,
+            keys: customKeybindings[kb.id] || kb.keys,
+            isModified: !!customKeybindings[kb.id],
+        })
+        return acc
+    }, {} as Record<string, (Keybinding & { isModified: boolean })[]>)
+
+    const handleStartEdit = (kb: Keybinding) => {
+        setEditingId(kb.id)
+        setEditingKeys(customKeybindings[kb.id] || kb.keys)
+        setConflictWarning(null)
+    }
+
+    const handleKeyCapture = (e: React.KeyboardEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        // Build key combination
+        const parts: string[] = []
+        if (e.ctrlKey) parts.push('ctrl')
+        if (e.altKey) parts.push('alt')
+        if (e.shiftKey) parts.push('shift')
+
+        // Get the actual key
+        let key = e.key.toLowerCase()
+        if (key === 'control' || key === 'alt' || key === 'shift') return // Ignore modifier-only presses
+
+        // Normalize special keys
+        if (key === ' ') key = 'space'
+        if (key === 'escape') key = 'esc'
+
+        parts.push(key)
+        const newKeys = parts.join('+')
+        setEditingKeys(newKeys)
+
+        // Check for conflicts
+        const conflict = isKeysConflict(newKeys, editingId || undefined)
+        if (conflict) {
+            setConflictWarning(`Conflicts with "${conflict.label}"`)
+        } else {
+            setConflictWarning(null)
+        }
+    }
+
+    const handleSaveEdit = () => {
+        if (!editingId || !editingKeys) return
+
+        // Check for conflicts before saving
+        const conflict = isKeysConflict(editingKeys, editingId)
+        if (conflict) {
+            setConflictWarning(`Cannot save: conflicts with "${conflict.label}"`)
+            return
+        }
+
+        setKeybinding(editingId, editingKeys)
+        setEditingId(null)
+        setEditingKeys('')
+        setConflictWarning(null)
+    }
+
+    const handleCancelEdit = () => {
+        setEditingId(null)
+        setEditingKeys('')
+        setConflictWarning(null)
+    }
+
+    const handleResetOne = (id: string) => {
+        resetKeybinding(id)
+        if (editingId === id) {
+            setEditingId(null)
+            setEditingKeys('')
+        }
+    }
+
+    const handleResetAll = () => {
+        if (confirm('Reset all keyboard shortcuts to defaults?')) {
+            resetAllKeybindings()
+            setEditingId(null)
+            setEditingKeys('')
+        }
+    }
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="text-sm text-np-green">// Custom Keybindings</h3>
+                    <p className="text-xs text-np-text-secondary mt-1">
+                        Click on a shortcut to customize it
+                    </p>
+                </div>
+                <button onClick={handleResetAll} className="np-btn text-xs text-np-orange">
+                    Reset All
+                </button>
+            </div>
+
+            {/* Categories */}
+            {Object.entries(CATEGORY_LABELS).map(([category, { label, icon }]) => (
+                <div key={category}>
+                    <h4 className="text-xs text-np-text-secondary mb-2 flex items-center gap-2">
+                        <span>{icon}</span>
+                        <span>{label}</span>
+                    </h4>
+                    <div className="space-y-1">
+                        {groupedKeybindings[category]?.map((kb) => (
+                            <div
+                                key={kb.id}
+                                className={`flex items-center justify-between p-2 border transition-colors ${
+                                    editingId === kb.id
+                                        ? 'bg-np-selection border-np-blue'
+                                        : 'bg-np-bg-tertiary border-np-border hover:border-np-blue/50'
+                                } ${kb.isModified ? 'border-l-2 border-l-np-purple' : ''}`}
+                            >
+                                <div className="flex-1">
+                                    <div className="text-sm text-np-text-primary">{kb.label}</div>
+                                    <div className="text-xs text-np-text-secondary">{kb.description}</div>
+                                </div>
+
+                                {editingId === kb.id ? (
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            value={formatKeybinding(editingKeys)}
+                                            onKeyDown={handleKeyCapture}
+                                            placeholder="Press keys..."
+                                            readOnly
+                                            autoFocus
+                                            className="w-32 bg-np-bg-primary border border-np-border text-np-cyan text-xs px-2 py-1 text-center focus:outline-none focus:border-np-blue"
+                                        />
+                                        <button onClick={handleSaveEdit} className="text-np-green text-sm px-1" title="Save">
+                                            ✓
+                                        </button>
+                                        <button onClick={handleCancelEdit} className="text-np-error text-sm px-1" title="Cancel">
+                                            ✕
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleStartEdit(kb)}
+                                            className={`px-2 py-1 text-xs font-mono ${
+                                                kb.isModified ? 'text-np-purple' : 'text-np-cyan'
+                                            } bg-np-bg-primary border border-np-border hover:border-np-blue`}
+                                        >
+                                            {formatKeybinding(kb.keys)}
+                                        </button>
+                                        {kb.isModified && (
+                                            <button
+                                                onClick={() => handleResetOne(kb.id)}
+                                                className="text-np-text-secondary hover:text-np-orange text-xs"
+                                                title="Reset to default"
+                                            >
+                                                ↺
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ))}
+
+            {/* Conflict Warning */}
+            {conflictWarning && (
+                <div className="text-xs text-np-error bg-np-error/10 border border-np-error p-2">
+                    ⚠️ {conflictWarning}
+                </div>
+            )}
+
+            {/* Help */}
+            <div className="text-xs text-np-text-secondary bg-np-bg-tertiary p-3 border border-np-border">
+                <p className="font-medium mb-1">Tips:</p>
+                <ul className="list-disc list-inside space-y-1">
+                    <li>Click a shortcut to edit, then press your desired key combination</li>
+                    <li>Modified shortcuts are marked with a purple border</li>
+                    <li>Shortcuts are saved automatically and persist across sessions</li>
+                </ul>
             </div>
         </div>
     )
