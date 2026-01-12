@@ -101,6 +101,8 @@ export function TasksModule() {
     deadlineTime: string
     reminderEnabled: boolean
     reminderMinutesBefore: number
+    tags: string[]
+    newTag: string
   } | null>(null)
 
   // Auto-complete parent task when all subtasks are done
@@ -171,7 +173,9 @@ export function TasksModule() {
       deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
       deadlineTime: task.deadlineTime || '',
       reminderEnabled: task.reminderEnabled || false,
-      reminderMinutesBefore: task.reminderMinutesBefore || 30
+      reminderMinutesBefore: task.reminderMinutesBefore || 30,
+      tags: task.tags || [],
+      newTag: ''
     })
   }
 
@@ -186,10 +190,24 @@ export function TasksModule() {
       deadline: editTaskForm.deadline ? new Date(editTaskForm.deadline) : undefined,
       deadlineTime: editTaskForm.deadlineTime || undefined,
       reminderEnabled: editTaskForm.reminderEnabled,
-      reminderMinutesBefore: editTaskForm.reminderMinutesBefore
+      reminderMinutesBefore: editTaskForm.reminderMinutesBefore,
+      tags: editTaskForm.tags
     })
     setEditingTaskId(null)
     setEditTaskForm(null)
+  }
+
+  const handleAddTag = () => {
+    if (!editTaskForm || !editTaskForm.newTag.trim()) return
+    const tag = editTaskForm.newTag.trim().toLowerCase().replace(/\s+/g, '-')
+    if (!editTaskForm.tags.includes(tag)) {
+      setEditTaskForm({ ...editTaskForm, tags: [...editTaskForm.tags, tag], newTag: '' })
+    }
+  }
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    if (!editTaskForm) return
+    setEditTaskForm({ ...editTaskForm, tags: editTaskForm.tags.filter(t => t !== tagToRemove) })
   }
 
   const handleCancelTaskEdit = () => {
@@ -538,6 +556,48 @@ export function TasksModule() {
               </div>
             </div>
 
+            {/* Tags */}
+            <div className="mb-3">
+              <label className="text-xs text-np-text-secondary block mb-1">Tags</label>
+              <div className="flex flex-wrap gap-1 mb-2">
+                {editTaskForm.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-np-purple/20 text-np-purple rounded"
+                  >
+                    #{tag}
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      className="hover:text-np-error ml-1"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={editTaskForm.newTag}
+                  onChange={(e) => setEditTaskForm({ ...editTaskForm, newTag: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddTag()
+                    }
+                  }}
+                  placeholder="Add tag..."
+                  className="flex-1 np-input text-sm"
+                />
+                <button
+                  onClick={handleAddTag}
+                  className="np-btn text-xs text-np-purple"
+                >
+                  + Add
+                </button>
+              </div>
+            </div>
+
             {/* Reminder */}
             <div className="mb-4">
               <label className="flex items-center gap-2 text-sm text-np-text-secondary mb-2">
@@ -718,6 +778,30 @@ function SortableTaskItem({
         {/* Reminder indicator */}
         {task.reminderEnabled && (
           <span className="text-xs">🔔</span>
+        )}
+
+        {/* Tags */}
+        {task.tags && task.tags.length > 0 && (
+          <div className="flex gap-1">
+            {task.tags.slice(0, 3).map((tag) => (
+              <span
+                key={tag}
+                className="text-xs px-1.5 py-0.5 bg-np-purple/20 text-np-purple rounded"
+              >
+                #{tag}
+              </span>
+            ))}
+            {task.tags.length > 3 && (
+              <span className="text-xs text-np-text-secondary">+{task.tags.length - 3}</span>
+            )}
+          </div>
+        )}
+
+        {/* Linked bookmarks indicator */}
+        {task.linkedBookmarkIds && task.linkedBookmarkIds.length > 0 && (
+          <span className="text-xs px-1.5 py-0.5 bg-np-cyan/20 text-np-cyan rounded" title={`${task.linkedBookmarkIds.length} linked bookmarks`}>
+            🔗 {task.linkedBookmarkIds.length}
+          </span>
         )}
 
         {/* Expand indicator */}
