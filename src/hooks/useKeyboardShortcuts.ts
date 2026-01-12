@@ -26,10 +26,6 @@ export function useKeyboardShortcuts() {
   const { setActiveModule, toggleCommandPalette, toggleFocusMode } = useUIStore()
   const { keybindings, customKeybindings } = useKeybindingsStore()
 
-  const getEffectiveKeys = useCallback((id: string): string => {
-    return customKeybindings[id] || keybindings.find((k) => k.id === id)?.keys || ''
-  }, [keybindings, customKeybindings])
-
   const findMatchingKeybinding = useCallback((e: KeyboardEvent) => {
     for (const kb of keybindings) {
       const keys = customKeybindings[kb.id] || kb.keys

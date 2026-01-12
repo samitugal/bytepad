@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { exportAllData, downloadAsJson, importData, readFileAsJson, clearAllData, getDataStats } from '../../services/dataService'
 import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider, FONT_SIZES, FontSize, FONT_FAMILIES, FontFamily, ApiKeyType, GistSyncPreferences } from '../../stores/settingsStore'
 import { useI18nStore, LANGUAGES, Language } from '../../i18n'
@@ -7,7 +7,6 @@ import { useNotificationStore } from '../../stores/notificationStore'
 import { useAuthStore } from '../../stores/authStore'
 import { requestNotificationPermission, startNotificationChecker, stopNotificationChecker } from '../../services/notificationService'
 import {
-    syncWithGist,
     forcePushToGist,
     forcePullFromGist,
     createGist,
@@ -18,7 +17,6 @@ import {
 import {
     useKeybindingsStore,
     formatKeybinding,
-    normalizeKeys,
     type Keybinding
 } from '../../stores/keybindingsStore'
 
@@ -127,14 +125,6 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                 setImportStatus({ type: 'success', message: 'All data cleared. Refresh to reset.' })
             }
         }
-    }
-
-    const handleGistSync = async () => {
-        setIsGistSyncing(true)
-        setGistSyncStatus(null)
-        const result = await syncWithGist()
-        setGistSyncStatus(result.message)
-        setIsGistSyncing(false)
     }
 
     const handleGistForcePush = async () => {
@@ -274,7 +264,6 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                             setGistSync={setGistSync}
                             gistSyncStatus={gistSyncStatus}
                             isGistSyncing={isGistSyncing}
-                            handleGistSync={handleGistSync}
                             handleGistForcePush={handleGistForcePush}
                             handleGistForcePull={handleGistForcePull}
                             handleCreateGist={handleCreateGist}
@@ -749,7 +738,6 @@ function SyncTab({
     setGistSync,
     gistSyncStatus,
     isGistSyncing,
-    handleGistSync,
     handleGistForcePush,
     handleGistForcePull,
     handleCreateGist,
@@ -764,7 +752,6 @@ function SyncTab({
     setGistSync: (prefs: Partial<GistSyncPreferences>) => void
     gistSyncStatus: string | null
     isGistSyncing: boolean
-    handleGistSync: () => void
     handleGistForcePush: () => void
     handleGistForcePull: () => void
     handleCreateGist: () => void
@@ -909,46 +896,73 @@ function SyncTab({
                         </div>
                     )}
 
+                    {/* Sync Status Indicator */}
                     {gistSync.enabled && gistSync.gistId && (
-                        <div className="flex gap-2 pt-2 border-t border-np-border">
-                            <button
-                                onClick={handleGistSync}
-                                disabled={isGistSyncing}
-                                className="np-btn text-xs flex-1"
-                            >
-                                {isGistSyncing ? '⏳ Syncing...' : '🔄 Sync Now'}
-                            </button>
-                            <button
-                                onClick={handleGistForcePush}
-                                disabled={isGistSyncing}
-                                className="np-btn text-xs text-np-orange"
-                                title="Overwrite remote with local"
-                            >
-                                ⬆️ Push
-                            </button>
-                            <button
-                                onClick={handleGistForcePull}
-                                disabled={isGistSyncing}
-                                className="np-btn text-xs text-np-cyan"
-                                title="Overwrite local with remote"
-                            >
-                                ⬇️ Pull
-                            </button>
-                        </div>
-                    )}
-
-                    {gistSyncStatus && (
-                        <div className={`text-xs p-2 border ${gistSync.lastSyncStatus === 'error'
-                            ? 'border-np-error text-np-error'
-                            : 'border-np-green text-np-green'
+                        <div className="pt-2 border-t border-np-border space-y-3">
+                            {/* Sync Status */}
+                            <div className={`flex items-center justify-between p-2 border ${
+                                isGistSyncing ? 'border-np-blue bg-np-blue/10' :
+                                gistSync.lastSyncStatus === 'error' ? 'border-np-error bg-np-error/10' :
+                                gistSync.lastSyncStatus === 'success' ? 'border-np-green bg-np-green/10' :
+                                'border-np-border bg-np-bg-tertiary'
                             }`}>
-                            {gistSyncStatus}
-                        </div>
-                    )}
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-lg ${
+                                        isGistSyncing ? 'animate-spin' : ''
+                                    }`}>
+                                        {isGistSyncing ? '🔄' :
+                                         gistSync.lastSyncStatus === 'error' ? '❌' :
+                                         gistSync.lastSyncStatus === 'success' ? '✅' : '⏳'}
+                                    </span>
+                                    <div>
+                                        <div className="text-xs text-np-text-primary">
+                                            {isGistSyncing ? 'Syncing...' :
+                                             gistSync.lastSyncStatus === 'error' ? 'Sync Failed' :
+                                             gistSync.lastSyncStatus === 'success' ? 'Synced' : 'Ready'}
+                                        </div>
+                                        {gistSync.lastSyncAt && !isGistSyncing && (
+                                            <div className="text-xs text-np-text-secondary">
+                                                {new Date(gistSync.lastSyncAt).toLocaleString()}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="text-xs text-np-text-secondary">
+                                    Auto-sync: {gistSync.autoSync ? `every ${gistSync.syncInterval} min` : 'off'}
+                                </div>
+                            </div>
 
-                    {gistSync.lastSyncAt && (
-                        <div className="text-xs text-np-text-secondary">
-                            Last sync: {new Date(gistSync.lastSyncAt).toLocaleString()}
+                            {/* Error Message */}
+                            {gistSyncStatus && gistSync.lastSyncStatus === 'error' && (
+                                <div className="text-xs p-2 border border-np-error text-np-error bg-np-error/10">
+                                    {gistSyncStatus}
+                                </div>
+                            )}
+
+                            {/* Manual Override Buttons */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleGistForcePush}
+                                    disabled={isGistSyncing}
+                                    className="np-btn text-xs flex-1 text-np-orange hover:bg-np-orange/10"
+                                    title="Overwrite remote with local data"
+                                >
+                                    ⬆️ Force Push
+                                </button>
+                                <button
+                                    onClick={handleGistForcePull}
+                                    disabled={isGistSyncing}
+                                    className="np-btn text-xs flex-1 text-np-cyan hover:bg-np-cyan/10"
+                                    title="Overwrite local with remote data"
+                                >
+                                    ⬇️ Force Pull
+                                </button>
+                            </div>
+
+                            <p className="text-xs text-np-text-secondary">
+                                💡 Sync happens automatically on startup, when you close the app, and at your configured interval.
+                                Use Push/Pull for manual overrides.
+                            </p>
                         </div>
                     )}
                 </div>

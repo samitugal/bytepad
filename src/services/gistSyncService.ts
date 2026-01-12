@@ -11,7 +11,7 @@ import { useDailyNotesStore } from '../stores/dailyNotesStore'
 import { useFocusStore } from '../stores/focusStore'
 import { useGamificationStore } from '../stores/gamificationStore'
 
-const GIST_FILENAME = 'myflowspace-data.json'
+const GIST_FILENAME = 'bytepad-data.json'
 
 interface SyncData {
     version: number
@@ -97,61 +97,128 @@ function collectAllData(): SyncData {
     }
 }
 
-// Apply synced data to all stores
+// Helper to check if data has actually changed (shallow compare for arrays)
+function hasDataChanged(oldData: unknown[], newData: unknown[]): boolean {
+    if (oldData.length !== newData.length) return true
+    // Quick check: compare JSON strings for small arrays, or just assume changed for large ones
+    if (oldData.length > 100) return true
+    return JSON.stringify(oldData) !== JSON.stringify(newData)
+}
+
+// Apply synced data to all stores with batched updates to prevent input blocking
 function applyData(syncData: SyncData): void {
     const { data } = syncData
 
-    if (data.notes) {
-        useNoteStore.setState({ notes: data.notes as never[] })
+    // Save current focus before applying updates
+    const activeElement = document.activeElement as HTMLElement | null
+    const selectionStart = (activeElement as HTMLInputElement)?.selectionStart
+    const selectionEnd = (activeElement as HTMLInputElement)?.selectionEnd
+
+    // Collect all updates that need to be applied
+    const updates: Array<() => void> = []
+
+    // Get current state for comparison
+    const currentNotes = useNoteStore.getState().notes
+    const currentTasks = useTaskStore.getState().tasks
+    const currentHabits = useHabitStore.getState().habits
+    const currentJournal = useJournalStore.getState().entries
+    const currentBookmarks = useBookmarkStore.getState().bookmarks
+    const currentDailyNotes = useDailyNotesStore.getState().dailyNotes
+    const currentFocusSessions = useFocusStore.getState().sessions
+
+    // Only add updates for stores that have actually changed
+    if (data.notes && hasDataChanged(currentNotes, data.notes as unknown[])) {
+        updates.push(() => useNoteStore.setState({ notes: data.notes as never[] }))
     }
-    if (data.tasks) {
-        useTaskStore.setState({ tasks: data.tasks as never[] })
+    if (data.tasks && hasDataChanged(currentTasks, data.tasks as unknown[])) {
+        updates.push(() => useTaskStore.setState({ tasks: data.tasks as never[] }))
     }
-    if (data.habits) {
-        useHabitStore.setState({ habits: data.habits as never[] })
+    if (data.habits && hasDataChanged(currentHabits, data.habits as unknown[])) {
+        updates.push(() => useHabitStore.setState({ habits: data.habits as never[] }))
     }
-    if (data.journal) {
-        useJournalStore.setState({ entries: data.journal as never[] })
+    if (data.journal && hasDataChanged(currentJournal, data.journal as unknown[])) {
+        updates.push(() => useJournalStore.setState({ entries: data.journal as never[] }))
     }
-    if (data.bookmarks) {
-        useBookmarkStore.setState({ bookmarks: data.bookmarks as never[] })
+    if (data.bookmarks && hasDataChanged(currentBookmarks, data.bookmarks as unknown[])) {
+        updates.push(() => useBookmarkStore.setState({ bookmarks: data.bookmarks as never[] }))
     }
-    if (data.dailyNotes) {
-        useDailyNotesStore.setState({ dailyNotes: data.dailyNotes as never[] })
+    if (data.dailyNotes && hasDataChanged(currentDailyNotes, data.dailyNotes as unknown[])) {
+        updates.push(() => useDailyNotesStore.setState({ dailyNotes: data.dailyNotes as never[] }))
     }
-    if (data.focusSessions) {
-        useFocusStore.setState({ sessions: data.focusSessions as never[] })
+    if (data.focusSessions && hasDataChanged(currentFocusSessions, data.focusSessions as unknown[])) {
+        updates.push(() => useFocusStore.setState({ sessions: data.focusSessions as never[] }))
     }
     if (data.focusStats) {
-        useFocusStore.setState({
-            consecutiveSessions: data.focusStats.consecutiveSessions,
-            focusStreak: data.focusStats.focusStreak,
-            lastFocusDate: data.focusStats.lastFocusDate,
-        })
+        const currentFocus = useFocusStore.getState()
+        if (currentFocus.consecutiveSessions !== data.focusStats.consecutiveSessions ||
+            currentFocus.focusStreak !== data.focusStats.focusStreak ||
+            currentFocus.lastFocusDate !== data.focusStats.lastFocusDate) {
+            updates.push(() => useFocusStore.setState({
+                consecutiveSessions: data.focusStats!.consecutiveSessions,
+                focusStreak: data.focusStats!.focusStreak,
+                lastFocusDate: data.focusStats!.lastFocusDate,
+            }))
+        }
     }
     if (data.gamification) {
-        useGamificationStore.setState({
-            level: data.gamification.level,
-            currentXP: data.gamification.currentXP,
-            totalXP: data.gamification.totalXP,
-            tasksCompleted: data.gamification.tasksCompleted,
-            tasksCompletedToday: data.gamification.tasksCompletedToday,
-            habitsCompleted: data.gamification.habitsCompleted,
-            habitsCompletedToday: data.gamification.habitsCompletedToday,
-            pomodorosCompleted: data.gamification.pomodorosCompleted,
-            notesCreated: data.gamification.notesCreated,
-            journalEntries: data.gamification.journalEntries,
-            perfectDays: data.gamification.perfectDays,
-            currentStreak: data.gamification.currentStreak,
-            bestStreak: data.gamification.bestStreak,
-            lastActiveDate: data.gamification.lastActiveDate,
-            achievements: data.gamification.achievements,
-        })
+        const currentGamification = useGamificationStore.getState()
+        // Check if gamification data changed
+        const gamificationChanged =
+            currentGamification.level !== data.gamification.level ||
+            currentGamification.currentXP !== data.gamification.currentXP ||
+            currentGamification.totalXP !== data.gamification.totalXP
+
+        if (gamificationChanged) {
+            updates.push(() => useGamificationStore.setState({
+                level: data.gamification!.level,
+                currentXP: data.gamification!.currentXP,
+                totalXP: data.gamification!.totalXP,
+                tasksCompleted: data.gamification!.tasksCompleted,
+                tasksCompletedToday: data.gamification!.tasksCompletedToday,
+                habitsCompleted: data.gamification!.habitsCompleted,
+                habitsCompletedToday: data.gamification!.habitsCompletedToday,
+                pomodorosCompleted: data.gamification!.pomodorosCompleted,
+                notesCreated: data.gamification!.notesCreated,
+                journalEntries: data.gamification!.journalEntries,
+                perfectDays: data.gamification!.perfectDays,
+                currentStreak: data.gamification!.currentStreak,
+                bestStreak: data.gamification!.bestStreak,
+                lastActiveDate: data.gamification!.lastActiveDate,
+                achievements: data.gamification!.achievements,
+            }))
+        }
     }
+
+    // If no updates needed, return early
+    if (updates.length === 0) return
+
+    // Apply all updates in a single microtask to batch React renders
+    queueMicrotask(() => {
+        // Apply all updates
+        updates.forEach(update => update())
+
+        // Restore focus after updates complete
+        requestAnimationFrame(() => {
+            if (activeElement && document.body.contains(activeElement)) {
+                activeElement.focus()
+                // Restore cursor position for input/textarea
+                if (selectionStart !== null && selectionEnd !== null) {
+                    const inputElement = activeElement as HTMLInputElement | HTMLTextAreaElement
+                    if (inputElement.setSelectionRange) {
+                        try {
+                            inputElement.setSelectionRange(selectionStart, selectionEnd)
+                        } catch {
+                            // Ignore if element doesn't support selection
+                        }
+                    }
+                }
+            }
+        })
+    })
 }
 
 // Create a new Gist
-export async function createGist(token: string, description: string = 'MyFlowSpace Data'): Promise<string> {
+export async function createGist(token: string, description: string = 'BytePad Data'): Promise<string> {
     const data = collectAllData()
 
     const response = await fetch('https://api.github.com/gists', {
@@ -360,6 +427,8 @@ export async function forcePullFromGist(): Promise<{ success: boolean; message: 
 
 // Auto-sync interval manager
 let syncIntervalId: number | null = null
+let debouncedSyncTimeoutId: number | null = null
+const DEBOUNCE_DELAY_MS = 30000 // 30 seconds debounce for data change sync
 
 export function startAutoSync(): void {
     stopAutoSync()
@@ -386,6 +455,32 @@ export function stopAutoSync(): void {
         window.clearInterval(syncIntervalId)
         syncIntervalId = null
     }
+    if (debouncedSyncTimeoutId !== null) {
+        window.clearTimeout(debouncedSyncTimeoutId)
+        debouncedSyncTimeoutId = null
+    }
+}
+
+// Debounced sync triggered by data changes
+export function triggerDebouncedSync(): void {
+    const settings = useSettingsStore.getState()
+    const { gistSync } = settings
+
+    // Only trigger if sync is enabled
+    if (!gistSync.enabled || !gistSync.githubToken || !gistSync.gistId) {
+        return
+    }
+
+    // Clear existing debounce timer
+    if (debouncedSyncTimeoutId !== null) {
+        window.clearTimeout(debouncedSyncTimeoutId)
+    }
+
+    // Set new debounce timer
+    debouncedSyncTimeoutId = window.setTimeout(() => {
+        syncWithGist()
+        debouncedSyncTimeoutId = null
+    }, DEBOUNCE_DELAY_MS)
 }
 
 // Validate GitHub token

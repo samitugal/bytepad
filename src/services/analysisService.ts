@@ -699,33 +699,6 @@ Aşağıdaki başlıklarla detaylı bir Markdown rapor yaz:
 Format: Düz Markdown olarak yaz, JSON değil. Her bölüm için ## başlık kullan. Türkçe yaz.`
 }
 
-function parseMarkdownReportResponse(response: string, stats: WeeklyStats): string {
-  // Check if response is already markdown (not JSON)
-  if (response.includes('##') || response.includes('**')) {
-    return response
-  }
-
-  // Try to extract markdown from response
-  // Sometimes AI might wrap it in code blocks
-  const codeBlockMatch = response.match(/```markdown\n?([\s\S]*?)```/)
-  if (codeBlockMatch) {
-    return codeBlockMatch[1].trim()
-  }
-
-  const mdMatch = response.match(/```\n?([\s\S]*?)```/)
-  if (mdMatch) {
-    return mdMatch[1].trim()
-  }
-
-  // If response is plain text, return it as is
-  if (response.length > 100) {
-    return response
-  }
-
-  // Fallback
-  return generateFallbackMarkdownReport(stats)
-}
-
 function generateFallbackMarkdownReport(stats: WeeklyStats): string {
   const completionEmoji = stats.habits.avgCompletion >= 70 ? '🎉' : stats.habits.avgCompletion >= 40 ? '💪' : '🌱'
   const taskEmoji = stats.tasks.completionRate >= 70 ? '✅' : stats.tasks.completionRate >= 40 ? '📝' : '🎯'
