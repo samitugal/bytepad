@@ -13,17 +13,15 @@ A modern, privacy-first productivity application for personal knowledge manageme
 
 ## Screenshots
 
-<!-- SCREENSHOT_PLACEHOLDER: Main Dashboard -->
-<!-- ![Dashboard](assets/screenshots/dashboard.png) -->
-*Main dashboard showing the unified workspace*
+<img width="1403" height="902" alt="image" src="https://github.com/user-attachments/assets/b9908d5f-eae1-496e-98ac-86a2366589bb" />
 
-<!-- SCREENSHOT_PLACEHOLDER: Notes Module with Wikilinks -->
-<!-- ![Notes](assets/screenshots/notes.png) -->
-*Notes module with markdown support and wikilink navigation*
+---
 
-<!-- SCREENSHOT_PLACEHOLDER: Knowledge Graph -->
-<!-- ![Knowledge Graph](assets/screenshots/graph.png) -->
-*Interactive knowledge graph visualizing connections*
+<img width="1403" height="901" alt="image" src="https://github.com/user-attachments/assets/4b3074b2-6456-4567-9235-022903b20891" />
+
+---
+
+<img width="1403" height="901" alt="image" src="https://github.com/user-attachments/assets/c2498eef-d272-4446-9bf5-d486989abfb7" />
 
 ---
 
@@ -68,6 +66,10 @@ Built-in AI assistant for productivity coaching and insights.
 | Google AI | Gemini Pro |
 | Groq | Llama, Mixtral |
 | Ollama | Local models (self-hosted) |
+
+---
+
+<img width="437" height="510" alt="image" src="https://github.com/user-attachments/assets/7fe46ae8-ee96-456b-8ec1-641879c7ac30" />
 
 ---
 
