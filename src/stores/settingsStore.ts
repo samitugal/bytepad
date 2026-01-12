@@ -73,6 +73,7 @@ export type FontFamily =
   | 'cascadia-code'
   | 'source-code-pro'
   | 'consolas'
+  | 'courier-new'
   | 'proto-nerd'
   | 'hack-nerd'
   | 'meslo-nerd'
@@ -108,6 +109,11 @@ export const FONT_FAMILIES: Record<FontFamily, { label: string; value: string; i
   'source-code-pro': { 
     label: 'Source Code Pro', 
     value: '"Source Code Pro", monospace',
+    isNerd: false 
+  },
+  'courier-new': { 
+    label: 'Courier New', 
+    value: '"Courier New", Courier, monospace',
     isNerd: false 
   },
   'proto-nerd': { 
