@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useHabitStore } from '../../stores/habitStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useJournalStore } from '../../stores/journalStore'
-import { calculateWeeklyStats, getWeekRange, generateAIInsights, type WeeklyStats } from '../../services/analysisService'
+import { calculateWeeklyStats, getWeekRange, generateAIInsights, generateAIMarkdownReport, type WeeklyStats, type AIMarkdownReport } from '../../services/analysisService'
 import { useTranslation } from '../../i18n'
 import { ProductivityReport } from './ProductivityReport'
 
@@ -69,6 +69,9 @@ export function AnalysisModule() {
     summary: string
   } | null>(null)
   const [isLoadingAI, setIsLoadingAI] = useState(false)
+  const [mdReport, setMdReport] = useState<AIMarkdownReport | null>(null)
+  const [isLoadingMdReport, setIsLoadingMdReport] = useState(false)
+  const [showMdPreview, setShowMdPreview] = useState(false)
 
   const weekRange = useMemo(() => {
     const now = new Date()
@@ -91,6 +94,33 @@ export function AnalysisModule() {
     } finally {
       setIsLoadingAI(false)
     }
+  }
+
+  const handleGenerateMdReport = async () => {
+    setIsLoadingMdReport(true)
+    setMdReport(null)
+    try {
+      const result = await generateAIMarkdownReport(stats)
+      setMdReport(result)
+      setShowMdPreview(true)
+    } catch (error) {
+      console.error('MD Report error:', error)
+    } finally {
+      setIsLoadingMdReport(false)
+    }
+  }
+
+  const handleDownloadMdReport = () => {
+    if (!mdReport) return
+    const blob = new Blob([mdReport.markdown], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `bytepad-report-${stats.weekStart}-${stats.weekEnd}.md`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   // Use AI insights if available, otherwise use default stats
@@ -242,30 +272,113 @@ export function AnalysisModule() {
       <div className="bg-np-bg-secondary border border-np-border p-4 mb-6">
         <div className="flex items-center justify-between mb-3">
           <div className="text-sm text-np-purple">// AI Analysis</div>
-          <button
-            onClick={handleGenerateAIInsights}
-            disabled={isLoadingAI}
-            className="np-btn text-xs flex items-center gap-2"
-          >
-            {isLoadingAI ? (
-              <>
-                <span className="animate-spin">⚡</span>
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <span>🤖</span>
-                Generate AI Insights
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleGenerateAIInsights}
+              disabled={isLoadingAI}
+              className="np-btn text-xs flex items-center gap-2"
+            >
+              {isLoadingAI ? (
+                <>
+                  <span className="animate-spin">⚡</span>
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <span>🤖</span>
+                  AI Insights
+                </>
+              )}
+            </button>
+            <div className="relative group">
+              <button
+                onClick={handleGenerateMdReport}
+                disabled={isLoadingMdReport}
+                className="np-btn text-xs flex items-center gap-2 text-np-cyan"
+              >
+                {isLoadingMdReport ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <span>📄</span>
+                    MD Report
+                  </>
+                )}
+              </button>
+              {mdReport && !isLoadingMdReport && (
+                <div className="absolute right-0 top-full mt-1 w-64 bg-np-bg-primary border border-np-border p-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
+                  <div className="text-xs text-np-text-secondary mb-1">Preview:</div>
+                  <pre className="text-xs text-np-text-primary whitespace-pre-wrap max-h-32 overflow-hidden">
+                    {mdReport.markdown.slice(0, 300)}...
+                  </pre>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         {aiInsights?.summary && (
           <div className="text-sm text-np-text-primary bg-np-bg-tertiary p-3 border-l-2 border-np-purple">
             {aiInsights.summary}
           </div>
         )}
+        {mdReport && (
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              onClick={() => setShowMdPreview(true)}
+              className="np-btn text-xs flex items-center gap-2"
+            >
+              <span>👁</span>
+              Preview Report
+            </button>
+            <button
+              onClick={handleDownloadMdReport}
+              className="np-btn text-xs flex items-center gap-2 text-np-green"
+            >
+              <span>⬇</span>
+              Download .md
+            </button>
+            <span className="text-xs text-np-text-secondary">
+              Generated: {new Date(mdReport.generatedAt).toLocaleTimeString('tr-TR')}
+            </span>
+          </div>
+        )}
       </div>
+
+      {/* MD Report Preview Modal */}
+      {showMdPreview && mdReport && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowMdPreview(false)}
+        >
+          <div
+            className="w-[700px] max-h-[85vh] bg-np-bg-secondary border border-np-border shadow-2xl flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-np-border shrink-0">
+              <span className="text-np-text-primary font-medium">📄 Weekly Report Preview</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownloadMdReport}
+                  className="np-btn text-xs text-np-green"
+                >
+                  ⬇ Download
+                </button>
+                <button onClick={() => setShowMdPreview(false)} className="text-np-text-secondary hover:text-np-text-primary text-xl">
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <pre className="text-sm text-np-text-primary whitespace-pre-wrap font-mono leading-relaxed">
+                {mdReport.markdown}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Insights & Recommendations */}
       <div className="grid grid-cols-2 gap-4 mb-6">
