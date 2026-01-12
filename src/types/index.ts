@@ -9,6 +9,7 @@ export interface Note {
   content: string
   tags: string[]
   folderId?: string
+  pinned?: boolean
   createdAt: Date
   updatedAt: Date
 }
