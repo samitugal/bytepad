@@ -7,22 +7,38 @@ import { useDailyNotesStore } from '../stores/dailyNotesStore'
 import { useJournalStore } from '../stores/journalStore'
 import { useBookmarkStore } from '../stores/bookmarkStore'
 import { useTabStore } from '../stores/tabStore'
+import { useKeybindingsStore, matchesKeybinding } from '../stores/keybindingsStore'
 import type { ModuleType } from '../types'
 
-const MODULE_MAP: Record<string, ModuleType> = {
-  '1': 'notes',
-  '2': 'dailynotes',
-  '3': 'habits',
-  '4': 'tasks',
-  '5': 'journal',
-  '6': 'bookmarks',
-  '7': 'calendar',
-  '8': 'graph',
-  '9': 'analysis',
+const MODULE_ACTION_MAP: Record<string, ModuleType> = {
+  'navigate:notes': 'notes',
+  'navigate:dailynotes': 'dailynotes',
+  'navigate:habits': 'habits',
+  'navigate:tasks': 'tasks',
+  'navigate:journal': 'journal',
+  'navigate:bookmarks': 'bookmarks',
+  'navigate:calendar': 'calendar',
+  'navigate:graph': 'graph',
+  'navigate:analysis': 'analysis',
 }
 
 export function useKeyboardShortcuts() {
   const { setActiveModule, toggleCommandPalette, toggleFocusMode } = useUIStore()
+  const { keybindings, customKeybindings } = useKeybindingsStore()
+
+  const getEffectiveKeys = useCallback((id: string): string => {
+    return customKeybindings[id] || keybindings.find((k) => k.id === id)?.keys || ''
+  }, [keybindings, customKeybindings])
+
+  const findMatchingKeybinding = useCallback((e: KeyboardEvent) => {
+    for (const kb of keybindings) {
+      const keys = customKeybindings[kb.id] || kb.keys
+      if (matchesKeybinding(e, keys)) {
+        return kb
+      }
+    }
+    return null
+  }, [keybindings, customKeybindings])
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     // Ignore if typing in input/textarea (except for specific shortcuts)
@@ -35,186 +51,203 @@ export function useKeyboardShortcuts() {
       return
     }
 
-    // Ctrl+Shift+F - Focus Mode (works everywhere)
-    if (e.ctrlKey && e.shiftKey && e.key === 'F') {
-      e.preventDefault()
-      toggleFocusMode()
-      return
-    }
-
-    // Ctrl+Shift+N - Notification Center (works everywhere)
-    if (e.ctrlKey && e.shiftKey && e.key === 'N') {
-      e.preventDefault()
-      useUIStore.getState().toggleNotificationCenter()
-      return
-    }
-
-    // Ctrl+K - Command Palette (works everywhere)
-    if (e.ctrlKey && e.key === 'k') {
-      e.preventDefault()
-      toggleCommandPalette()
-      return
-    }
-
-    // Ctrl+? or Ctrl+Shift+/ - Shortcuts Help (works everywhere)
-    if (e.ctrlKey && (e.key === '?' || (e.shiftKey && e.key === '/'))) {
-      e.preventDefault()
-      useUIStore.getState().toggleShortcutsModal()
-      return
-    }
-
-    // Ctrl+/ - Toggle Chat (works everywhere)
-    if (e.ctrlKey && e.key === '/') {
-      e.preventDefault()
-      useChatStore.getState().toggleOpen()
-      return
-    }
-
-    // Alt+U - Global Search (works everywhere)
-    if (e.altKey && e.key === 'u') {
-      e.preventDefault()
-      useUIStore.getState().toggleGlobalSearch()
-      return
-    }
-
-    // Ctrl+T - New tab (in notes module)
-    if (e.ctrlKey && e.key === 't') {
-      e.preventDefault()
-      e.stopPropagation()
-      
-      const { activeModule } = useUIStore.getState()
-      if (activeModule === 'notes') {
-        const noteId = useNoteStore.getState().addNote({
-          title: '',
-          content: '',
-          tags: [],
-        })
-        useNoteStore.getState().setActiveNote(noteId)
-        useTabStore.getState().addTab('note', noteId, 'Untitled')
+    // Find matching keybinding
+    const kb = findMatchingKeybinding(e)
+    if (!kb) {
+      // Handle Escape separately (not customizable)
+      if (e.key === 'Escape') {
+        useUIStore.getState().setCommandPaletteOpen(false)
       }
       return
     }
 
-    // Ctrl+W - Close current tab
-    if (e.ctrlKey && e.key === 'w') {
-      e.preventDefault()
-      e.stopPropagation()
-      
-      const { activeTabId, closeTab } = useTabStore.getState()
-      if (activeTabId) {
-        closeTab(activeTabId)
-      }
-      return
-    }
+    // Some shortcuts work even in inputs
+    const worksInInput = [
+      'system:commandPalette',
+      'system:chat',
+      'focus:toggle',
+      'system:notifications',
+      'system:globalSearch',
+      'action:new',
+    ].includes(kb.action)
 
-    // Ctrl+Tab - Next tab
-    if (e.ctrlKey && e.key === 'Tab') {
-      e.preventDefault()
-      const { tabs, activeTabId, setActiveTab } = useTabStore.getState()
-      if (tabs.length > 1 && activeTabId) {
-        const currentIndex = tabs.findIndex(t => t.id === activeTabId)
-        const nextIndex = e.shiftKey 
-          ? (currentIndex - 1 + tabs.length) % tabs.length 
-          : (currentIndex + 1) % tabs.length
-        setActiveTab(tabs[nextIndex].id)
-        
-        // Also set active note if it's a note tab
-        const nextTab = tabs[nextIndex]
-        if (nextTab.type === 'note' && nextTab.entityId) {
-          useNoteStore.getState().setActiveNote(nextTab.entityId)
-        }
-      }
-      return
-    }
+    if (isInput && !worksInInput) return
 
-    // Ctrl+N - New item (context-aware, works everywhere)
-    if (e.ctrlKey && e.key === 'n') {
-      e.preventDefault()
-      e.stopPropagation()
-      
-      const { activeModule } = useUIStore.getState()
-      
-      switch (activeModule) {
-        case 'notes': {
-          const noteId = useNoteStore.getState().addNote({
-            title: '',
-            content: '',
-            tags: [],
-          })
-          useNoteStore.getState().setActiveNote(noteId)
-          break
-        }
-        case 'tasks': {
-          useTaskStore.getState().addTask({
-            title: 'New Task',
-            description: '',
-            priority: 'P3',
-          })
-          break
-        }
-        case 'dailynotes': {
-          const today = new Date().toISOString().split('T')[0]
-          useDailyNotesStore.getState().addCard(today, {
-            title: 'New Note',
-            content: '',
-            tags: [],
-            pinned: false,
-          })
-          break
-        }
-        case 'journal': {
-          const todayDate = new Date().toISOString().split('T')[0]
-          useJournalStore.getState().addEntry({
-            date: todayDate,
-            content: '',
-            mood: 3,
-            energy: 3,
-            tags: [],
-          })
-          break
-        }
-        case 'bookmarks': {
-          useBookmarkStore.getState().addBookmark({
-            title: 'New Bookmark',
-            url: 'https://',
-            description: '',
-            tags: [],
-            favicon: '',
-          })
-          break
-        }
-        default: {
-          // For other modules, switch to notes and create new note
-          setActiveModule('notes')
-          const newNoteId = useNoteStore.getState().addNote({
-            title: '',
-            content: '',
-            tags: [],
-          })
-          useNoteStore.getState().setActiveNote(newNoteId)
-        }
-      }
-      return
-    }
+    e.preventDefault()
 
-    // Skip remaining shortcuts if in input
-    if (isInput) return
+    // Execute the action
+    switch (kb.action) {
+      // Navigation actions
+      case 'navigate:notes':
+      case 'navigate:dailynotes':
+      case 'navigate:habits':
+      case 'navigate:tasks':
+      case 'navigate:journal':
+      case 'navigate:bookmarks':
+      case 'navigate:calendar':
+      case 'navigate:graph':
+      case 'navigate:analysis':
+        setActiveModule(MODULE_ACTION_MAP[kb.action])
+        break
 
-    // Ctrl+1-5 - Module navigation
-    if (e.ctrlKey && MODULE_MAP[e.key]) {
-      e.preventDefault()
-      setActiveModule(MODULE_MAP[e.key])
-      return
-    }
+      // System actions
+      case 'system:commandPalette':
+        toggleCommandPalette()
+        break
 
-    // Escape - Close modals
-    if (e.key === 'Escape') {
-      useUIStore.getState().setCommandPaletteOpen(false)
+      case 'system:settings':
+        useUIStore.getState().toggleSettings()
+        break
+
+      case 'system:shortcuts':
+        useUIStore.getState().toggleShortcutsModal()
+        break
+
+      case 'system:chat':
+        useChatStore.getState().toggleOpen()
+        break
+
+      case 'system:globalSearch':
+        useUIStore.getState().toggleGlobalSearch()
+        break
+
+      case 'system:notifications':
+        useUIStore.getState().toggleNotificationCenter()
+        break
+
+      // Focus actions
+      case 'focus:toggle':
+        toggleFocusMode()
+        break
+
+      // Item actions
+      case 'action:new':
+        handleNewItem()
+        break
+
+      case 'action:newTab':
+        handleNewTab()
+        break
+
+      case 'action:closeTab':
+        handleCloseTab()
+        break
+
+      case 'action:nextTab':
+        handleSwitchTab(false)
+        break
+
+      case 'action:prevTab':
+        handleSwitchTab(true)
+        break
     }
-  }, [setActiveModule, toggleCommandPalette, toggleFocusMode])
+  }, [setActiveModule, toggleCommandPalette, toggleFocusMode, findMatchingKeybinding])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
+}
+
+// Helper functions for actions
+function handleNewItem() {
+  const { activeModule } = useUIStore.getState()
+
+  switch (activeModule) {
+    case 'notes': {
+      const noteId = useNoteStore.getState().addNote({
+        title: '',
+        content: '',
+        tags: [],
+      })
+      useNoteStore.getState().setActiveNote(noteId)
+      break
+    }
+    case 'tasks': {
+      useTaskStore.getState().addTask({
+        title: 'New Task',
+        description: '',
+        priority: 'P3',
+      })
+      break
+    }
+    case 'dailynotes': {
+      const today = new Date().toISOString().split('T')[0]
+      useDailyNotesStore.getState().addCard(today, {
+        title: 'New Note',
+        content: '',
+        tags: [],
+        pinned: false,
+      })
+      break
+    }
+    case 'journal': {
+      const todayDate = new Date().toISOString().split('T')[0]
+      useJournalStore.getState().addEntry({
+        date: todayDate,
+        content: '',
+        mood: 3,
+        energy: 3,
+        tags: [],
+      })
+      break
+    }
+    case 'bookmarks': {
+      useBookmarkStore.getState().addBookmark({
+        title: 'New Bookmark',
+        url: 'https://',
+        description: '',
+        tags: [],
+        favicon: '',
+      })
+      break
+    }
+    default: {
+      // For other modules, switch to notes and create new note
+      useUIStore.getState().setActiveModule('notes')
+      const newNoteId = useNoteStore.getState().addNote({
+        title: '',
+        content: '',
+        tags: [],
+      })
+      useNoteStore.getState().setActiveNote(newNoteId)
+    }
+  }
+}
+
+function handleNewTab() {
+  const { activeModule } = useUIStore.getState()
+  if (activeModule === 'notes') {
+    const noteId = useNoteStore.getState().addNote({
+      title: '',
+      content: '',
+      tags: [],
+    })
+    useNoteStore.getState().setActiveNote(noteId)
+    useTabStore.getState().addTab('note', noteId, 'Untitled')
+  }
+}
+
+function handleCloseTab() {
+  const { activeTabId, closeTab } = useTabStore.getState()
+  if (activeTabId) {
+    closeTab(activeTabId)
+  }
+}
+
+function handleSwitchTab(reverse: boolean) {
+  const { tabs, activeTabId, setActiveTab } = useTabStore.getState()
+  if (tabs.length > 1 && activeTabId) {
+    const currentIndex = tabs.findIndex((t) => t.id === activeTabId)
+    const nextIndex = reverse
+      ? (currentIndex - 1 + tabs.length) % tabs.length
+      : (currentIndex + 1) % tabs.length
+    setActiveTab(tabs[nextIndex].id)
+
+    // Also set active note if it's a note tab
+    const nextTab = tabs[nextIndex]
+    if (nextTab.type === 'note' && nextTab.entityId) {
+      useNoteStore.getState().setActiveNote(nextTab.entityId)
+    }
+  }
 }
