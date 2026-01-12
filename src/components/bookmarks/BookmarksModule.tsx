@@ -1,8 +1,114 @@
 import { useState } from 'react'
 import { useBookmarkStore, getFilteredBookmarks } from '../../stores/bookmarkStore'
+import { useNoteStore } from '../../stores/noteStore'
+import { useTaskStore } from '../../stores/taskStore'
+import { useHabitStore } from '../../stores/habitStore'
+import { useUIStore } from '../../stores/uiStore'
 import { useTranslation } from '../../i18n'
 import type { Bookmark } from '../../types'
 import { parseTags } from '../../utils/storage'
+
+// Parse and render description with wikilinks
+function RenderDescription({ text }: { text: string }) {
+  const notes = useNoteStore((s) => s.notes)
+  const tasks = useTaskStore((s) => s.tasks)
+  const habits = useHabitStore((s) => s.habits)
+  const setActiveModule = useUIStore((s) => s.setActiveModule)
+
+  // Parse wikilinks: [[Note Name]], @task:Task Name, @habit:Habit Name
+  const parts: Array<{ type: 'text' | 'note' | 'task' | 'habit'; content: string; id?: string }> = []
+  // Regex patterns
+  const wikiLinkRegex = /\[\[([^\]]+)\]\]/g
+  const taskLinkRegex = /@task:([^@\n]+)/g
+  const habitLinkRegex = /@habit:([^@\n]+)/g
+
+  // Find all matches and their positions
+  const matches: Array<{ index: number; length: number; type: 'note' | 'task' | 'habit'; name: string }> = []
+
+  let match
+  while ((match = wikiLinkRegex.exec(text)) !== null) {
+    matches.push({ index: match.index, length: match[0].length, type: 'note', name: match[1] })
+  }
+  while ((match = taskLinkRegex.exec(text)) !== null) {
+    matches.push({ index: match.index, length: match[0].length, type: 'task', name: match[1].trim() })
+  }
+  while ((match = habitLinkRegex.exec(text)) !== null) {
+    matches.push({ index: match.index, length: match[0].length, type: 'habit', name: match[1].trim() })
+  }
+
+  // Sort by index
+  matches.sort((a, b) => a.index - b.index)
+
+  // Build parts array
+  let lastIndex = 0
+  for (const m of matches) {
+    if (m.index > lastIndex) {
+      parts.push({ type: 'text', content: text.slice(lastIndex, m.index) })
+    }
+
+    let id: string | undefined
+    if (m.type === 'note') {
+      const note = notes.find(n => n.title.toLowerCase() === m.name.toLowerCase())
+      id = note?.id
+    } else if (m.type === 'task') {
+      const task = tasks.find(t => t.title.toLowerCase() === m.name.toLowerCase())
+      id = task?.id
+    } else if (m.type === 'habit') {
+      const habit = habits.find(h => h.name.toLowerCase() === m.name.toLowerCase())
+      id = habit?.id
+    }
+
+    parts.push({ type: m.type, content: m.name, id })
+    lastIndex = m.index + m.length
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({ type: 'text', content: text.slice(lastIndex) })
+  }
+
+  const handleLinkClick = (type: 'note' | 'task' | 'habit') => {
+    if (type === 'note') {
+      setActiveModule('notes')
+    } else if (type === 'task') {
+      setActiveModule('tasks')
+    } else if (type === 'habit') {
+      setActiveModule('habits')
+    }
+  }
+
+  return (
+    <span className="text-sm text-np-text-secondary">
+      {parts.map((part, i) => {
+        if (part.type === 'text') {
+          return <span key={i}>{part.content}</span>
+        }
+
+        const colors = {
+          note: 'text-np-cyan',
+          task: 'text-np-orange',
+          habit: 'text-np-green',
+        }
+
+        const icons = {
+          note: '📝',
+          task: '✅',
+          habit: '🔄',
+        }
+
+        return (
+          <button
+            key={i}
+            onClick={() => handleLinkClick(part.type as 'note' | 'task' | 'habit')}
+            className={`${colors[part.type as keyof typeof colors]} hover:underline ${!part.id ? 'opacity-50' : ''}`}
+            title={part.id ? `Go to ${part.type}: ${part.content}` : `${part.type} not found: ${part.content}`}
+          >
+            {icons[part.type as keyof typeof icons]} {part.content}
+          </button>
+        )
+      })}
+    </span>
+  )
+}
 
 const COLLECTIONS = [
   { name: 'Gold', emoji: '🥇' },
@@ -32,7 +138,7 @@ export function BookmarksModule() {
   } = useBookmarkStore()
 
   const [showAddForm, setShowAddForm] = useState(false)
-  const [newBookmark, setNewBookmark] = useState({ url: '', title: '', tags: '', collection: 'Unsorted' })
+  const [newBookmark, setNewBookmark] = useState({ url: '', title: '', description: '', tags: '', collection: 'Unsorted' })
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const filteredBookmarks = getFilteredBookmarks(useBookmarkStore.getState())
@@ -56,11 +162,12 @@ export function BookmarksModule() {
     addBookmark({
       url: newBookmark.url.trim(),
       title,
+      description: newBookmark.description.trim() || undefined,
       tags: parseTags(newBookmark.tags),
       collection: newBookmark.collection,
     })
 
-    setNewBookmark({ url: '', title: '', tags: '', collection: 'Unsorted' })
+    setNewBookmark({ url: '', title: '', description: '', tags: '', collection: 'Unsorted' })
     setShowAddForm(false)
   }
 
@@ -78,9 +185,8 @@ export function BookmarksModule() {
           <div className="text-xs text-np-text-secondary mb-2">{language === 'tr' ? 'Koleksiyonlar' : 'Collections'}</div>
           <button
             onClick={() => setSelectedCollection(null)}
-            className={`w-full text-left px-2 py-1 text-sm flex items-center justify-between ${
-              !selectedCollection ? 'bg-np-selection text-np-text-primary' : 'text-np-text-secondary hover:bg-np-bg-tertiary'
-            }`}
+            className={`w-full text-left px-2 py-1 text-sm flex items-center justify-between ${!selectedCollection ? 'bg-np-selection text-np-text-primary' : 'text-np-text-secondary hover:bg-np-bg-tertiary'
+              }`}
           >
             <span>📚 {language === 'tr' ? 'Tüm yer imleri' : 'All bookmarks'}</span>
             <span className="text-xs">{bookmarks.length}</span>
@@ -92,9 +198,8 @@ export function BookmarksModule() {
               <button
                 key={col.name}
                 onClick={() => setSelectedCollection(col.name)}
-                className={`w-full text-left px-2 py-1 text-sm flex items-center justify-between ${
-                  selectedCollection === col.name ? 'bg-np-selection text-np-text-primary' : 'text-np-text-secondary hover:bg-np-bg-tertiary'
-                }`}
+                className={`w-full text-left px-2 py-1 text-sm flex items-center justify-between ${selectedCollection === col.name ? 'bg-np-selection text-np-text-primary' : 'text-np-text-secondary hover:bg-np-bg-tertiary'
+                  }`}
               >
                 <span>{col.emoji} {col.name}</span>
                 <span className="text-xs">{count}</span>
@@ -111,9 +216,8 @@ export function BookmarksModule() {
               <button
                 key={tag}
                 onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                className={`w-full text-left px-2 py-1 text-sm flex items-center justify-between ${
-                  selectedTag === tag ? 'bg-np-purple/20 text-np-purple' : 'text-np-text-secondary hover:bg-np-bg-tertiary'
-                }`}
+                className={`w-full text-left px-2 py-1 text-sm flex items-center justify-between ${selectedTag === tag ? 'bg-np-purple/20 text-np-purple' : 'text-np-text-secondary hover:bg-np-bg-tertiary'
+                  }`}
               >
                 <span># {tag}</span>
                 <span className="text-xs">{count}</span>
@@ -183,6 +287,12 @@ export function BookmarksModule() {
                 onKeyDown={handleKeyDown}
                 placeholder={language === 'tr' ? 'Başlık (opsiyonel)' : 'Title (optional)'}
                 className="w-full np-input"
+              />
+              <textarea
+                value={newBookmark.description}
+                onChange={(e) => setNewBookmark({ ...newBookmark, description: e.target.value })}
+                placeholder={language === 'tr' ? 'Açıklama - [[Not Adı]] veya @task:Görev Adı ile linkle' : 'Description - link with [[Note Name]] or @task:Task Name'}
+                className="w-full np-input h-16 resize-none"
               />
               <div className="flex gap-2">
                 <input
@@ -271,6 +381,7 @@ function BookmarkItem({
 }: BookmarkItemProps) {
   const [editData, setEditData] = useState({
     title: bookmark.title,
+    description: bookmark.description || '',
     tags: bookmark.tags.join(', '),
     collection: bookmark.collection || 'Unsorted',
   })
@@ -293,6 +404,13 @@ function BookmarkItem({
           value={editData.title}
           onChange={(e) => setEditData({ ...editData, title: e.target.value })}
           className="w-full np-input mb-2"
+          placeholder="Title"
+        />
+        <textarea
+          value={editData.description}
+          onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+          placeholder="Description - link with [[Note Name]] or @task:Task Name"
+          className="w-full np-input h-16 resize-none mb-2"
         />
         <div className="flex gap-2 mb-2">
           <input
@@ -319,6 +437,7 @@ function BookmarkItem({
             onClick={() =>
               onUpdate({
                 title: editData.title,
+                description: editData.description.trim() || undefined,
                 tags: parseTags(editData.tags),
                 collection: editData.collection,
               })
@@ -337,9 +456,8 @@ function BookmarkItem({
 
   return (
     <div
-      className={`p-3 border-b border-np-border hover:bg-np-bg-tertiary transition-colors group ${
-        bookmark.isRead ? 'opacity-60' : ''
-      }`}
+      className={`p-3 border-b border-np-border hover:bg-np-bg-tertiary transition-colors group ${bookmark.isRead ? 'opacity-60' : ''
+        }`}
     >
       <div className="flex items-start gap-3">
         {/* Favicon placeholder */}
@@ -364,6 +482,11 @@ function BookmarkItem({
             <span>·</span>
             <span>{formatDate(bookmark.createdAt)}</span>
           </div>
+          {bookmark.description && (
+            <div className="mt-1">
+              <RenderDescription text={bookmark.description} />
+            </div>
+          )}
           {bookmark.tags.length > 0 && (
             <div className="flex gap-1 mt-1 flex-wrap">
               {bookmark.tags.map((tag) => (
