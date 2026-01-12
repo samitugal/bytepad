@@ -1,1 +1,5 @@
 export { TasksModule } from './TasksModule'
+export { TaskFilters } from './TaskFilters'
+export { NewTaskForm, EditTaskModal } from './TaskForm'
+export { TaskList } from './TaskList'
+export { SortableTaskItem, CompletedTaskItem, LinkedDescription } from './TaskItem'
