@@ -29,7 +29,7 @@ export const useI18nStore = create<I18nState>()(
             setLanguage: (language) => set({ language }),
         }),
         {
-            name: 'myflowspace-i18n',
+            name: 'bytepad-i18n',
         }
     )
 )

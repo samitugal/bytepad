@@ -15,10 +15,11 @@ export function HabitsModule() {
   useEffect(() => {
     recordDailyStats()
   }, [])
-  const [newHabit, setNewHabit] = useState({ 
-    name: '', 
-    category: 'personal', 
+  const [newHabit, setNewHabit] = useState({
+    name: '',
+    category: 'personal',
     frequency: 'daily' as const,
+    tags: '' as string, // comma-separated tags input
     reminderEnabled: false,
     reminderTime: '09:00'
   })
@@ -28,8 +29,19 @@ export function HabitsModule() {
 
   const handleAdd = () => {
     if (!newHabit.name.trim()) return
-    addHabit(newHabit)
-    setNewHabit({ name: '', category: 'personal', frequency: 'daily', reminderEnabled: false, reminderTime: '09:00' })
+    const tags = newHabit.tags
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0)
+    addHabit({
+      name: newHabit.name,
+      category: newHabit.category,
+      frequency: newHabit.frequency,
+      tags: tags.length > 0 ? tags : undefined,
+      reminderEnabled: newHabit.reminderEnabled,
+      reminderTime: newHabit.reminderTime
+    })
+    setNewHabit({ name: '', category: 'personal', frequency: 'daily', tags: '', reminderEnabled: false, reminderTime: '09:00' })
     setShowForm(false)
   }
 
@@ -79,6 +91,16 @@ export function HabitsModule() {
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
+          </div>
+          {/* Tags input */}
+          <div className="mb-2">
+            <input
+              type="text"
+              value={newHabit.tags}
+              onChange={(e) => setNewHabit({ ...newHabit, tags: e.target.value })}
+              placeholder="Tags (comma separated)..."
+              className="w-full np-input text-sm"
+            />
           </div>
           {/* Reminder settings */}
           <div className="flex items-center gap-3 mb-2">
@@ -159,18 +181,28 @@ export function HabitsModule() {
                         {habit.name}
                       </span>
                     )}
-                    <div className="flex items-center gap-2 mt-1 text-xs text-np-text-secondary">
+                    <div className="flex items-center flex-wrap gap-2 mt-1 text-xs text-np-text-secondary">
                       <span className="text-np-purple">#{habit.category}</span>
+                      {habit.tags && habit.tags.length > 0 && habit.tags.map((tag, idx) => (
+                        <span key={idx} className="text-np-cyan">#{tag}</span>
+                      ))}
                       {habit.streak > 0 && (
                         <span className="text-np-orange">🔥 {habit.streak} day streak</span>
                       )}
                       {habit.reminderEnabled && habit.reminderTime && (
-                        <span className="text-np-cyan">🔔 {habit.reminderTime}</span>
+                        <span className="text-np-blue">🔔 {habit.reminderTime}</span>
                       )}
                     </div>
                   </div>
 
                   {/* Actions */}
+                  <button
+                    onClick={() => setEditingId(habit.id)}
+                    className="text-np-text-secondary hover:text-np-blue text-sm px-1"
+                    title="Edit habit"
+                  >
+                    ✎
+                  </button>
                   <button
                     onClick={() => deleteHabit(habit.id)}
                     className="text-np-text-secondary hover:text-np-error text-sm px-2"

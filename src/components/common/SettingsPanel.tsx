@@ -84,7 +84,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     const handleExport = () => {
         const data = exportAllData()
         const date = new Date().toISOString().split('T')[0]
-        downloadAsJson(data, `myflowspace-backup-${date}.json`)
+        downloadAsJson(data, `bytepad-backup-${date}.json`)
     }
 
     const handleImportClick = () => {
@@ -161,7 +161,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                 setIsGistSyncing(false)
                 return
             }
-            const gistId = await createGist(gistSync.githubToken, 'MyFlowSpace Data Sync')
+            const gistId = await createGist(gistSync.githubToken, 'bytepad Data Sync')
             setGistSync({ gistId, enabled: true })
             setGistSyncStatus(`Gist created! ID: ${gistId}`)
             startAutoSync()
@@ -291,7 +291,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
                 {/* Footer */}
                 <div className="px-4 py-2 border-t border-np-border text-xs text-np-text-secondary flex justify-between shrink-0">
-                    <span>MyFlowSpace v0.11.0</span>
+                    <span>bytepad v0.15.0</span>
                     <span>Ctrl+, to open settings</span>
                 </div>
             </div>
@@ -870,7 +870,7 @@ function SyncTab({
                         />
                         <p className="text-xs text-np-text-secondary mt-1">
                             <a
-                                href="https://github.com/settings/tokens/new?scopes=gist&description=MyFlowSpace"
+                                href="https://github.com/settings/tokens/new?scopes=gist&description=bytepad"
                                 target="_blank"
                                 rel="noopener"
                                 className="text-np-blue hover:underline"

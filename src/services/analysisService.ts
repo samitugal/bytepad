@@ -330,7 +330,7 @@ export async function generateAIInsights(stats: WeeklyStats): Promise<{
 }
 
 function buildAIInsightsPrompt(stats: WeeklyStats): string {
-  return `Sen bir ADHD koçusun. Aşağıdaki haftalık verileri analiz et ve kişiselleştirilmiş öneriler sun.
+  return `Sen bir verimlilik koçusun. Aşağıdaki haftalık verileri analiz et ve kişiselleştirilmiş öneriler sun.
 
 ## Haftalık Veriler (${stats.weekStart} - ${stats.weekEnd})
 
@@ -356,9 +356,9 @@ function buildAIInsightsPrompt(stats: WeeklyStats): string {
 - Enerji trendi: ${stats.journal.energyTrend.join(', ')}
 
 ## Görevin
-1. Bu verilerdeki ADHD-spesifik pattern'leri tespit et (hyperfocus, enerji dalgalanmaları, tutarsızlık vb.)
+1. Bu verilerdeki verimlilik pattern'lerini tespit et (odaklanma, enerji dalgalanmaları, tutarlılık vb.)
 2. 3-4 kısa insight yaz (her biri max 1 cümle)
-3. 3-4 pratik öneri yaz (ADHD-friendly, küçük adımlar)
+3. 3-4 pratik öneri yaz (uygulanabilir, küçük adımlar)
 4. 2-3 cümlelik genel bir özet yaz
 
 ## Format (JSON olarak yanıtla)
@@ -379,7 +379,7 @@ async function callLLMForInsights(
   ollamaBaseUrl: string
 ): Promise<string> {
   const messages = [
-    { role: 'system', content: 'Sen bir ADHD koçusun. JSON formatında yanıt ver.' },
+    { role: 'system', content: 'Sen bir verimlilik koçusun. JSON formatında yanıt ver.' },
     { role: 'user', content: prompt },
   ]
 

@@ -325,6 +325,18 @@ export function TasksModule() {
                       {isExpanded ? '▼' : '▶'}
                     </span>
 
+                    {/* Edit */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setExpandedTask(isExpanded ? null : task.id)
+                      }}
+                      className="text-np-text-secondary hover:text-np-blue text-sm px-1"
+                      title="Edit task"
+                    >
+                      ✎
+                    </button>
+
                     {/* Delete */}
                     <button
                       onClick={(e) => {
@@ -478,6 +490,13 @@ export function TasksModule() {
                         {new Date(task.completedAt).toLocaleDateString('tr-TR')}
                       </span>
                     )}
+                    <button
+                      onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+                      className="text-np-text-secondary hover:text-np-blue text-sm px-1"
+                      title="Edit task"
+                    >
+                      ✎
+                    </button>
                     <button
                       onClick={() => handleDeleteTask(task.id, task.title)}
                       className="text-np-text-secondary hover:text-np-error text-sm px-1"

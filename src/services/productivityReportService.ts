@@ -296,7 +296,7 @@ export function collectProductivityData(period: 'daily' | 'weekly'): Productivit
 function buildReportPrompt(data: ProductivityData): string {
   const periodLabel = data.period === 'daily' ? 'Bugünkü' : 'Haftalık'
 
-  return `Sen bir ADHD-uzmanı productivity koçusun. Aşağıdaki ${periodLabel.toLowerCase()} verileri analiz et ve kapsamlı bir rapor oluştur.
+  return `Sen bir verimlilik koçusun. Aşağıdaki ${periodLabel.toLowerCase()} verileri analiz et ve kapsamlı bir rapor oluştur.
 
 ## Dönem: ${data.dateRange.start} - ${data.dateRange.end}
 
@@ -369,7 +369,7 @@ function buildReportPrompt(data: ProductivityData): string {
 
 ## Kurallar
 - Pozitif ve motive edici ol, ama gerçekçi
-- ADHD perspektifinden değerlendir
+- Verimlilik perspektifinden değerlendir
 - Somut, ölçülebilir öneriler ver
 - Küçük kazanımları kutla
 - Sadece JSON döndür`
@@ -381,7 +381,7 @@ async function callLLMForReport(prompt: string): Promise<string> {
   const { llmProvider, llmModel, apiKeys, ollamaBaseUrl } = settings
 
   const messages = [
-    { role: 'system', content: 'Sen bir ADHD productivity koçusun. JSON formatında yanıt ver.' },
+    { role: 'system', content: 'Sen bir verimlilik koçusun. JSON formatında yanıt ver.' },
     { role: 'user', content: prompt },
   ]
 

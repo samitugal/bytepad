@@ -18,6 +18,7 @@ export interface Habit {
   name: string
   frequency: 'daily' | 'weekly'
   category: string
+  tags?: string[] // Custom tags
   completions: Record<string, boolean>
   streak: number
   createdAt: Date
