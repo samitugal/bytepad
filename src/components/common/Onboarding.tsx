@@ -3,12 +3,12 @@ import { useSettingsStore } from '../../stores/settingsStore'
 
 const STEPS = [
   {
-    title: 'Welcome to MyFlowSpace',
-    subtitle: 'Your ADHD-friendly productivity companion',
+    title: 'Welcome to bytepad',
+    subtitle: 'Your keyboard-first productivity companion',
     content: (
       <div className="space-y-4">
         <p className="text-np-text-secondary">
-          MyFlowSpace is designed with ADHD minds in mind. It combines notes, tasks, habits,
+          bytepad is designed for focused productivity. It combines notes, tasks, habits,
           journal, and an AI coach - all with a keyboard-first approach.
         </p>
         <div className="bg-np-bg-tertiary p-4 border border-np-border">
@@ -78,11 +78,11 @@ const STEPS = [
   },
   {
     title: 'FlowBot AI Coach',
-    subtitle: 'Your ADHD-aware assistant',
+    subtitle: 'Your productivity assistant',
     content: (
       <div className="space-y-4">
         <p className="text-np-text-secondary">
-          FlowBot understands ADHD challenges and helps you stay on track.
+          FlowBot helps you stay on track and boost your productivity.
           Access it anytime with <kbd className="np-kbd">Ctrl+/</kbd>
         </p>
         <div className="bg-np-bg-tertiary p-4 border border-np-border">

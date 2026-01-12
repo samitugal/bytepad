@@ -21,7 +21,7 @@ function buildSystemPrompt(): string {
   const dayOfWeek = days[now.getDay()]
   const remainingHours = 24 - now.getHours()
 
-  return `You are FlowBot, an ADHD-friendly productivity coach. ALWAYS respond in Turkish.
+  return `You are FlowBot, a productivity assistant. ALWAYS respond in Turkish.
 
 CURRENT TIME: ${currentDate} (${dayOfWeek}), Saat: ${currentTime}, Kalan saat: ${remainingHours}
 
