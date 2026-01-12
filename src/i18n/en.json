@@ -161,6 +161,7 @@
         "filter": "Filter",
         "sort": "Sort",
         "created": "Created",
+        "manual": "Manual",
         "taskTitle": "Task title...",
         "descriptionOptional": "Description (optional)...",
         "start": "Start",

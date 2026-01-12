@@ -3,6 +3,23 @@ import { useTaskStore, getFilteredTasks } from '../../stores/taskStore'
 import { DateTimePicker, ConfirmModal } from '../common'
 import { useTranslation } from '../../i18n'
 import type { Task } from '../../types'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 const PRIORITIES = ['P1', 'P2', 'P3', 'P4'] as const
 const PRIORITY_COLORS = {
@@ -15,9 +32,37 @@ const PRIORITY_COLORS = {
 export function TasksModule() {
   const { t } = useTranslation()
   const store = useTaskStore()
-  const { addTask, deleteTask, toggleTask, updateTask, addSubtask, toggleSubtask, deleteSubtask, filter, setFilter, sortBy, setSortBy } = store
+  const { addTask, deleteTask, toggleTask, updateTask, addSubtask, toggleSubtask, deleteSubtask, filter, setFilter, sortBy, setSortBy, reorderTasks } = store
   const allTasks = store.tasks
   const filteredTasks = getFilteredTasks(store)
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // Handle drag end - reorder tasks
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = activeTasks.findIndex(t => t.id === active.id)
+      const newIndex = activeTasks.findIndex(t => t.id === over.id)
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reorderedTasks = arrayMove(activeTasks, oldIndex, newIndex)
+        const taskIds = reorderedTasks.map(t => t.id)
+        reorderTasks(taskIds)
+      }
+    }
+  }
 
   // Separate active and completed tasks
   const activeTasks = filteredTasks.filter(t => !t.completed)
@@ -190,13 +235,13 @@ export function TasksModule() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-np-text-secondary">{t('tasks.sort')}:</span>
-          {(['priority', 'deadline', 'created'] as const).map((s) => (
+          {(['priority', 'deadline', 'created', 'manual'] as const).map((s) => (
             <button
               key={s}
               onClick={() => setSortBy(s)}
               className={`px-2 py-0.5 ${sortBy === s ? 'bg-np-selection text-np-text-primary' : 'text-np-text-secondary hover:text-np-text-primary'}`}
             >
-              {t(`tasks.${s}`)}
+              {s === 'manual' ? (t('tasks.manual') || 'Manual') : t(`tasks.${s}`)}
             </button>
           ))}
         </div>
@@ -305,196 +350,38 @@ export function TasksModule() {
             </div>
           </div>
         ) : (
-          <div className="space-y-2">
-            {activeTasks.map((task) => {
-              const isExpanded = expandedTask === task.id
-              const completedSubtasks = task.subtasks.filter(s => s.completed).length
-
-              return (
-                <div
-                  key={task.id}
-                  className="border border-np-border bg-np-bg-secondary transition-colors"
-                >
-                  {/* Main row */}
-                  <div
-                    className="p-3 flex items-center gap-3 cursor-pointer hover:bg-np-bg-hover"
-                    onClick={() => setExpandedTask(isExpanded ? null : task.id)}
-                  >
-                    {/* Checkbox */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        toggleTask(task.id)
-                      }}
-                      className="w-5 h-5 border border-np-text-secondary hover:border-np-green flex items-center justify-center text-sm transition-colors"
-                    >
-                      {task.completed && '✓'}
-                    </button>
-
-                    {/* Priority badge */}
-                    <span className={`text-xs font-bold ${PRIORITY_COLORS[task.priority]}`}>
-                      [{task.priority}]
-                    </span>
-
-                    {/* Title */}
-                    <span className="flex-1 text-np-text-primary">
-                      {task.title}
-                    </span>
-
-                    {/* Subtask count badge */}
-                    {task.subtasks.length > 0 && (
-                      <span className={`text-xs px-2 py-0.5 rounded ${completedSubtasks === task.subtasks.length
-                        ? 'bg-np-green/20 text-np-green'
-                        : 'bg-np-bg-tertiary text-np-text-secondary'
-                        }`}>
-                        {completedSubtasks}/{task.subtasks.length}
-                      </span>
-                    )}
-
-                    {/* Time block indicator */}
-                    {task.startTime && (
-                      <span className="text-xs text-np-cyan">
-                        {task.startTime}{task.deadlineTime && ` - ${task.deadlineTime}`}
-                      </span>
-                    )}
-
-                    {/* Deadline */}
-                    {task.deadline && !task.startTime && (
-                      <span className="text-xs text-np-orange">
-                        {new Date(task.deadline).toLocaleDateString('tr-TR')}
-                      </span>
-                    )}
-
-                    {/* Reminder indicator */}
-                    {task.reminderEnabled && (
-                      <span className="text-xs">🔔</span>
-                    )}
-
-                    {/* Expand indicator */}
-                    <span className="text-np-text-secondary text-xs">
-                      {isExpanded ? '▼' : '▶'}
-                    </span>
-
-                    {/* Edit */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        openEditTaskModal(task.id)
-                      }}
-                      className="text-np-text-secondary hover:text-np-blue text-sm px-1"
-                      title="Edit task"
-                    >
-                      ✎
-                    </button>
-
-                    {/* Delete */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDeleteTask(task.id, task.title)
-                      }}
-                      className="text-np-text-secondary hover:text-np-error text-sm px-2"
-                    >
-                      ×
-                    </button>
-                  </div>
-
-                  {/* Expanded content with subtasks */}
-                  {isExpanded && (
-                    <div className="px-3 pb-3 border-t border-np-border bg-np-bg-primary">
-                      {/* Description */}
-                      {task.description && (
-                        <p className="text-sm text-np-text-secondary py-2 border-b border-np-border mb-2">
-                          {task.description}
-                        </p>
-                      )}
-
-                      {/* Subtasks */}
-                      {task.subtasks.length > 0 && (
-                        <div className="py-2 space-y-1">
-                          <div className="text-xs text-np-text-secondary mb-2">// {t('tasks.subtasks')}</div>
-                          {task.subtasks.map((subtask) => (
-                            <div
-                              key={subtask.id}
-                              className="flex items-center gap-2 pl-4 py-1 hover:bg-np-bg-hover group"
-                            >
-                              <button
-                                onClick={() => toggleSubtask(task.id, subtask.id)}
-                                className={`w-4 h-4 border flex items-center justify-center text-xs transition-colors
-                                  ${subtask.completed
-                                    ? 'bg-np-green border-np-green text-np-bg-primary'
-                                    : 'border-np-text-secondary hover:border-np-green'
-                                  }`}
-                              >
-                                {subtask.completed && '✓'}
-                              </button>
-                              <span className={`flex-1 text-sm ${subtask.completed ? 'line-through text-np-text-secondary' : 'text-np-text-primary'}`}>
-                                {subtask.title}
-                              </span>
-                              <button
-                                onClick={() => deleteSubtask(task.id, subtask.id)}
-                                className="text-np-text-secondary hover:text-np-error text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Add subtask input */}
-                      <div className="flex gap-2 py-2 border-t border-np-border mt-2">
-                        <input
-                          type="text"
-                          value={newSubtaskTitle}
-                          onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              handleAddSubtask(task.id)
-                            }
-                          }}
-                          placeholder={t('tasks.addSubtask')}
-                          className="flex-1 np-input text-sm"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleAddSubtask(task.id)
-                          }}
-                          className="np-btn text-xs text-np-green"
-                        >
-                          + {t('tasks.add')}
-                        </button>
-                      </div>
-
-                      {/* Task settings */}
-                      <div className="flex gap-2 pt-2 border-t border-np-border">
-                        <input
-                          type="date"
-                          value={task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : ''}
-                          onChange={(e) => updateTask(task.id, { deadline: e.target.value ? new Date(e.target.value) : undefined })}
-                          onClick={(e) => e.stopPropagation()}
-                          className="np-input text-xs"
-                        />
-                        <select
-                          value={task.priority}
-                          onChange={(e) => updateTask(task.id, { priority: e.target.value as Task['priority'] })}
-                          onClick={(e) => e.stopPropagation()}
-                          className="np-input text-xs"
-                        >
-                          {PRIORITIES.map(p => (
-                            <option key={p} value={p}>{p}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={activeTasks.map(t => t.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {activeTasks.map((task) => (
+                  <SortableTaskItem
+                    key={task.id}
+                    task={task}
+                    isExpanded={expandedTask === task.id}
+                    onToggleExpand={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+                    onToggleTask={toggleTask}
+                    onEditTask={openEditTaskModal}
+                    onDeleteTask={handleDeleteTask}
+                    onToggleSubtask={toggleSubtask}
+                    onDeleteSubtask={deleteSubtask}
+                    onAddSubtask={handleAddSubtask}
+                    onUpdateTask={updateTask}
+                    newSubtaskTitle={newSubtaskTitle}
+                    setNewSubtaskTitle={setNewSubtaskTitle}
+                    t={t}
+                    isDraggable={sortBy === 'manual'}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
 
         {/* Done Section */}
@@ -703,6 +590,257 @@ export function TasksModule() {
         onConfirm={confirmDeleteTask}
         onCancel={() => setDeleteConfirm({ isOpen: false, taskId: null, title: '' })}
       />
+    </div>
+  )
+}
+
+// Sortable Task Item Component
+interface SortableTaskItemProps {
+  task: Task
+  isExpanded: boolean
+  onToggleExpand: () => void
+  onToggleTask: (id: string) => void
+  onEditTask: (id: string) => void
+  onDeleteTask: (id: string, title: string) => void
+  onToggleSubtask: (taskId: string, subtaskId: string) => void
+  onDeleteSubtask: (taskId: string, subtaskId: string) => void
+  onAddSubtask: (taskId: string) => void
+  onUpdateTask: (id: string, updates: Partial<Task>) => void
+  newSubtaskTitle: string
+  setNewSubtaskTitle: (title: string) => void
+  t: (key: string, params?: Record<string, string | number>) => string
+  isDraggable: boolean
+}
+
+function SortableTaskItem({
+  task,
+  isExpanded,
+  onToggleExpand,
+  onToggleTask,
+  onEditTask,
+  onDeleteTask,
+  onToggleSubtask,
+  onDeleteSubtask,
+  onAddSubtask,
+  onUpdateTask,
+  newSubtaskTitle,
+  setNewSubtaskTitle,
+  t,
+  isDraggable,
+}: SortableTaskItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id, disabled: !isDraggable })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
+  }
+
+  const completedSubtasks = task.subtasks.filter(s => s.completed).length
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`border border-np-border bg-np-bg-secondary transition-colors ${isDragging ? 'shadow-lg ring-2 ring-np-blue' : ''}`}
+    >
+      {/* Main row */}
+      <div
+        className="p-3 flex items-center gap-3 cursor-pointer hover:bg-np-bg-hover"
+        onClick={onToggleExpand}
+      >
+        {/* Drag handle - only show when in manual sort mode */}
+        {isDraggable && (
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing text-np-text-secondary hover:text-np-text-primary px-1"
+            onClick={(e) => e.stopPropagation()}
+            title="Drag to reorder"
+          >
+            ⋮⋮
+          </button>
+        )}
+
+        {/* Checkbox */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleTask(task.id)
+          }}
+          className="w-5 h-5 border border-np-text-secondary hover:border-np-green flex items-center justify-center text-sm transition-colors"
+        >
+          {task.completed && '✓'}
+        </button>
+
+        {/* Priority badge */}
+        <span className={`text-xs font-bold ${PRIORITY_COLORS[task.priority]}`}>
+          [{task.priority}]
+        </span>
+
+        {/* Title */}
+        <span className="flex-1 text-np-text-primary">
+          {task.title}
+        </span>
+
+        {/* Subtask count badge */}
+        {task.subtasks.length > 0 && (
+          <span className={`text-xs px-2 py-0.5 rounded ${completedSubtasks === task.subtasks.length
+            ? 'bg-np-green/20 text-np-green'
+            : 'bg-np-bg-tertiary text-np-text-secondary'
+            }`}>
+            {completedSubtasks}/{task.subtasks.length}
+          </span>
+        )}
+
+        {/* Time block indicator */}
+        {task.startTime && (
+          <span className="text-xs text-np-cyan">
+            {task.startTime}{task.deadlineTime && ` - ${task.deadlineTime}`}
+          </span>
+        )}
+
+        {/* Deadline */}
+        {task.deadline && !task.startTime && (
+          <span className="text-xs text-np-orange">
+            {new Date(task.deadline).toLocaleDateString('tr-TR')}
+          </span>
+        )}
+
+        {/* Reminder indicator */}
+        {task.reminderEnabled && (
+          <span className="text-xs">🔔</span>
+        )}
+
+        {/* Expand indicator */}
+        <span className="text-np-text-secondary text-xs">
+          {isExpanded ? '▼' : '▶'}
+        </span>
+
+        {/* Edit */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onEditTask(task.id)
+          }}
+          className="text-np-text-secondary hover:text-np-blue text-sm px-1"
+          title="Edit task"
+        >
+          ✎
+        </button>
+
+        {/* Delete */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onDeleteTask(task.id, task.title)
+          }}
+          className="text-np-text-secondary hover:text-np-error text-sm px-2"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Expanded content with subtasks */}
+      {isExpanded && (
+        <div className="px-3 pb-3 border-t border-np-border bg-np-bg-primary">
+          {/* Description */}
+          {task.description && (
+            <p className="text-sm text-np-text-secondary py-2 border-b border-np-border mb-2">
+              {task.description}
+            </p>
+          )}
+
+          {/* Subtasks */}
+          {task.subtasks.length > 0 && (
+            <div className="py-2 space-y-1">
+              <div className="text-xs text-np-text-secondary mb-2">// {t('tasks.subtasks')}</div>
+              {task.subtasks.map((subtask) => (
+                <div
+                  key={subtask.id}
+                  className="flex items-center gap-2 pl-4 py-1 hover:bg-np-bg-hover group"
+                >
+                  <button
+                    onClick={() => onToggleSubtask(task.id, subtask.id)}
+                    className={`w-4 h-4 border flex items-center justify-center text-xs transition-colors
+                      ${subtask.completed
+                        ? 'bg-np-green border-np-green text-np-bg-primary'
+                        : 'border-np-text-secondary hover:border-np-green'
+                      }`}
+                  >
+                    {subtask.completed && '✓'}
+                  </button>
+                  <span className={`flex-1 text-sm ${subtask.completed ? 'line-through text-np-text-secondary' : 'text-np-text-primary'}`}>
+                    {subtask.title}
+                  </span>
+                  <button
+                    onClick={() => onDeleteSubtask(task.id, subtask.id)}
+                    className="text-np-text-secondary hover:text-np-error text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add subtask input */}
+          <div className="flex gap-2 py-2 border-t border-np-border mt-2">
+            <input
+              type="text"
+              value={newSubtaskTitle}
+              onChange={(e) => setNewSubtaskTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  onAddSubtask(task.id)
+                }
+              }}
+              placeholder={t('tasks.addSubtask')}
+              className="flex-1 np-input text-sm"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onAddSubtask(task.id)
+              }}
+              className="np-btn text-xs text-np-green"
+            >
+              + {t('tasks.add')}
+            </button>
+          </div>
+
+          {/* Task settings */}
+          <div className="flex gap-2 pt-2 border-t border-np-border">
+            <input
+              type="date"
+              value={task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : ''}
+              onChange={(e) => onUpdateTask(task.id, { deadline: e.target.value ? new Date(e.target.value) : undefined })}
+              onClick={(e) => e.stopPropagation()}
+              className="np-input text-xs"
+            />
+            <select
+              value={task.priority}
+              onChange={(e) => onUpdateTask(task.id, { priority: e.target.value as Task['priority'] })}
+              onClick={(e) => e.stopPropagation()}
+              className="np-input text-xs"
+            >
+              {PRIORITIES.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

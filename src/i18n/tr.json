@@ -161,6 +161,7 @@
         "filter": "Filtre",
         "sort": "Sırala",
         "created": "Oluşturulma",
+        "manual": "Manuel",
         "taskTitle": "Görev başlığı...",
         "descriptionOptional": "Açıklama (opsiyonel)...",
         "start": "Başlangıç",
