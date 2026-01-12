@@ -1,25 +1,59 @@
-# bytepad
+# bytepad 
 
-<!-- LOGO_PLACEHOLDER: Add your logo here (recommended: 200x200px) -->
-<!-- ![bytepad Logo](assets/logo.png) -->
+<img width="200" height="200" alt="icon" src="https://github.com/user-attachments/assets/8c4837b0-d567-40c3-814b-59dffabdefd1" />
 
-A modern, privacy-first productivity application for personal knowledge management, habit tracking, and task organization. Built with a keyboard-first philosophy and inspired by the clean aesthetics of code editors.
+---
 
 [![License](https://img.shields.io/badge/license-Personal%20Use-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#download)
 [![Version](https://img.shields.io/badge/version-0.20.0-green)](https://github.com/samitugal/bytepad/releases)
 
----
 
-## Screenshots
+bytepad is a keyboard-first, privacy-first productivity app built for people who think better in plain text.
+
+It brings together notes, tasks, habits, and lightweight planning in a single, calm workspace—without forcing you into rigid systems or complex knowledge graphs. The goal isn’t to manage your life, but to reduce friction between thinking and doing.
+
+Inspired by the clean, distraction-free aesthetics of code editors, bytepad favors:
+
+* fast startup and instant interaction
+* minimal UI, maximal focus
+
+Your data stays local and under your control. No accounts, no tracking, no dark patterns. Sync and structure exist to support you, not to lock you in.
+
+Bytepad is designed around a simple belief: 
+> Productivity tools should feel more like a text editor than a dashboard.
+> 
+> Open it, type, think, close it.
 
 <img width="1403" height="902" alt="image" src="https://github.com/user-attachments/assets/b9908d5f-eae1-496e-98ac-86a2366589bb" />
 
 ---
 
+## Why bytepad exists
+
+bytepad exists because I think modern productivity tools often confuse structure with clarity.
+
+Over time, notes turn into databases, simple tasks become workflows, and thinking gets replaced by organizing. I found myself spending more time maintaining the system than actually using it.
+
+The principles behind bytepad are intentionally simple:
+
+* Plain text over abstraction – if I can type it, I can use it
+* Keyboard-first by default – thinking is faster than clicking
+* Local-first, privacy-first – my data should stay mine
+* Low cognitive load – the tool should disappear while I work
+
+bytepad is built for people who enjoy the calm of a code editor, the flexibility of markdown, and the feeling of opening an app that never asks, “How would you like to organize this?”
+
 <img width="1403" height="901" alt="image" src="https://github.com/user-attachments/assets/4b3074b2-6456-4567-9235-022903b20891" />
 
 ---
+
+## Generate your knowledge graph
+
+bytepad doesn’t ask you to build a knowledge graph. It lets one emerge naturally.
+
+Notes, tasks, habits, journal entries, and bookmarks are all treated as first-class entities. Anything can link to anything else using simple, readable connections. 
+Over time, these links form a personal knowledge graph that reflects how you actually think—not how a tool expects you to organize information.
 
 <img width="1403" height="901" alt="image" src="https://github.com/user-attachments/assets/c2498eef-d272-4446-9bf5-d486989abfb7" />
 
