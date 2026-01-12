@@ -83,8 +83,10 @@ export function TasksModule() {
     deadline: '',
     deadlineTime: '',
     reminderEnabled: false,
-    reminderMinutesBefore: 30
+    reminderMinutesBefore: 30,
+    linkedBookmarkIds: [] as string[]
   })
+  const [newTaskBookmarkSearch, setNewTaskBookmarkSearch] = useState('')
   const [expandedTask, setExpandedTask] = useState<string | null>(null)
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('')
   const [showDoneSection, setShowDoneSection] = useState(true)
@@ -135,8 +137,10 @@ export function TasksModule() {
       deadlineTime: newTask.deadlineTime || undefined,
       reminderEnabled: newTask.reminderEnabled,
       reminderMinutesBefore: newTask.reminderMinutesBefore,
+      linkedBookmarkIds: newTask.linkedBookmarkIds,
     })
-    setNewTask({ title: '', priority: 'P2', description: '', startDate: '', startTime: '', deadline: '', deadlineTime: '', reminderEnabled: false, reminderMinutesBefore: 30 })
+    setNewTask({ title: '', priority: 'P2', description: '', startDate: '', startTime: '', deadline: '', deadlineTime: '', reminderEnabled: false, reminderMinutesBefore: 30, linkedBookmarkIds: [] })
+    setNewTaskBookmarkSearch('')
     setShowForm(false)
   }
 
@@ -333,6 +337,13 @@ export function TasksModule() {
               placeholder={t('tasks.time')}
             />
           </div>
+          {/* Linked Resources */}
+          <LinkedResourcesEditor
+            linkedBookmarkIds={newTask.linkedBookmarkIds}
+            onChange={(ids) => setNewTask({ ...newTask, linkedBookmarkIds: ids })}
+            searchQuery={newTaskBookmarkSearch}
+            onSearchChange={setNewTaskBookmarkSearch}
+          />
           {/* Reminder settings */}
           <div className="flex items-center gap-3 mb-2">
             <label className="flex items-center gap-2 text-sm text-np-text-secondary">
@@ -1134,10 +1145,13 @@ function EntityLinkInput({ value, onChange, placeholder, className }: EntityLink
     const textAfterCursor = value.slice(cursorPosition)
     const lastOpenBracket = textBeforeCursor.lastIndexOf('[[')
     
-    // Replace the partial link with the full link
-    const newValue = textBeforeCursor.slice(0, lastOpenBracket) + 
-      `[[${suggestion.title}]]` + 
-      textAfterCursor
+    // Check if there's already ]] after cursor
+    const hasClosingBrackets = textAfterCursor.startsWith(']]')
+    
+    // Replace the partial link with just the title (user already typed [[ and will have ]])
+    const newValue = textBeforeCursor.slice(0, lastOpenBracket + 2) + 
+      suggestion.title + 
+      (hasClosingBrackets ? textAfterCursor : ']]' + textAfterCursor)
     
     onChange(newValue)
     setShowSuggestions(false)
