@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTaskStore, getFilteredTasks } from '../../stores/taskStore'
+import { useBookmarkStore } from '../../stores/bookmarkStore'
+import { useNoteStore } from '../../stores/noteStore'
 import { DateTimePicker, ConfirmModal } from '../common'
 import { useTranslation } from '../../i18n'
+import { useUIStore } from '../../stores/uiStore'
 import type { Task } from '../../types'
 import {
   DndContext,
@@ -836,11 +839,13 @@ function SortableTaskItem({
       {/* Expanded content with subtasks */}
       {isExpanded && (
         <div className="px-3 pb-3 border-t border-np-border bg-np-bg-primary">
-          {/* Description */}
+          {/* Description with entity links */}
           {task.description && (
-            <p className="text-sm text-np-text-secondary py-2 border-b border-np-border mb-2">
-              {task.description}
-            </p>
+            <LinkedDescription 
+              text={task.description} 
+              linkedBookmarkIds={task.linkedBookmarkIds}
+              linkedNoteIds={task.linkedNoteIds}
+            />
           )}
 
           {/* Subtasks */}
@@ -922,6 +927,143 @@ function SortableTaskItem({
                 <option key={p} value={p}>{p}</option>
               ))}
             </select>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Component to render description with clickable [[entity]] links
+interface LinkedDescriptionProps {
+  text: string
+  linkedBookmarkIds?: string[]
+  linkedNoteIds?: string[]
+}
+
+function LinkedDescription({ text, linkedBookmarkIds }: LinkedDescriptionProps) {
+  const bookmarks = useBookmarkStore((state) => state.bookmarks)
+  const notes = useNoteStore((state) => state.notes)
+  const setActiveModule = useUIStore((state) => state.setActiveModule)
+
+  // Parse [[entity]] links and [T:id] task links
+  const parts = useMemo(() => {
+    const regex = /\[\[([^\]]+)\]\]|\[T:([^\]]+)\]|\[B:([^\]]+)\]|\[N:([^\]]+)\]/g
+    const result: Array<{ type: 'text' | 'note' | 'bookmark' | 'task'; content: string; id?: string }> = []
+    let lastIndex = 0
+    let match: RegExpExecArray | null
+
+    while ((match = regex.exec(text)) !== null) {
+      // Add text before match
+      if (match.index > lastIndex) {
+        result.push({ type: 'text', content: text.slice(lastIndex, match.index) })
+      }
+
+      if (match[1]) {
+        // [[entity]] format - try to find matching note or bookmark
+        const entityName = match[1]
+        const matchingNote = notes.find(n => n.title.toLowerCase().includes(entityName.toLowerCase()))
+        const matchingBookmark = bookmarks.find(b => b.title.toLowerCase().includes(entityName.toLowerCase()))
+        
+        if (matchingNote) {
+          result.push({ type: 'note', content: entityName, id: matchingNote.id })
+        } else if (matchingBookmark) {
+          result.push({ type: 'bookmark', content: entityName, id: matchingBookmark.id })
+        } else {
+          result.push({ type: 'text', content: `[[${entityName}]]` })
+        }
+      } else if (match[2]) {
+        // [T:taskId] format
+        result.push({ type: 'task', content: match[2], id: match[2] })
+      } else if (match[3]) {
+        // [B:bookmarkId] format
+        const bookmarkId = match[3]
+        const bookmark = bookmarks.find(b => b.id === bookmarkId)
+        result.push({ type: 'bookmark', content: bookmark?.title || bookmarkId, id: bookmarkId })
+      } else if (match[4]) {
+        // [N:noteId] format
+        const noteId = match[4]
+        const note = notes.find(n => n.id === noteId)
+        result.push({ type: 'note', content: note?.title || noteId, id: noteId })
+      }
+
+      lastIndex = match.index + match[0].length
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      result.push({ type: 'text', content: text.slice(lastIndex) })
+    }
+
+    return result
+  }, [text, notes, bookmarks])
+
+  // Also show linked bookmarks if any
+  const linkedBookmarks = useMemo(() => {
+    if (!linkedBookmarkIds || linkedBookmarkIds.length === 0) return []
+    return bookmarks.filter(b => linkedBookmarkIds.includes(b.id))
+  }, [linkedBookmarkIds, bookmarks])
+
+  const handleClick = (type: 'note' | 'bookmark' | 'task', id?: string) => {
+    if (!id) return
+    if (type === 'note') {
+      setActiveModule('notes')
+      useNoteStore.getState().setActiveNote(id)
+    } else if (type === 'bookmark') {
+      setActiveModule('bookmarks')
+    } else if (type === 'task') {
+      // Already in tasks, could scroll to task
+    }
+  }
+
+  return (
+    <div className="text-sm text-np-text-secondary py-2 border-b border-np-border mb-2">
+      {/* Parsed description with links */}
+      <p>
+        {parts.map((part, i) => {
+          if (part.type === 'text') {
+            return <span key={i}>{part.content}</span>
+          }
+          return (
+            <button
+              key={i}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleClick(part.type as 'note' | 'bookmark' | 'task', part.id)
+              }}
+              className={`inline-flex items-center gap-0.5 px-1 rounded hover:underline ${
+                part.type === 'note' ? 'text-np-green bg-np-green/10' :
+                part.type === 'bookmark' ? 'text-np-cyan bg-np-cyan/10' :
+                'text-np-orange bg-np-orange/10'
+              }`}
+            >
+              {part.type === 'note' && '📝'}
+              {part.type === 'bookmark' && '🔗'}
+              {part.type === 'task' && '✓'}
+              {part.content}
+            </button>
+          )
+        })}
+      </p>
+
+      {/* Show linked bookmarks */}
+      {linkedBookmarks.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-np-border/50">
+          <div className="text-xs text-np-text-secondary mb-1">🔗 Linked Resources:</div>
+          <div className="flex flex-wrap gap-1">
+            {linkedBookmarks.map((bookmark) => (
+              <a
+                key={bookmark.id}
+                href={bookmark.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs px-2 py-0.5 bg-np-cyan/10 text-np-cyan rounded hover:bg-np-cyan/20 truncate max-w-[200px]"
+                title={bookmark.url}
+              >
+                {bookmark.title}
+              </a>
+            ))}
           </div>
         </div>
       )}
