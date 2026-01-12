@@ -12,7 +12,7 @@ export function extractWikilinks(content: string): string[] {
 
 export function collectAllTags(
   notes: Note[],
-  _tasks: Task[],
+  tasks: Task[],
   habits: Habit[],
   journals: JournalEntry[],
   bookmarks: Bookmark[]
@@ -20,6 +20,7 @@ export function collectAllTags(
   const tags = new Set<string>()
   
   notes.forEach(n => n.tags.forEach(t => tags.add(t)))
+  tasks.forEach(t => (t.tags || []).forEach(tag => tags.add(tag)))
   journals.forEach(j => j.tags.forEach(t => tags.add(t)))
   bookmarks.forEach(b => b.tags.forEach(t => tags.add(t)))
   habits.forEach(h => tags.add(h.category))
@@ -103,7 +104,7 @@ export function buildGraphData(
         `task:${task.id}`,
         'task',
         task.title,
-        [],
+        task.tags || [],
         task.createdAt.toString()
       )
     })
@@ -194,6 +195,32 @@ export function buildGraphData(
         addEdge(`habit:${habit.id}`, `tag:${habit.category}`, 'tag')
       })
     }
+
+    if (filters.showTasks) {
+      tasks.forEach(task => {
+        (task.tags || []).forEach(tag => {
+          addEdge(`task:${task.id}`, `tag:${tag}`, 'tag')
+        })
+      })
+    }
+  }
+
+  // Task-Bookmark links (linkedBookmarkIds)
+  if (filters.showTasks && filters.showBookmarks) {
+    tasks.forEach(task => {
+      (task.linkedBookmarkIds || []).forEach(bookmarkId => {
+        addEdge(`task:${task.id}`, `bookmark:${bookmarkId}`, 'wikilink')
+      })
+    })
+  }
+
+  // Bookmark-Task links (linkedTaskId)
+  if (filters.showBookmarks && filters.showTasks) {
+    bookmarks.forEach(bookmark => {
+      if (bookmark.linkedTaskId) {
+        addEdge(`bookmark:${bookmark.id}`, `task:${bookmark.linkedTaskId}`, 'wikilink')
+      }
+    })
   }
 
   nodes.forEach(node => {
