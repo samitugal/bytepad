@@ -48,8 +48,12 @@ export function CalendarModule() {
   const addTask = useTaskStore((state) => state.addTask)
   const toggleTask = useTaskStore((state) => state.toggleTask)
   const deleteTask = useTaskStore((state) => state.deleteTask)
+  const updateTask = useTaskStore((state) => state.updateTask)
 
   const [showTaskForm, setShowTaskForm] = useState(false)
+  const [draggingTask, setDraggingTask] = useState<Task | null>(null)
+  const [dragTargetHour, setDragTargetHour] = useState<number | null>(null)
+  const [dragTargetDate, setDragTargetDate] = useState<Date | null>(null)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskPriority, setNewTaskPriority] = useState<'P1' | 'P2' | 'P3' | 'P4'>('P3')
   const [newTaskEndDate, setNewTaskEndDate] = useState<string>('')
@@ -75,6 +79,62 @@ export function CalendarModule() {
       deleteTask(selectedTask.id)
       setSelectedTask(null)
     }
+  }
+
+  // Drag handlers for task time editing
+  const handleTaskDragStart = (task: Task, e: React.DragEvent) => {
+    setDraggingTask(task)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', task.id)
+    // Create a custom drag image
+    const element = e.currentTarget as HTMLElement
+    element.style.opacity = '0.5'
+  }
+
+  const handleTaskDragEnd = (e: React.DragEvent) => {
+    const element = e.currentTarget as HTMLElement
+    element.style.opacity = '1'
+    setDraggingTask(null)
+    setDragTargetHour(null)
+    setDragTargetDate(null)
+  }
+
+  const handleHourDragOver = (hour: number, date: Date, e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragTargetHour(hour)
+    setDragTargetDate(date)
+  }
+
+  const handleHourDrop = (hour: number, date: Date, e: React.DragEvent) => {
+    e.preventDefault()
+    if (!draggingTask) return
+
+    const newStartTime = `${hour.toString().padStart(2, '0')}:00`
+
+    // Calculate new end time based on original duration
+    let newDeadlineTime: string | undefined = undefined
+    if (draggingTask.startTime && draggingTask.deadlineTime) {
+      const oldStartHour = parseInt(draggingTask.startTime.split(':')[0])
+      const oldEndHour = parseInt(draggingTask.deadlineTime.split(':')[0])
+      const duration = oldEndHour - oldStartHour
+      const newEndHour = Math.min(hour + duration, 23)
+      newDeadlineTime = `${newEndHour.toString().padStart(2, '0')}:00`
+    }
+
+    // Update task with new time
+    updateTask(draggingTask.id, {
+      startTime: newStartTime,
+      deadlineTime: newDeadlineTime || draggingTask.deadlineTime,
+      startDate: date,
+      deadline: date,
+      allDay: false,
+    })
+
+    // Reset drag state
+    setDraggingTask(null)
+    setDragTargetHour(null)
+    setDragTargetDate(null)
   }
 
   // Keyboard shortcuts handler
@@ -270,12 +330,25 @@ export function CalendarModule() {
             getTasksForDate={getTasksForDate}
             onDateClick={handleDateClick}
             onTaskClick={handleTaskClick}
+            onTaskDragStart={handleTaskDragStart}
+            onTaskDragEnd={handleTaskDragEnd}
+            onHourDragOver={handleHourDragOver}
+            onHourDrop={handleHourDrop}
+            draggingTask={draggingTask}
+            dragTargetHour={dragTargetHour}
+            dragTargetDate={dragTargetDate}
           />
         )}
         {currentView === 'day' && (
           <DayView
             currentDate={currentDate}
             tasks={getTasksForDate(currentDate)}
+            onTaskDragStart={handleTaskDragStart}
+            onTaskDragEnd={handleTaskDragEnd}
+            onHourDragOver={handleHourDragOver}
+            onHourDrop={handleHourDrop}
+            draggingTask={draggingTask}
+            dragTargetHour={dragTargetHour}
             onDateClick={() => handleDateClick(currentDate)}
             onTaskClick={handleTaskClick}
           />
@@ -564,9 +637,29 @@ interface WeekViewProps {
   getTasksForDate: (date: Date) => Task[]
   onDateClick: (date: Date) => void
   onTaskClick: (task: Task, e: React.MouseEvent) => void
+  onTaskDragStart: (task: Task, e: React.DragEvent) => void
+  onTaskDragEnd: (e: React.DragEvent) => void
+  onHourDragOver: (hour: number, date: Date, e: React.DragEvent) => void
+  onHourDrop: (hour: number, date: Date, e: React.DragEvent) => void
+  draggingTask: Task | null
+  dragTargetHour: number | null
+  dragTargetDate: Date | null
 }
 
-function WeekView({ currentDate, selectedDate, getTasksForDate, onDateClick, onTaskClick }: WeekViewProps) {
+function WeekView({
+  currentDate,
+  selectedDate,
+  getTasksForDate,
+  onDateClick,
+  onTaskClick,
+  onTaskDragStart,
+  onTaskDragEnd,
+  onHourDragOver,
+  onHourDrop,
+  draggingTask,
+  dragTargetHour,
+  dragTargetDate,
+}: WeekViewProps) {
   const { language } = useTranslation()
   const WEEKDAYS = language === 'tr' ? WEEKDAYS_TR : WEEKDAYS_EN
   const days = getWeekDays(currentDate)
@@ -616,37 +709,55 @@ function WeekView({ currentDate, selectedDate, getTasksForDate, onDateClick, onT
               })
               const tasks = [...allDayTasks, ...timedTasks]
 
+              const isDropTarget = draggingTask && dragTargetHour === hour && dragTargetDate && isSameDay(date, dragTargetDate)
+
               return (
                 <div
                   key={i}
                   onClick={() => onDateClick(date)}
+                  onDragOver={(e) => onHourDragOver(hour, date, e)}
+                  onDrop={(e) => onHourDrop(hour, date, e)}
                   className={`
                     border-r border-np-border p-0.5 cursor-pointer relative
                     hover:bg-np-bg-tertiary
                     ${isWeekend(date) ? 'bg-np-bg-primary/30' : ''}
+                    ${isDropTarget ? 'bg-np-blue/20 ring-2 ring-np-blue ring-inset' : ''}
                   `}
                 >
+                  {/* Drop target indicator */}
+                  {isDropTarget && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="text-xs text-np-blue font-semibold bg-np-bg-secondary/80 px-2 py-0.5 rounded">
+                        {hour.toString().padStart(2, '0')}:00
+                      </span>
+                    </div>
+                  )}
                   {tasks.map((task) => {
                     const { duration } = taskSpansHour(task, hour)
                     const heightMultiplier = Math.min(duration, 4) // Cap at 4 hours for display
                     const showDuration = duration > 1
+                    const isDragging = draggingTask?.id === task.id
 
                     return (
                       <div
                         key={task.id}
+                        draggable={!task.completed}
+                        onDragStart={(e) => onTaskDragStart(task, e)}
+                        onDragEnd={onTaskDragEnd}
                         onClick={(e) => onTaskClick(task, e)}
                         className={`
-                          text-[10px] px-1 py-0.5 mb-0.5 truncate rounded-sm cursor-pointer
+                          text-[10px] px-1 py-0.5 mb-0.5 truncate rounded-sm
+                          ${task.completed ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
                           ${PRIORITY_COLORS[task.priority]} text-white
                           ${task.completed ? 'opacity-50 line-through' : ''}
-                          hover:ring-1 hover:ring-white/50
+                          ${isDragging ? 'opacity-50 ring-2 ring-white' : 'hover:ring-1 hover:ring-white/50'}
                         `}
                         style={showDuration ? {
                           minHeight: `${heightMultiplier * 56}px`,
                           position: 'relative',
-                          zIndex: 5
+                          zIndex: isDragging ? 100 : 5
                         } : undefined}
-                        title={`${task.title}${task.startTime ? ` (${task.startTime}` : ''}${task.deadlineTime ? ` - ${task.deadlineTime})` : task.startTime ? ')' : ''}`}
+                        title={`${task.title}${task.startTime ? ` (${task.startTime}` : ''}${task.deadlineTime ? ` - ${task.deadlineTime})` : task.startTime ? ')' : ''} - Drag to change time`}
                       >
                         <div className="flex items-center gap-1">
                           {task.startTime && <span className="opacity-75">{task.startTime}</span>}
@@ -672,9 +783,26 @@ interface DayViewProps {
   tasks: Task[]
   onDateClick: () => void
   onTaskClick: (task: Task, e: React.MouseEvent) => void
+  onTaskDragStart: (task: Task, e: React.DragEvent) => void
+  onTaskDragEnd: (e: React.DragEvent) => void
+  onHourDragOver: (hour: number, date: Date, e: React.DragEvent) => void
+  onHourDrop: (hour: number, date: Date, e: React.DragEvent) => void
+  draggingTask: Task | null
+  dragTargetHour: number | null
 }
 
-function DayView({ tasks, onDateClick, onTaskClick }: DayViewProps) {
+function DayView({
+  currentDate,
+  tasks,
+  onDateClick,
+  onTaskClick,
+  onTaskDragStart,
+  onTaskDragEnd,
+  onHourDragOver,
+  onHourDrop,
+  draggingTask,
+  dragTargetHour,
+}: DayViewProps) {
   const { t } = useTranslation()
   const hours = Array.from({ length: 24 }, (_, i) => i)
   const allDayTasks = tasks.filter(t => t.allDay)
@@ -691,13 +819,18 @@ function DayView({ tasks, onDateClick, onTaskClick }: DayViewProps) {
             {allDayTasks.map((task) => (
               <div
                 key={task.id}
+                draggable={!task.completed}
+                onDragStart={(e) => onTaskDragStart(task, e)}
+                onDragEnd={onTaskDragEnd}
                 onClick={(e) => onTaskClick(task, e)}
                 className={`
-                  text-sm px-2 py-1 rounded cursor-pointer
+                  text-sm px-2 py-1 rounded
+                  ${task.completed ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
                   ${PRIORITY_COLORS[task.priority]} text-white
                   ${task.completed ? 'opacity-50 line-through' : ''}
-                  hover:ring-1 hover:ring-white/50
+                  ${draggingTask?.id === task.id ? 'opacity-50 ring-2 ring-white' : 'hover:ring-1 hover:ring-white/50'}
                 `}
+                title={`${task.title} - Drag to time slot to convert to timed task`}
               >
                 {task.title}
               </div>
@@ -715,36 +848,58 @@ function DayView({ tasks, onDateClick, onTaskClick }: DayViewProps) {
             return spans && isStart
           })
 
+          const isDropTarget = draggingTask && dragTargetHour === hour
+
           return (
             <div
               key={hour}
               onClick={onDateClick}
-              className="flex border-b border-np-border min-h-[60px] cursor-pointer hover:bg-np-bg-tertiary"
+              onDragOver={(e) => onHourDragOver(hour, currentDate, e)}
+              onDrop={(e) => onHourDrop(hour, currentDate, e)}
+              className={`
+                flex border-b border-np-border min-h-[60px] cursor-pointer
+                hover:bg-np-bg-tertiary
+                ${isDropTarget ? 'bg-np-blue/20 ring-2 ring-np-blue ring-inset' : ''}
+              `}
             >
               <div className="w-16 p-2 text-xs text-np-text-secondary border-r border-np-border text-right">
                 {hour.toString().padStart(2, '0')}:00
               </div>
               <div className="flex-1 p-1 relative">
+                {/* Drop target indicator */}
+                {isDropTarget && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-xs text-np-blue font-semibold bg-np-bg-secondary/80 px-2 py-0.5 rounded">
+                      {hour.toString().padStart(2, '0')}:00
+                    </span>
+                  </div>
+                )}
                 {hourTasks.map((task) => {
                   const { duration } = taskSpansHour(task, hour)
                   const heightMultiplier = Math.min(duration, 6) // Cap at 6 hours for display
                   const showDuration = duration > 1
+                  const isDragging = draggingTask?.id === task.id
 
                   return (
                     <div
                       key={task.id}
+                      draggable={!task.completed}
+                      onDragStart={(e) => onTaskDragStart(task, e)}
+                      onDragEnd={onTaskDragEnd}
                       onClick={(e) => onTaskClick(task, e)}
                       className={`
-                        text-sm px-2 py-1 mb-1 rounded cursor-pointer
+                        text-sm px-2 py-1 mb-1 rounded
+                        ${task.completed ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
                         ${PRIORITY_COLORS[task.priority]} text-white
                         ${task.completed ? 'opacity-50 line-through' : ''}
-                        hover:ring-1 hover:ring-white/50
+                        ${isDragging ? 'opacity-50 ring-2 ring-white' : 'hover:ring-1 hover:ring-white/50'}
                       `}
                       style={showDuration ? {
                         minHeight: `${heightMultiplier * 56}px`,
                         position: 'relative',
-                        zIndex: 5
+                        zIndex: isDragging ? 100 : 5
                       } : undefined}
+                      title={`${task.title}${task.startTime ? ` (${task.startTime}` : ''}${task.deadlineTime ? ` - ${task.deadlineTime})` : task.startTime ? ')' : ''} - Drag to change time`}
                     >
                       <div className="flex items-center gap-2 opacity-75 text-xs">
                         {task.startTime && <span>{task.startTime}</span>}
