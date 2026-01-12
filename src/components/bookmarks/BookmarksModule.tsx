@@ -88,14 +88,17 @@ function WikilinkTextarea({ value, onChange, placeholder, className }: WikilinkT
     const afterCursor = value.slice(cursorPosition)
     const match = beforeCursor.match(/\[\[([^\]]*?)$/)
     if (match) {
-      const newBefore = beforeCursor.slice(0, match.index) + `[[${suggestion.title}]]`
-      onChange(newBefore + afterCursor)
+      // Check if there's already ]] after cursor
+      const hasClosingBrackets = afterCursor.startsWith(']]')
+      const newBefore = beforeCursor.slice(0, match.index) + `[[${suggestion.title}`
+      const newAfter = hasClosingBrackets ? afterCursor : ']]' + afterCursor
+      onChange(newBefore + newAfter)
       setShowSuggestions(false)
       // Focus back on textarea
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.focus()
-          const newPos = newBefore.length
+          const newPos = newBefore.length + 2 // After ]]
           textareaRef.current.setSelectionRange(newPos, newPos)
         }
       }, 0)
