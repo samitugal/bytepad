@@ -20,7 +20,8 @@
       "Bash(wc:*)",
       "Bash(git rev-parse:*)",
       "Bash(npm run lint:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git push:*)"
     ]
   }
 }
