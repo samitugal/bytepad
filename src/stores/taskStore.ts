@@ -4,7 +4,7 @@ import type { Task, SubTask } from '../types'
 import { useGamificationStore, XP_VALUES } from './gamificationStore'
 
 // Cross-tab sync channel
-const syncChannel = new BroadcastChannel('myflowspace-tasks')
+const syncChannel = new BroadcastChannel('bytepad-tasks')
 
 interface TaskState {
   tasks: Task[]
@@ -164,7 +164,7 @@ export const useTaskStore = create<TaskState>()(
       getPendingCount: () => get().tasks.filter(t => !t.completed).length,
     }),
     {
-      name: 'myflowspace-tasks',
+      name: 'bytepad-tasks',
       partialize: (state) => ({ tasks: state.tasks, sortBy: state.sortBy }),
     }
   )

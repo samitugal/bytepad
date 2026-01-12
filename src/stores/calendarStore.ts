@@ -71,7 +71,7 @@ export const useCalendarStore = create<CalendarState>()(
       },
     }),
     {
-      name: 'myflowspace-calendar',
+      name: 'bytepad-calendar',
       partialize: (state) => ({
         currentView: state.currentView,
       }),

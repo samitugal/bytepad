@@ -4,7 +4,7 @@ import type { Habit } from '../types'
 import { useGamificationStore, XP_VALUES } from './gamificationStore'
 
 // Cross-tab sync channel
-const syncChannel = new BroadcastChannel('myflowspace-habits')
+const syncChannel = new BroadcastChannel('bytepad-habits')
 
 interface HabitStats {
   date: string
@@ -178,7 +178,7 @@ export const useHabitStore = create<HabitState>()(
       },
     }),
     {
-      name: 'myflowspace-habits',
+      name: 'bytepad-habits',
       partialize: (state) => ({ habits: state.habits, dailyStats: state.dailyStats }),
     }
   )

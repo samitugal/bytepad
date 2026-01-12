@@ -1,10 +1,11 @@
 // FlowBot Tool Registry - Defines all available tools for the AI agent
 
 export interface ToolParameter {
-  type: 'string' | 'number' | 'boolean' | 'array'
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object'
   description: string
   enum?: string[]
-  items?: { type: string }
+  items?: { type: string; properties?: Record<string, ToolParameter> }
+  properties?: Record<string, ToolParameter>
   required?: boolean
 }
 
@@ -291,7 +292,7 @@ export const FLOWBOT_TOOLS: ToolDefinition[] = [
   // ============ BOOKMARK TOOLS ============
   {
     name: 'create_bookmark',
-    description: 'Create a new bookmark. Use when user wants to save a URL or web resource.',
+    description: 'Create a new bookmark. Use when user wants to save a URL or web resource. Can link to a task for cross-referencing.',
     parameters: {
       type: 'object',
       properties: {
@@ -300,6 +301,8 @@ export const FLOWBOT_TOOLS: ToolDefinition[] = [
         description: { type: 'string', description: 'Optional description' },
         collection: { type: 'string', description: 'Collection name (Gold, Silver, Bronze, or custom)', enum: ['Gold', 'Silver', 'Bronze', 'Unsorted'] },
         tags: { type: 'array', items: { type: 'string' }, description: 'Tags for organization' },
+        linkedTaskId: { type: 'string', description: 'ID of related task to link this bookmark to' },
+        sourceQuery: { type: 'string', description: 'Original search query that found this resource' },
       },
       required: ['url', 'title'],
     },
@@ -325,6 +328,35 @@ export const FLOWBOT_TOOLS: ToolDefinition[] = [
         limit: { type: 'number', description: 'Max number of bookmarks to return (default 10)' },
       },
       required: [],
+    },
+  },
+
+  // ============ RESEARCH & PLANNING TOOLS ============
+  {
+    name: 'research_and_plan',
+    description: 'Create a study/research plan with linked resources. Creates a task and saves related bookmarks linked to that task. Use when user asks for a learning plan, study resources, or research on a topic.',
+    parameters: {
+      type: 'object',
+      properties: {
+        topic: { type: 'string', description: 'The topic to research (e.g., "prompt engineering", "React hooks")' },
+        taskTitle: { type: 'string', description: 'Title for the main task (e.g., "Prompt Engineering Öğren")' },
+        subtasks: { type: 'array', items: { type: 'string' }, description: 'Subtasks/steps for the learning plan' },
+        resources: { 
+          type: 'array', 
+          items: { 
+            type: 'object',
+            properties: {
+              url: { type: 'string', description: 'URL of the resource' },
+              title: { type: 'string', description: 'Title of the resource' },
+              description: { type: 'string', description: 'Description of the resource' }
+            }
+          }, 
+          description: 'Resources to save as bookmarks (from web search results)' 
+        },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Common tags for both task and bookmarks' },
+        priority: { type: 'string', description: 'Task priority', enum: ['P1', 'P2', 'P3', 'P4'] },
+      },
+      required: ['topic', 'taskTitle', 'resources'],
     },
   },
 

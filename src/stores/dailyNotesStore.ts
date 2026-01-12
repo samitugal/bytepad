@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { DailyNote, DailyNoteCard } from '../types'
 
-const syncChannel = new BroadcastChannel('myflowspace-dailynotes')
+const syncChannel = new BroadcastChannel('bytepad-dailynotes')
 
 type FilterType = 'all' | 'pinned' | 'newest'
 
@@ -222,7 +222,7 @@ export const useDailyNotesStore = create<DailyNotesState>()(
       },
     }),
     {
-      name: 'myflowspace-dailynotes',
+      name: 'bytepad-dailynotes',
     }
   )
 )

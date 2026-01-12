@@ -94,7 +94,7 @@ export const useNotificationStore = create<NotificationState>()(
       })),
     }),
     {
-      name: 'myflowspace-notifications',
+      name: 'bytepad-notifications',
     }
   )
 )

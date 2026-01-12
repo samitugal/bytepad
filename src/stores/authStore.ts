@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'myflowspace-auth',
+      name: 'bytepad-auth',
       partialize: () => ({ 
         // Don't persist user object, let Firebase handle it
       }),

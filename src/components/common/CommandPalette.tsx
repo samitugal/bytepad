@@ -64,7 +64,7 @@ export function CommandPalette() {
       useBookmarkStore.getState().addBookmark({ title: 'New Bookmark', url: 'https://', description: '', tags: [], favicon: '' })
     }},
     // Settings
-    { id: 'toggle-focus', title: 'Toggle Focus Mode', shortcut: 'Ctrl+Shift+F', category: 'settings', action: () => useUIStore.getState().toggleFocusMode() },
+    { id: 'toggle-focus', title: 'Toggle Focus Mode', shortcut: 'Ctrl+Shift+O', category: 'settings', action: () => useUIStore.getState().toggleFocusMode() },
     { id: 'open-settings', title: 'Open Settings', category: 'settings', action: () => useUIStore.getState().setSettingsOpen(true) },
     { id: 'open-flowbot', title: 'Open FlowBot', shortcut: 'Ctrl+/', category: 'settings', action: () => useChatStore.getState().setOpen(true) },
     { id: 'global-search', title: 'Global Search', shortcut: 'Alt+U', category: 'settings', action: () => useUIStore.getState().setGlobalSearchOpen(true) },

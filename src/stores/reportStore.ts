@@ -79,7 +79,7 @@ export const useReportStore = create<ReportState>()(
       },
     }),
     {
-      name: 'myflowspace-reports',
+      name: 'bytepad-reports',
       partialize: (state) => ({
         reports: state.reports,
       }),

@@ -4,7 +4,7 @@ import type { Note } from '../types'
 import { useGamificationStore, XP_VALUES } from './gamificationStore'
 
 // Cross-tab sync channel
-const syncChannel = new BroadcastChannel('myflowspace-notes')
+const syncChannel = new BroadcastChannel('bytepad-notes')
 
 interface NoteState {
   notes: Note[]
@@ -101,7 +101,7 @@ export const useNoteStore = create<NoteState>()(
       },
     }),
     {
-      name: 'myflowspace-notes',
+      name: 'bytepad-notes',
       partialize: (state) => ({ notes: state.notes }),
     }
   )

@@ -40,7 +40,7 @@ export const useThemeStore = create<ThemeState>()(
             },
         }),
         {
-            name: 'myflowspace-theme',
+            name: 'bytepad-theme',
             onRehydrateStorage: () => (state) => {
                 if (state) {
                     const resolvedTheme = state.theme === 'system' ? getSystemTheme() : state.theme

@@ -128,9 +128,9 @@ export function FocusMode() {
     if (isRunning && timeLeft !== null) {
       const m = Math.floor(timeLeft / 60)
       const s = timeLeft % 60
-      document.title = `🍅 ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} - Focus | MyFlowSpace`
+      document.title = `🍅 ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} - Focus | BytePad`
     } else if (focusMode) {
-      document.title = '🎯 Focus Mode | MyFlowSpace'
+      document.title = '🎯 Focus Mode | BytePad'
     }
 
     return () => {

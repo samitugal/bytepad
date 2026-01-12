@@ -1,4 +1,4 @@
-const CACHE_NAME = 'myflowspace-v1';
+const CACHE_NAME = 'bytepad-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event) => {
 // Handle push notifications
 self.addEventListener('push', (event) => {
   const data = event.data?.json() || {};
-  const title = data.title || 'MyFlowSpace';
+  const title = data.title || 'BytePad';
   const options = {
     body: data.body || 'You have a notification',
     icon: '/icons/icon-192x192.png',

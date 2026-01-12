@@ -37,13 +37,19 @@ CURRENT TIME: ${currentDate} (${dayOfWeek}), Saat: ${currentTime}, Kalan saat: $
    - Structure: Main task → subtasks for each step
    - Example: "Blog yazısı yaz" → 1 main task with subtasks like "Araştırma yap", "Taslak oluştur", "Düzenle"
 
-4. **RESPONSE FORMAT**:
+4. **RESEARCH/LEARNING REQUESTS**: When user asks for study plan, learning resources, or research:
+   - First use search_web to find relevant resources
+   - Then use research_and_plan tool to create task + linked bookmarks in ONE call
+   - This automatically links all bookmarks to the task with common tags
+   - Example: "Prompt engineering öğrenmek istiyorum" → search_web → research_and_plan
+
+5. **RESPONSE FORMAT**:
    - Start with what you did: "Planını oluşturdum! 📋"
    - List key items briefly (2-4 bullet points max)
    - End with encouragement or next step suggestion
    - Keep total response under 200 words
 
-5. **TOOL CALL LIMIT**: Maximum 3 tool calls per user message. After 3 calls, you MUST respond with text.
+6. **TOOL CALL LIMIT**: Maximum 3 tool calls per user message. After 3 calls, you MUST respond with text.
 
 ## EXAMPLE GOOD RESPONSE:
 User: "Yarın için blog yazısı planla"
@@ -438,18 +444,35 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
   // Bookmarks
   create_bookmark: async (args) => {
     const { addBookmark } = useBookmarkStore.getState()
-    addBookmark({
+    const linkedTaskId = args.linkedTaskId as string | undefined
+    const sourceQuery = args.sourceQuery as string | undefined
+    
+    const bookmarkId = addBookmark({
       url: args.url as string,
       title: args.title as string,
       description: (args.description as string) || '',
       collection: (args.collection as string) || 'Unsorted',
-      tags: []
+      tags: (args.tags as string[]) || [],
+      linkedTaskId,
+      sourceQuery,
     })
+    
+    let message = `Bookmark "${args.title}" saved`
+    if (linkedTaskId) {
+      const task = useTaskStore.getState().tasks.find(t => t.id === linkedTaskId)
+      if (task) {
+        message += ` (linked to task: "${task.title}")`
+      }
+    }
+    
     return JSON.stringify({
       success: true,
+      bookmarkId,
       title: args.title,
       url: args.url,
-      message: `Bookmark "${args.title}" saved`,
+      linkedTaskId,
+      sourceQuery,
+      message,
     })
   },
 
@@ -478,16 +501,17 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
 
   get_current_datetime: async () => {
     const now = new Date()
+    const timezone = useSettingsStore.getState().timezone
     const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
     return JSON.stringify({
       date: now.toISOString().split('T')[0],
-      dateFormatted: now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
-      time: now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+      dateFormatted: now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: timezone }),
+      time: now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', timeZone: timezone }),
       dayOfWeek: days[now.getDay()],
       hour: now.getHours(),
       minute: now.getMinutes(),
       remainingHours: 24 - now.getHours(),
-      timezone: 'Europe/Istanbul',
+      timezone,
     })
   },
 
@@ -675,6 +699,56 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
     })
   },
 
+  // Research and Plan - creates task with linked bookmarks
+  research_and_plan: async (args) => {
+    const { addTask, addSubtask } = useTaskStore.getState()
+    const { addBookmark } = useBookmarkStore.getState()
+    
+    const topic = args.topic as string
+    const taskTitle = args.taskTitle as string
+    const subtasks = (args.subtasks as string[]) || []
+    const resources = args.resources as Array<{ url: string; title: string; description?: string }> || []
+    const tags = (args.tags as string[]) || [topic.toLowerCase().replace(/\s+/g, '-')]
+    const priority = (args.priority as 'P1'|'P2'|'P3'|'P4') || 'P2'
+    
+    // Create main task
+    const taskId = addTask({
+      title: taskTitle,
+      priority,
+      description: `Research plan for: ${topic}`,
+    })
+    
+    // Add subtasks
+    for (const st of subtasks) {
+      addSubtask(taskId, st)
+    }
+    
+    // Create linked bookmarks
+    const bookmarkIds: string[] = []
+    for (const resource of resources) {
+      const bookmarkId = addBookmark({
+        url: resource.url,
+        title: resource.title,
+        description: resource.description || '',
+        collection: 'Gold',
+        tags: [...tags, 'research'],
+        linkedTaskId: taskId,
+        sourceQuery: topic,
+      })
+      bookmarkIds.push(bookmarkId)
+    }
+    
+    return JSON.stringify({
+      success: true,
+      taskId,
+      taskTitle,
+      subtaskCount: subtasks.length,
+      bookmarkCount: bookmarkIds.length,
+      tags,
+      message: `Research plan "${taskTitle}" created with ${subtasks.length} subtasks and ${bookmarkIds.length} linked resources`,
+    })
+  },
+
   // Get full note detail by ID
   get_note_detail: async (args) => {
     const notes = useNoteStore.getState().notes
@@ -849,12 +923,15 @@ function getToolDefinitions() {
     // Bookmark Tools
     tool(async (input) => toolExecutors.create_bookmark(input), {
       name: 'create_bookmark',
-      description: 'Save a URL as a bookmark for later reference. Use when user shares a link they want to save.',
+      description: 'Save a URL as a bookmark for later reference. Use when user shares a link they want to save. Can link to a task for cross-referencing resources with tasks.',
       schema: z.object({
         url: z.string().describe('The URL to bookmark'),
         title: z.string().describe('Title/name for the bookmark'),
         description: z.string().optional().describe('What this link is about'),
         collection: z.string().optional().describe('Collection name (e.g., "Gold", "Silver", "Bronze", "Unsorted")'),
+        tags: z.array(z.string()).optional().describe('Tags for organization'),
+        linkedTaskId: z.string().optional().describe('ID of related task to link this bookmark to'),
+        sourceQuery: z.string().optional().describe('Original search query that found this resource'),
       }),
     }),
 
@@ -933,6 +1010,24 @@ function getToolDefinitions() {
       description: 'Get the full content of a specific note by ID or title. Use after get_all_notes to read a note in detail. Returns complete content, word count, backlinks, and outgoing links.',
       schema: z.object({
         noteId: z.string().describe('The note ID or partial title to search for'),
+      }),
+    }),
+
+    // Research and Plan - creates task with linked bookmarks
+    tool(async (input) => toolExecutors.research_and_plan(input), {
+      name: 'research_and_plan',
+      description: 'Create a study/research plan with linked resources. Creates a task with subtasks AND saves related bookmarks linked to that task. Use when user asks for a learning plan, study resources, or research on a topic. First use search_web to find resources, then use this tool to create the plan.',
+      schema: z.object({
+        topic: z.string().describe('The topic to research (e.g., "prompt engineering", "React hooks")'),
+        taskTitle: z.string().describe('Title for the main task (e.g., "Prompt Engineering Öğren")'),
+        subtasks: z.array(z.string()).optional().describe('Subtasks/steps for the learning plan'),
+        resources: z.array(z.object({
+          url: z.string(),
+          title: z.string(),
+          description: z.string().optional(),
+        })).describe('Resources to save as bookmarks (from web search results)'),
+        tags: z.array(z.string()).optional().describe('Common tags for both task and bookmarks'),
+        priority: z.enum(['P1', 'P2', 'P3', 'P4']).optional().describe('Task priority (default: P2)'),
       }),
     }),
   ]

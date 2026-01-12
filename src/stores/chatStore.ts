@@ -47,7 +47,7 @@ export const useChatStore = create<ChatState>()(
       setError: (error) => set({ error }),
     }),
     {
-      name: 'myflowspace-chat',
+      name: 'bytepad-chat',
       partialize: (state) => ({ messages: state.messages }), // Only persist messages
     }
   )

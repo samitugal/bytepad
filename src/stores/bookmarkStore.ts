@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { Bookmark } from '../types'
 
 // Cross-tab sync channel
-const syncChannel = new BroadcastChannel('myflowspace-bookmarks')
+const syncChannel = new BroadcastChannel('bytepad-bookmarks')
 
 interface BookmarkState {
   bookmarks: Bookmark[]
@@ -11,7 +11,7 @@ interface BookmarkState {
   selectedTag: string | null
   searchQuery: string
   sortBy: 'date' | 'title' | 'domain'
-  addBookmark: (bookmark: Omit<Bookmark, 'id' | 'createdAt' | 'domain' | 'isRead'>) => string
+  addBookmark: (bookmark: Omit<Bookmark, 'id' | 'createdAt' | 'domain' | 'isRead'> & { linkedTaskId?: string; linkedNoteId?: string; sourceQuery?: string }) => string
   updateBookmark: (id: string, updates: Partial<Bookmark>) => void
   deleteBookmark: (id: string) => void
   toggleRead: (id: string) => void
@@ -117,7 +117,7 @@ export const useBookmarkStore = create<BookmarkState>()(
       },
     }),
     {
-      name: 'myflowspace-bookmarks',
+      name: 'bytepad-bookmarks',
       partialize: (state) => ({ bookmarks: state.bookmarks }),
     }
   )

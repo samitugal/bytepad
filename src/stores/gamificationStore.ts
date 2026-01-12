@@ -386,7 +386,7 @@ export const useGamificationStore = create<GamificationState>()(
       },
     }),
     {
-      name: 'myflowspace-gamification',
+      name: 'bytepad-gamification',
       partialize: (state) => ({
         level: state.level,
         currentXP: state.currentXP,
