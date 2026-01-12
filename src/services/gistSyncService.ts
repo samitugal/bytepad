@@ -105,8 +105,25 @@ function hasDataChanged(oldData: unknown[], newData: unknown[]): boolean {
     return JSON.stringify(oldData) !== JSON.stringify(newData)
 }
 
+// Helper to check if remote data should replace local data
+// Returns true only if remote has actual data (not empty) OR if we explicitly want to clear
+function shouldApplyRemoteData(localData: unknown[], remoteData: unknown[] | undefined | null): boolean {
+    // If remote data is undefined or null, don't apply
+    if (remoteData === undefined || remoteData === null) return false
+    
+    // If remote is empty but local has data, DON'T overwrite (preserve local)
+    if (remoteData.length === 0 && localData.length > 0) return false
+    
+    // If both are empty, no need to apply
+    if (remoteData.length === 0 && localData.length === 0) return false
+    
+    // Remote has data, check if it's different
+    return hasDataChanged(localData, remoteData)
+}
+
 // Apply synced data to all stores with batched updates to prevent input blocking
-function applyData(syncData: SyncData): void {
+// If forceOverwrite is true, it will overwrite local data even if remote is empty
+function applyData(syncData: SyncData, forceOverwrite: boolean = false): void {
     const { data } = syncData
 
     // Save current focus before applying updates
@@ -126,26 +143,35 @@ function applyData(syncData: SyncData): void {
     const currentDailyNotes = useDailyNotesStore.getState().dailyNotes
     const currentFocusSessions = useFocusStore.getState().sessions
 
-    // Only add updates for stores that have actually changed
-    if (data.notes && hasDataChanged(currentNotes, data.notes as unknown[])) {
+    // Only add updates for stores that have actually changed AND remote has data
+    // This prevents empty remote arrays from wiping out local data (unless forceOverwrite is true)
+    const shouldApply = (local: unknown[], remote: unknown[] | undefined | null) => {
+        if (forceOverwrite) {
+            // Force overwrite: apply if remote exists (even if empty)
+            return remote !== undefined && remote !== null && hasDataChanged(local, remote)
+        }
+        return shouldApplyRemoteData(local, remote)
+    }
+
+    if (shouldApply(currentNotes, data.notes as unknown[])) {
         updates.push(() => useNoteStore.setState({ notes: data.notes as never[] }))
     }
-    if (data.tasks && hasDataChanged(currentTasks, data.tasks as unknown[])) {
+    if (shouldApply(currentTasks, data.tasks as unknown[])) {
         updates.push(() => useTaskStore.setState({ tasks: data.tasks as never[] }))
     }
-    if (data.habits && hasDataChanged(currentHabits, data.habits as unknown[])) {
+    if (shouldApply(currentHabits, data.habits as unknown[])) {
         updates.push(() => useHabitStore.setState({ habits: data.habits as never[] }))
     }
-    if (data.journal && hasDataChanged(currentJournal, data.journal as unknown[])) {
+    if (shouldApply(currentJournal, data.journal as unknown[])) {
         updates.push(() => useJournalStore.setState({ entries: data.journal as never[] }))
     }
-    if (data.bookmarks && hasDataChanged(currentBookmarks, data.bookmarks as unknown[])) {
+    if (shouldApply(currentBookmarks, data.bookmarks as unknown[])) {
         updates.push(() => useBookmarkStore.setState({ bookmarks: data.bookmarks as never[] }))
     }
-    if (data.dailyNotes && hasDataChanged(currentDailyNotes, data.dailyNotes as unknown[])) {
+    if (shouldApply(currentDailyNotes, data.dailyNotes as unknown[])) {
         updates.push(() => useDailyNotesStore.setState({ dailyNotes: data.dailyNotes as never[] }))
     }
-    if (data.focusSessions && hasDataChanged(currentFocusSessions, data.focusSessions as unknown[])) {
+    if (shouldApply(currentFocusSessions, data.focusSessions as unknown[])) {
         updates.push(() => useFocusStore.setState({ sessions: data.focusSessions as never[] }))
     }
     if (data.focusStats) {
@@ -406,7 +432,8 @@ export async function forcePullFromGist(): Promise<{ success: boolean; message: 
             throw new Error('No data found in Gist')
         }
 
-        applyData(remoteData)
+        // Force overwrite local data with remote data (even if remote has empty arrays)
+        applyData(remoteData, true)
 
         setGistSync({
             lastSyncAt: new Date().toISOString(),
