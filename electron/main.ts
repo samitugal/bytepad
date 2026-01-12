@@ -23,7 +23,7 @@ function createWindow() {
   const preloadPath = path.join(__dirname, '../preload/index.cjs')
   console.log('[Main] Preload path:', preloadPath)
   console.log('[Main] __dirname:', __dirname)
-  
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -84,24 +84,24 @@ function createTray() {
   tray = new Tray(trayIcon)
 
   const contextMenu = Menu.buildFromTemplate([
-    { 
-      label: 'Open bytepad', 
+    {
+      label: 'Open bytepad',
       click: () => {
         mainWindow?.show()
         mainWindow?.focus()
       }
     },
     { type: 'separator' },
-    { 
-      label: 'Quick Add Task', 
+    {
+      label: 'Quick Add Task',
       accelerator: 'CmdOrCtrl+Shift+T',
       click: () => {
         mainWindow?.show()
         mainWindow?.webContents.send('shortcut:quickAddTask')
       }
     },
-    { 
-      label: 'Start Focus Mode', 
+    {
+      label: 'Start Focus Mode',
       accelerator: 'CmdOrCtrl+Shift+P',
       click: () => {
         mainWindow?.show()
@@ -109,16 +109,16 @@ function createTray() {
       }
     },
     { type: 'separator' },
-    { 
-      label: 'Settings', 
+    {
+      label: 'Settings',
       click: () => {
         mainWindow?.show()
         mainWindow?.webContents.send('shortcut:settings')
       }
     },
     { type: 'separator' },
-    { 
-      label: 'Quit', 
+    {
+      label: 'Quit',
       click: () => {
         app.isQuitting = true
         app.quit()
@@ -207,7 +207,19 @@ function setupIPC() {
 
   // Notifications
   ipcMain.on('notification:show', (_, { title, body }: { title: string; body: string }) => {
-    new Notification({ title, body }).show()
+    const notification = new Notification({
+      title,
+      body,
+      icon: getIconPath(),
+    })
+
+    // Click notification to show app
+    notification.on('click', () => {
+      mainWindow?.show()
+      mainWindow?.focus()
+    })
+
+    notification.show()
   })
 
   // Auto-start
@@ -216,9 +228,9 @@ function setupIPC() {
   })
 
   ipcMain.handle('autostart:set', (_, enabled: boolean) => {
-    app.setLoginItemSettings({ 
+    app.setLoginItemSettings({
       openAtLogin: enabled,
-      openAsHidden: true 
+      openAsHidden: true
     })
   })
 }

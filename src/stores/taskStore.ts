@@ -75,8 +75,8 @@ export const useTaskStore = create<TaskState>()(
                 ...t,
                 completed: willBeCompleted,
                 completedAt: willBeCompleted ? new Date() : undefined,
-                subtasks: willBeCompleted 
-                  ? t.subtasks 
+                subtasks: willBeCompleted
+                  ? t.subtasks
                   : t.subtasks.map(st => ({ ...st, completed: false })),
               }
             }
@@ -88,8 +88,8 @@ export const useTaskStore = create<TaskState>()(
         if (task && !wasCompleted) {
           const gamification = useGamificationStore.getState()
           const xp = task.priority === 'P1' ? XP_VALUES.taskCompleteP1
-                   : task.priority === 'P2' ? XP_VALUES.taskCompleteP2
-                   : XP_VALUES.taskComplete
+            : task.priority === 'P2' ? XP_VALUES.taskCompleteP2
+              : XP_VALUES.taskComplete
           gamification.addXP(xp, 'taskComplete')
           gamification.incrementStat('tasksCompleted')
           gamification.incrementStat('tasksCompletedToday')
@@ -116,11 +116,11 @@ export const useTaskStore = create<TaskState>()(
           tasks: state.tasks.map((task) =>
             task.id === taskId
               ? {
-                  ...task,
-                  subtasks: task.subtasks.map((st) =>
-                    st.id === subtaskId ? { ...st, completed: !st.completed } : st
-                  ),
-                }
+                ...task,
+                subtasks: task.subtasks.map((st) =>
+                  st.id === subtaskId ? { ...st, completed: !st.completed } : st
+                ),
+              }
               : task
           ),
         }))
@@ -131,9 +131,9 @@ export const useTaskStore = create<TaskState>()(
           tasks: state.tasks.map((task) =>
             task.id === taskId
               ? {
-                  ...task,
-                  subtasks: task.subtasks.filter((st) => st.id !== subtaskId),
-                }
+                ...task,
+                subtasks: task.subtasks.filter((st) => st.id !== subtaskId),
+              }
               : task
           ),
         }))
@@ -147,13 +147,16 @@ export const useTaskStore = create<TaskState>()(
           // Create a map of task id to new order
           const orderMap = new Map(taskIds.map((id, index) => [id, index]))
 
+          // Only update tasks that are in the reorder list
+          const updatedTasks = state.tasks.map(task => {
+            if (orderMap.has(task.id)) {
+              return { ...task, order: orderMap.get(task.id) }
+            }
+            return task
+          })
+
           return {
-            tasks: state.tasks.map(task => ({
-              ...task,
-              order: orderMap.has(task.id) ? orderMap.get(task.id) : task.order,
-            })),
-            // Switch to manual sort when reordering
-            sortBy: 'manual' as const,
+            tasks: updatedTasks,
           }
         })
       },
@@ -167,15 +170,23 @@ export const useTaskStore = create<TaskState>()(
   )
 )
 
-// Cross-tab synchronization
+// Cross-tab synchronization with loop prevention
+let isReceivingSync = false
+
 syncChannel.onmessage = (event) => {
   if (event.data?.type === 'SYNC') {
+    isReceivingSync = true
     useTaskStore.setState({ tasks: event.data.tasks })
+    // Reset flag after microtask to allow normal updates
+    queueMicrotask(() => { isReceivingSync = false })
   }
 }
 
 useTaskStore.subscribe((state) => {
-  syncChannel.postMessage({ type: 'SYNC', tasks: state.tasks })
+  // Don't broadcast if we're receiving a sync (prevents loop)
+  if (!isReceivingSync) {
+    syncChannel.postMessage({ type: 'SYNC', tasks: state.tasks })
+  }
 })
 
 export const getFilteredTasks = (state: TaskState) => {
