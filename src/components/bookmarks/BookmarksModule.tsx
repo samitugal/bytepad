@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useBookmarkStore, getFilteredBookmarks } from '../../stores/bookmarkStore'
 import { useNoteStore } from '../../stores/noteStore'
 import { useTaskStore } from '../../stores/taskStore'
@@ -7,6 +7,116 @@ import { useUIStore } from '../../stores/uiStore'
 import { useTranslation } from '../../i18n'
 import type { Bookmark } from '../../types'
 import { parseTags } from '../../utils/storage'
+
+// Wikilink autocomplete textarea component
+interface WikilinkTextareaProps {
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  className?: string
+}
+
+function WikilinkTextarea({ value, onChange, placeholder, className }: WikilinkTextareaProps) {
+  const notes = useNoteStore((s) => s.notes)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [suggestions, setSuggestions] = useState<Array<{ title: string; type: 'note' }>>([])
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [cursorPosition, setCursorPosition] = useState(0)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Check if we're in a wikilink context
+  const checkForWikilink = (text: string, pos: number) => {
+    const beforeCursor = text.slice(0, pos)
+    const match = beforeCursor.match(/\[\[([^\]]*?)$/)
+    return match ? match[1] : null
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value
+    const pos = e.target.selectionStart || 0
+    setCursorPosition(pos)
+    onChange(newValue)
+
+    const searchTerm = checkForWikilink(newValue, pos)
+    if (searchTerm !== null) {
+      const filtered = notes
+        .filter(n => n.title.toLowerCase().includes(searchTerm.toLowerCase()))
+        .slice(0, 5)
+        .map(n => ({ title: n.title, type: 'note' as const }))
+      setSuggestions(filtered)
+      setShowSuggestions(filtered.length > 0)
+      setSelectedIndex(0)
+    } else {
+      setShowSuggestions(false)
+    }
+  }
+
+  const insertSuggestion = (title: string) => {
+    const beforeCursor = value.slice(0, cursorPosition)
+    const afterCursor = value.slice(cursorPosition)
+    const match = beforeCursor.match(/\[\[([^\]]*?)$/)
+    if (match) {
+      const newBefore = beforeCursor.slice(0, match.index) + `[[${title}]]`
+      onChange(newBefore + afterCursor)
+      setShowSuggestions(false)
+      // Focus back on textarea
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus()
+          const newPos = newBefore.length
+          textareaRef.current.setSelectionRange(newPos, newPos)
+        }
+      }, 0)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedIndex(i => Math.min(i + 1, suggestions.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedIndex(i => Math.max(i - 1, 0))
+    } else if (e.key === 'Enter' && suggestions[selectedIndex]) {
+      e.preventDefault()
+      insertSuggestion(suggestions[selectedIndex].title)
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false)
+    }
+  }
+
+  return (
+    <div className="relative">
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        placeholder={placeholder}
+        className={className}
+      />
+      {showSuggestions && (
+        <div className="absolute left-0 right-0 top-full mt-1 bg-np-bg-secondary border border-np-border shadow-lg z-50 max-h-40 overflow-y-auto">
+          {suggestions.map((s, i) => (
+            <button
+              key={s.title}
+              onClick={() => insertSuggestion(s.title)}
+              className={`w-full text-left px-2 py-1 text-sm flex items-center gap-2 ${
+                i === selectedIndex ? 'bg-np-selection' : 'hover:bg-np-bg-tertiary'
+              }`}
+            >
+              <span className="text-np-cyan">📝</span>
+              <span className="text-np-text-primary truncate">{s.title}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 // Parse and render description with wikilinks
 function RenderDescription({ text }: { text: string }) {
@@ -288,10 +398,10 @@ export function BookmarksModule() {
                 placeholder={language === 'tr' ? 'Başlık (opsiyonel)' : 'Title (optional)'}
                 className="w-full np-input"
               />
-              <textarea
+              <WikilinkTextarea
                 value={newBookmark.description}
-                onChange={(e) => setNewBookmark({ ...newBookmark, description: e.target.value })}
-                placeholder={language === 'tr' ? 'Açıklama - [[Not Adı]] veya @task:Görev Adı ile linkle' : 'Description - link with [[Note Name]] or @task:Task Name'}
+                onChange={(desc) => setNewBookmark({ ...newBookmark, description: desc })}
+                placeholder={language === 'tr' ? 'Açıklama - [[Not Adı]] yazarak linkle' : 'Description - type [[ to link notes'}
                 className="w-full np-input h-16 resize-none"
               />
               <div className="flex gap-2">
@@ -406,10 +516,10 @@ function BookmarkItem({
           className="w-full np-input mb-2"
           placeholder="Title"
         />
-        <textarea
+        <WikilinkTextarea
           value={editData.description}
-          onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-          placeholder="Description - link with [[Note Name]] or @task:Task Name"
+          onChange={(desc) => setEditData({ ...editData, description: desc })}
+          placeholder="Description - type [[ to link notes"
           className="w-full np-input h-16 resize-none mb-2"
         />
         <div className="flex gap-2 mb-2">
