@@ -755,7 +755,7 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
       taskTitle,
       subtaskCount: subtasks.length,
       bookmarkCount: bookmarkIds.length,
-      tags: [...tags, 'research'],
+      tags: [...tags],
       message: `Research plan "${taskTitle}" created with ${subtasks.length} subtasks and ${bookmarkIds.length} linked resources`,
     })
   },
