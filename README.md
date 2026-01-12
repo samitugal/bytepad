@@ -363,8 +363,6 @@ All data is stored locally in JSON format:
 
 bytepad is designed for keyboard-first navigation. Press `Ctrl+?` anytime to see all available shortcuts.
 
-### Global Shortcuts
-
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl+K` | Open Command Palette |
@@ -372,56 +370,11 @@ bytepad is designed for keyboard-first navigation. Press `Ctrl+?` anytime to see
 | `Ctrl+/` | Toggle FlowBot AI Chat |
 | `Ctrl+?` | Show Keyboard Shortcuts Help |
 | `Ctrl+Shift+O` | Toggle Focus Mode |
-| `Ctrl+Shift+N` | Notification Center |
-| `Escape` | Close modal/panel |
-
-### Module Navigation
-
-| Shortcut | Module |
-|----------|--------|
-| `Ctrl+1` | Notes |
-| `Ctrl+2` | Daily Notes |
-| `Ctrl+3` | Habits |
-| `Ctrl+4` | Tasks |
-| `Ctrl+5` | Journal |
-| `Ctrl+6` | Bookmarks |
-| `Ctrl+7` | Calendar |
-| `Ctrl+8` | Knowledge Graph |
-| `Ctrl+9` | Analysis |
-
-### Actions
-
-| Shortcut | Action |
-|----------|--------|
 | `Ctrl+N` | Create new note |
+| `Ctrl+1` to `Ctrl+9` | Navigate between modules |
 | `Ctrl+Enter` | Save and close current item |
-
-### Desktop-Only Shortcuts (Electron)
-
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+Shift+F` | Global Focus Mode Toggle |
-| `Ctrl+Shift+T` | Quick Add Task |
-| `Ctrl+Shift+P` | Start Focus Session |
-
-### Editor Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+B` | Bold text |
-| `Ctrl+I` | Italic text |
-| `Ctrl+S` | Save current item |
-| `Ctrl+Enter` | Save and close |
 | `[[` | Trigger wikilink autocomplete |
-
-### Calendar Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Arrow Left/Right` | Navigate days |
-| `Arrow Up/Down` | Navigate weeks |
-| `T` | Go to today |
-| `N` | Create new task |
+| `Escape` | Close modal/panel |
 
 ---
 
