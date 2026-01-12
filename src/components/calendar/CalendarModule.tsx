@@ -321,6 +321,24 @@ export function CalendarModule() {
             getTasksForDate={getTasksForDate}
             onDateClick={handleDateClick}
             onTaskClick={handleTaskClick}
+            onTaskDragStart={handleTaskDragStart}
+            onTaskDragEnd={handleTaskDragEnd}
+            onDateDragOver={(date, e) => {
+              e.preventDefault()
+              e.dataTransfer.dropEffect = 'move'
+              setDragTargetDate(date)
+            }}
+            onDateDrop={(date, e) => {
+              e.preventDefault()
+              if (!draggingTask) return
+              updateTask(draggingTask.id, {
+                deadline: date,
+                startDate: date,
+              })
+              setDraggingTask(null)
+              setDragTargetDate(null)
+            }}
+            dragTargetDate={dragTargetDate}
           />
         )}
         {currentView === 'week' && (
@@ -503,9 +521,14 @@ interface MonthViewProps {
   getTasksForDate: (date: Date) => Task[]
   onDateClick: (date: Date) => void
   onTaskClick: (task: Task, e: React.MouseEvent) => void
+  onTaskDragStart: (task: Task, e: React.DragEvent) => void
+  onTaskDragEnd: (e: React.DragEvent) => void
+  onDateDragOver: (date: Date, e: React.DragEvent) => void
+  onDateDrop: (date: Date, e: React.DragEvent) => void
+  dragTargetDate: Date | null
 }
 
-function MonthView({ currentDate, selectedDate, getTasksForDate, onDateClick, onTaskClick }: MonthViewProps) {
+function MonthView({ currentDate, selectedDate, getTasksForDate, onDateClick, onTaskClick, onTaskDragStart, onTaskDragEnd, onDateDragOver, onDateDrop, dragTargetDate }: MonthViewProps) {
   const { t, language } = useTranslation()
   const WEEKDAYS = language === 'tr' ? WEEKDAYS_TR : WEEKDAYS_EN
   const days = getMonthDays(currentDate.getFullYear(), currentDate.getMonth())
@@ -536,6 +559,8 @@ function MonthView({ currentDate, selectedDate, getTasksForDate, onDateClick, on
             <div
               key={index}
               onClick={() => onDateClick(date)}
+              onDragOver={(e) => onDateDragOver(date, e)}
+              onDrop={(e) => onDateDrop(date, e)}
               className={`
                 border-b border-r border-np-border p-1 min-h-[80px] cursor-pointer
                 transition-colors hover:bg-np-bg-tertiary
@@ -543,6 +568,7 @@ function MonthView({ currentDate, selectedDate, getTasksForDate, onDateClick, on
                 ${isWeekend(date) ? 'bg-np-bg-primary/30' : ''}
                 ${isToday(date) ? 'ring-2 ring-inset ring-np-blue' : ''}
                 ${selectedDate && isSameDay(date, selectedDate) ? 'bg-np-blue/20' : ''}
+                ${dragTargetDate && isSameDay(date, dragTargetDate) ? 'bg-np-green/20 ring-2 ring-np-green' : ''}
               `}
             >
               <div className={`
@@ -558,9 +584,12 @@ function MonthView({ currentDate, selectedDate, getTasksForDate, onDateClick, on
                 {tasks.slice(0, 3).map((task) => (
                   <div
                     key={task.id}
+                    draggable
+                    onDragStart={(e) => onTaskDragStart(task, e)}
+                    onDragEnd={onTaskDragEnd}
                     onClick={(e) => onTaskClick(task, e)}
                     className={`
-                      text-[10px] px-1 py-0.5 truncate rounded-sm cursor-pointer
+                      text-[10px] px-1 py-0.5 truncate rounded-sm cursor-grab active:cursor-grabbing
                       ${PRIORITY_COLORS[task.priority]} text-white
                       ${task.completed ? 'opacity-50 line-through' : ''}
                       hover:ring-1 hover:ring-white/50
