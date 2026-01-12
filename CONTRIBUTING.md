@@ -1,12 +1,14 @@
-# Contributing to BytePad
+# Contributing to bytepad
 
-Thank you for your interest in contributing to BytePad! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to bytepad! This document provides guidelines and instructions for contributing.
 
 ## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
 - [Getting Started](#getting-started)
 - [Development Setup](#development-setup)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
 - [Making Changes](#making-changes)
 - [Pull Request Process](#pull-request-process)
 - [Code Style](#code-style)
@@ -26,7 +28,7 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm 9+
 - Git
 
@@ -46,18 +48,123 @@ npm run dev:electron
 ### Building
 
 ```bash
-# Build for production
+# Build for production (web)
 npm run build
 
-# Build Electron app (Windows)
-npm run package:win
+# Build Electron app
+npm run build:electron
 
-# Build Electron app (macOS)
-npm run package:mac
+# Package for distribution
+npm run package
 
-# Build Electron app (Linux)
-npm run package:linux
+# Platform-specific packaging
+npm run package:win     # Windows
+npm run package:mac     # macOS
+npm run package:linux   # Linux
+npm run package:all     # Windows + macOS
 ```
+
+### Project Structure
+
+```
+bytepad/
+├── src/
+│   ├── components/       # React components
+│   │   ├── analysis/     # Productivity analysis
+│   │   ├── bookmarks/    # Bookmark management
+│   │   ├── calendar/     # Calendar views
+│   │   ├── chat/         # FlowBot AI chat
+│   │   ├── common/       # Shared components
+│   │   ├── dailynotes/   # Daily notes
+│   │   ├── focus/        # Focus mode & timer
+│   │   ├── gamification/ # XP, levels, achievements
+│   │   ├── graph/        # Knowledge graph
+│   │   ├── habits/       # Habit tracking
+│   │   ├── journal/      # Journal entries
+│   │   ├── layout/       # App layout
+│   │   ├── notes/        # Note management
+│   │   └── tasks/        # Task management
+│   ├── hooks/            # Custom React hooks
+│   ├── i18n/             # Internationalization (en, tr)
+│   ├── services/         # Business logic & API
+│   ├── stores/           # Zustand state stores
+│   ├── types/            # TypeScript definitions
+│   └── utils/            # Utility functions
+├── electron/             # Electron main process
+├── public/               # Static assets
+└── docs/                 # Documentation
+```
+
+## Tech Stack
+
+### Frontend
+
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **TailwindCSS** - Styling
+- **Zustand** - State management
+
+### Desktop
+
+- **Electron** - Cross-platform desktop apps
+- **electron-vite** - Build tooling
+- **electron-builder** - Packaging and distribution
+- **electron-store** - Persistent storage
+
+### AI Integration
+
+- **LangChain.js** - AI orchestration and tool calling
+- **Multiple providers** - OpenAI, Anthropic, Google AI, Groq, Ollama
+
+### Build Tools
+
+- **Vite** - Fast development and building
+- **PostCSS** - CSS processing
+- **ESLint** - Code linting
+
+## Architecture
+
+### State Management
+
+bytepad uses Zustand for state management with separate stores for each domain:
+
+- `useAppStore` - Application-wide state
+- `useNotesStore` - Notes management
+- `useTasksStore` - Task management
+- `useHabitsStore` - Habit tracking
+- `useJournalStore` - Journal entries
+- `useBookmarksStore` - Bookmark management
+- `useFocusStore` - Focus mode state
+- `useGamificationStore` - XP and achievements
+
+### Data Flow
+
+```
+User Action → React Component → Zustand Store → LocalStorage
+                    ↓
+              AI Service (optional)
+                    ↓
+              Updated State → UI Re-render
+```
+
+### Data Storage
+
+All data is stored locally in JSON format:
+
+- **Web (PWA)**: Browser's IndexedDB/LocalStorage
+- **Desktop**:
+  - Windows: `%APPDATA%/bytepad/`
+  - macOS: `~/Library/Application Support/bytepad/`
+  - Linux: `~/.config/bytepad/`
+
+### Sync Architecture
+
+Optional GitHub Gist synchronization:
+
+1. Local changes are saved immediately
+2. Background sync uploads to Gist at configured interval
+3. On startup, pulls latest from Gist
+4. Conflict resolution favors most recent timestamp
 
 ## Making Changes
 
@@ -114,21 +221,6 @@ npm run package:linux
 - Follow the existing color scheme (np-* classes)
 - Mobile-first responsive design
 
-### File Organization
-
-```
-src/
-├── components/     # React components
-│   ├── common/     # Shared components
-│   └── [module]/   # Module-specific components
-├── stores/         # Zustand stores
-├── services/       # Business logic & API
-├── hooks/          # Custom React hooks
-├── types/          # TypeScript types
-├── i18n/           # Translations
-└── utils/          # Utility functions
-```
-
 ## Commit Messages
 
 We use [Conventional Commits](https://www.conventionalcommits.org/):
@@ -163,4 +255,4 @@ refactor(graph): extract node rendering logic
 
 Feel free to open an issue for any questions or concerns.
 
-Thank you for contributing! 🎉
+Thank you for contributing!
