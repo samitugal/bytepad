@@ -33,6 +33,10 @@ export interface ElectronAPI {
   onShortcut: (callback: (action: string) => void) => void
   removeShortcutListeners: () => void
 
+  // App lifecycle
+  onBeforeQuit: (callback: () => void) => void
+  removeBeforeQuitListener: () => void
+
   // Check if running in Electron
   isElectron: boolean
 }

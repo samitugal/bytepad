@@ -10,9 +10,7 @@ import {
     forcePushToGist,
     forcePullFromGist,
     createGist,
-    validateGitHubToken,
-    startAutoSync,
-    stopAutoSync
+    validateGitHubToken
 } from '../../services/gistSyncService'
 import {
     useKeybindingsStore,
@@ -161,7 +159,6 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
             const gistId = await createGist(gistSync.githubToken, 'bytepad Data Sync')
             setGistSync({ gistId, enabled: true })
             setGistSyncStatus(`Gist created! ID: ${gistId}`)
-            startAutoSync()
         } catch (error) {
             setGistSyncStatus(`Error: ${error instanceof Error ? error.message : 'Unknown'}`)
         }
@@ -171,11 +168,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     const handleToggleGistSync = () => {
         const newEnabled = !gistSync.enabled
         setGistSync({ enabled: newEnabled })
-        if (newEnabled && gistSync.githubToken && gistSync.gistId) {
-            startAutoSync()
-        } else {
-            stopAutoSync()
-        }
+        // No auto-sync - sync happens on app open/close
     }
 
     if (!isOpen) return null
@@ -872,27 +865,10 @@ function SyncTab({
                     </div>
 
                     {gistSync.gistId && (
-                        <div className="flex items-center gap-4">
-                            <label className="flex items-center gap-2 text-sm text-np-text-secondary">
-                                <input
-                                    type="checkbox"
-                                    checked={gistSync.autoSync}
-                                    onChange={(e) => setGistSync({ autoSync: e.target.checked })}
-                                    className="w-4 h-4"
-                                />
-                                Auto-sync every
-                            </label>
-                            <select
-                                value={gistSync.syncInterval}
-                                onChange={(e) => setGistSync({ syncInterval: Number(e.target.value) })}
-                                className="np-input text-xs"
-                                disabled={!gistSync.autoSync}
-                            >
-                                <option value={1}>1 min</option>
-                                <option value={5}>5 min</option>
-                                <option value={15}>15 min</option>
-                                <option value={30}>30 min</option>
-                            </select>
+                        <div className="text-xs text-np-text-secondary p-2 bg-np-bg-tertiary border border-np-border">
+                            <strong>Sync Mode:</strong> Pull on app open, Push on app close
+                            <br />
+                            <span className="text-np-text-secondary/70">Use manual buttons for immediate sync</span>
                         </div>
                     )}
 
@@ -928,7 +904,7 @@ function SyncTab({
                                     </div>
                                 </div>
                                 <div className="text-xs text-np-text-secondary">
-                                    Auto-sync: {gistSync.autoSync ? `every ${gistSync.syncInterval} min` : 'off'}
+                                    Mode: Pull on open, Push on close
                                 </div>
                             </div>
 

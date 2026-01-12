@@ -46,6 +46,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('shortcut:settings')
   },
 
+  // Listen for app quit event to trigger sync
+  onBeforeQuit: (callback: () => void) => {
+    ipcRenderer.on('app:before-quit', () => callback())
+  },
+
+  removeBeforeQuitListener: () => {
+    ipcRenderer.removeAllListeners('app:before-quit')
+  },
+
   // Check if running in Electron
   isElectron: true,
 })
