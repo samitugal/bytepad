@@ -143,6 +143,15 @@ docs/
 
 ---
 
+## Phase 5: Release
+
+### 5.1 Version Update
+- [ ] Package.json version update
+- [ ] CHANGELOG.md update
+- [ ] Change release tag as v0.20.0 and push to github
+
+---
+
 ## Refactor Priority Matrix
 
 | Area | Impact | Effort | Priority |
