@@ -46,13 +46,43 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Windows artifacts
+      - name: Upload Windows artifacts (unsigned)
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build
+          name: windows-build-unsigned
           path: |
             dist-electron/*.exe
             dist-electron/*.exe.blockmap
+          retention-days: 5
+
+  sign-windows:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    if: github.repository == 'samitugal/bytepad'
+    steps:
+      - name: Download unsigned Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-build-unsigned
+          path: ./unsigned
+
+      - name: Sign with SignPath
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: 'bytepad'
+          signing-policy-slug: 'release-signing'
+          artifact-configuration-slug: 'windows-exe'
+          github-artifact-id: windows-build-unsigned
+          wait-for-completion: true
+          output-artifact-directory: ./signed
+
+      - name: Upload signed Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: ./signed/*.exe
           retention-days: 5
 
   build-macos:
@@ -89,7 +119,7 @@ jobs:
           retention-days: 5
 
   create-release:
-    needs: [build-windows, build-macos]
+    needs: [sign-windows, build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
     steps:
@@ -134,23 +164,27 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag_name }}
-          name: MyFlowSpace v${{ steps.version.outputs.version }}
+          name: bytepad v${{ steps.version.outputs.version }}
           files: |
             ./artifacts/windows/*
             ./artifacts/macos/*
           draft: true
           generate_release_notes: true
           body: |
-            ## MyFlowSpace v${{ steps.version.outputs.version }}
+            ## bytepad v${{ steps.version.outputs.version }}
             
             ### Downloads
-            - **Windows**: `MyFlowSpace-${{ steps.version.outputs.version }}-win-x64.exe`
-            - **macOS (Intel)**: `MyFlowSpace-${{ steps.version.outputs.version }}-mac-x64.dmg`
-            - **macOS (Apple Silicon)**: `MyFlowSpace-${{ steps.version.outputs.version }}-mac-arm64.dmg`
+            - **Windows**: `bytepad-${{ steps.version.outputs.version }}-win-x64.exe` (Signed)
+            - **macOS (Intel)**: `bytepad-${{ steps.version.outputs.version }}-mac-x64.dmg`
+            - **macOS (Apple Silicon)**: `bytepad-${{ steps.version.outputs.version }}-mac-arm64.dmg`
             
             ### Installation
             - **Windows**: Download and run the `.exe` installer
-            - **macOS**: Download the `.dmg` file, open it, and drag MyFlowSpace to Applications
+            - **macOS**: Download the `.dmg` file, open it, and drag bytepad to Applications
+            
+            ### License
+            This software is licensed for **personal, non-commercial use only**.
+            For commercial licensing inquiries, please contact the author.
             
             ---
             _See CHANGELOG.md for detailed changes._
