@@ -221,7 +221,7 @@ export const useFocusStore = create<FocusState>()(
       },
     }),
     {
-      name: 'myflowspace-focus',
+      name: 'bytepad-focus',
       partialize: (state) => ({
         sessions: state.sessions,
         consecutiveSessions: state.consecutiveSessions,

@@ -58,7 +58,7 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
     {
       title: 'Focus Mode',
       shortcuts: [
-        { keys: 'Ctrl+Shift+F', description: 'Toggle Focus Mode' },
+        { keys: 'Ctrl+Shift+O', description: 'Toggle Focus Mode' },
         { keys: 'Space', description: 'Pause/Resume timer (in Focus Mode)' },
         { keys: 'C', description: 'Complete task (in Focus Mode)' },
         { keys: 'R', description: 'Reset timer (in Focus Mode)' },

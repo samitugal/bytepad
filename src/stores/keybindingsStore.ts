@@ -34,7 +34,7 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
   { id: 'sys-notifications', action: 'system:notifications', label: 'Notifications', description: 'Toggle notification center', keys: 'ctrl+shift+n', category: 'system' },
 
   // Focus
-  { id: 'focus-mode', action: 'focus:toggle', label: 'Focus Mode', description: 'Toggle focus/pomodoro mode', keys: 'ctrl+shift+f', category: 'focus' },
+  { id: 'focus-mode', action: 'focus:toggle', label: 'Focus Mode', description: 'Toggle focus/pomodoro mode', keys: 'ctrl+shift+o', category: 'focus' },
 
   // Actions
   { id: 'action-new', action: 'action:new', label: 'New Item', description: 'Create new item in current module', keys: 'ctrl+n', category: 'actions' },

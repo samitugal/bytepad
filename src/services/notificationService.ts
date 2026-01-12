@@ -50,7 +50,7 @@ export function showNotification(title: string, body: string, icon?: string): vo
     body,
     icon: icon || '/favicon.ico',
     badge: '/favicon.ico',
-    tag: `myflowspace-${Date.now()}`,
+    tag: `bytepad-${Date.now()}`,
   })
 }
 

@@ -180,7 +180,7 @@ export const useTabStore = create<TabState>()(
       },
     }),
     {
-      name: 'myflowspace-tabs',
+      name: 'bytepad-tabs',
       partialize: (state) => ({
         tabs: state.tabs,
         activeTabId: state.activeTabId,

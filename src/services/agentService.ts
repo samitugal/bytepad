@@ -646,17 +646,33 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
       // ============ BOOKMARK OPERATIONS ============
       case 'create_bookmark': {
         const bookmarkStore = useBookmarkStore.getState()
+        const linkedTaskId = args.linkedTaskId as string | undefined
+        const sourceQuery = args.sourceQuery as string | undefined
+        
         const id = bookmarkStore.addBookmark({
           url: args.url as string,
           title: args.title as string,
           description: args.description as string | undefined,
           collection: (args.collection as string) || 'Unsorted',
           tags: (args.tags as string[]) || [],
+          linkedTaskId,
+          sourceQuery,
         })
+        
+        // Build response message with link info
+        let message = `Bookmark "${args.title}" saved to ${args.collection || 'Unsorted'}`
+        if (linkedTaskId) {
+          const taskStore = useTaskStore.getState()
+          const linkedTask = taskStore.tasks.find(t => t.id === linkedTaskId)
+          if (linkedTask) {
+            message += ` (linked to task: "${linkedTask.title}")`
+          }
+        }
+        
         return {
           success: true,
-          message: `Bookmark "${args.title}" saved to ${args.collection || 'Unsorted'}`,
-          data: { id, url: args.url, title: args.title },
+          message,
+          data: { id, url: args.url, title: args.title, linkedTaskId, sourceQuery },
         }
       }
 
@@ -777,6 +793,84 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
           success: true,
           message: `Saved ${savedIds.length} bookmarks to ${collection}`,
           data: { savedCount: savedIds.length, collection },
+        }
+      }
+
+      // ============ RESEARCH & PLANNING ============
+      case 'research_and_plan': {
+        const taskStore = useTaskStore.getState()
+        const bookmarkStore = useBookmarkStore.getState()
+        
+        const topic = args.topic as string
+        const taskTitle = args.taskTitle as string
+        const subtasks = (args.subtasks as string[]) || []
+        const resources = args.resources as Array<{ url: string; title: string; description?: string }> || []
+        const tags = (args.tags as string[]) || [topic.toLowerCase().replace(/\s+/g, '-')]
+        const priority = (args.priority as 'P1' | 'P2' | 'P3' | 'P4') || 'P2'
+        
+        // 1. Create main task with subtasks
+        const taskId = taskStore.addTask({
+          title: taskTitle,
+          priority,
+          description: `Research plan for: ${topic}\n\nResources: ${resources.length} bookmarks linked`,
+        })
+        
+        // Add subtasks
+        for (const subtask of subtasks) {
+          taskStore.addSubtask(taskId, subtask)
+        }
+        
+        // 2. Create bookmarks linked to the task
+        const bookmarkIds: string[] = []
+        for (const resource of resources) {
+          const bookmarkId = bookmarkStore.addBookmark({
+            url: resource.url,
+            title: resource.title,
+            description: resource.description,
+            collection: 'Gold', // Research resources go to Gold
+            tags: [...tags, 'research', topic.toLowerCase().replace(/\s+/g, '-')],
+            linkedTaskId: taskId,
+            sourceQuery: topic,
+          })
+          bookmarkIds.push(bookmarkId)
+        }
+        
+        // Build response
+        let message = `📚 **Research Plan Created: "${taskTitle}"**\n\n`
+        message += `**Task ID:** ${taskId}\n`
+        message += `**Priority:** ${priority}\n`
+        
+        if (subtasks.length > 0) {
+          message += `\n**Subtasks (${subtasks.length}):**\n`
+          subtasks.forEach((st, i) => {
+            message += `${i + 1}. ${st}\n`
+          })
+        }
+        
+        if (resources.length > 0) {
+          message += `\n**Linked Resources (${resources.length}):**\n`
+          resources.slice(0, 5).forEach((r, i) => {
+            message += `${i + 1}. [${r.title}](${r.url})\n`
+          })
+          if (resources.length > 5) {
+            message += `... and ${resources.length - 5} more\n`
+          }
+        }
+        
+        message += `\n✅ All bookmarks are linked to this task with tag: #${tags[0]}`
+        
+        return {
+          success: true,
+          message,
+          data: {
+            taskId,
+            taskTitle,
+            subtaskCount: subtasks.length,
+            bookmarkIds,
+            bookmarkCount: bookmarkIds.length,
+            tags,
+            topic,
+          },
         }
       }
 

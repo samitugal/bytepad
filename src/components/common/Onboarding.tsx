@@ -37,7 +37,7 @@ const STEPS = [
             { key: 'Ctrl+K', desc: 'Command Palette - quick access to everything' },
             { key: 'Ctrl+1-5', desc: 'Switch between modules' },
             { key: 'Ctrl+/', desc: 'Open AI Coach (FlowBot)' },
-            { key: 'Ctrl+Shift+F', desc: 'Focus Mode - hide distractions' },
+            { key: 'Ctrl+Shift+O', desc: 'Focus Mode - hide distractions' },
             { key: 'Ctrl+Shift+N', desc: 'Notification Center' },
             { key: 'Escape', desc: 'Close any modal or panel' },
           ].map(({ key, desc }) => (

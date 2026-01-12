@@ -215,6 +215,9 @@ interface SettingsState {
   // Onboarding
   onboardingCompleted: boolean
 
+  // Locale Settings
+  timezone: string // e.g., 'Europe/Istanbul', 'America/New_York'
+
   // Actions
   setLLMProvider: (provider: LLMProvider) => void
   setLLMModel: (model: string) => void
@@ -227,6 +230,7 @@ interface SettingsState {
   setGistSync: (prefs: Partial<GistSyncPreferences>) => void
   setFocusPreferences: (prefs: Partial<FocusPreferences>) => void
   setGamificationEnabled: (enabled: boolean) => void
+  setTimezone: (timezone: string) => void
   completeOnboarding: () => void
 
   // Helpers
@@ -291,6 +295,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
       gamificationEnabled: true,
       onboardingCompleted: false,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, // Auto-detect from browser
 
       // Actions
       setLLMProvider: (provider) => {
@@ -329,6 +334,8 @@ export const useSettingsStore = create<SettingsState>()(
 
       setGamificationEnabled: (enabled) => set({ gamificationEnabled: enabled }),
 
+      setTimezone: (timezone) => set({ timezone }),
+
       completeOnboarding: () => set({ onboardingCompleted: true }),
 
       // Helpers
@@ -343,7 +350,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
     }),
     {
-      name: 'myflowspace-settings',
+      name: 'bytepad-settings',
       // Persist all settings including API keys, font size, etc.
       partialize: (state) => ({
         llmProvider: state.llmProvider,
@@ -358,6 +365,7 @@ export const useSettingsStore = create<SettingsState>()(
         focusPreferences: state.focusPreferences,
         gamificationEnabled: state.gamificationEnabled,
         onboardingCompleted: state.onboardingCompleted,
+        timezone: state.timezone,
       }),
       // Merge persisted state with initial state to handle new fields
       merge: (persistedState, currentState) => ({

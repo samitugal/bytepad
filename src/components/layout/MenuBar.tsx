@@ -68,7 +68,7 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
           <span
             className="hover:text-np-text-primary cursor-pointer"
             onClick={toggleFocusMode}
-            title="Focus Mode (Ctrl+Shift+F)"
+            title="Focus Mode (Ctrl+Shift+O)"
           >
             Focus
           </span>

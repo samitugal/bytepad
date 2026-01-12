@@ -83,7 +83,7 @@ export function Sidebar() {
     return labelMap[id] || id
   }
   const [width, setWidth] = useState(() => {
-    const saved = localStorage.getItem('myflowspace-sidebar-width')
+    const saved = localStorage.getItem('bytepad-sidebar-width')
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH
   })
   const [isResizing, setIsResizing] = useState(false)
@@ -91,7 +91,7 @@ export function Sidebar() {
 
   // Save width to localStorage
   useEffect(() => {
-    localStorage.setItem('myflowspace-sidebar-width', width.toString())
+    localStorage.setItem('bytepad-sidebar-width', width.toString())
   }, [width])
 
   const startResizing = useCallback((e: React.MouseEvent) => {

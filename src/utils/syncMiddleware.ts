@@ -11,7 +11,7 @@ export function setupCrossTabSync<T>(
   // Create or get broadcast channel
   let channel = channels.get(storeName)
   if (!channel) {
-    channel = new BroadcastChannel(`myflowspace-${storeName}`)
+    channel = new BroadcastChannel(`bytepad-${storeName}`)
     channels.set(storeName, channel)
   }
 

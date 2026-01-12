@@ -143,6 +143,10 @@ export interface Bookmark {
   isRead: boolean
   createdAt: Date
   domain: string // Extracted from URL
+  // Cross-linking support
+  linkedTaskId?: string // Link to related task
+  linkedNoteId?: string // Link to related note
+  sourceQuery?: string // Original search query that found this bookmark
 }
 
 // Knowledge Graph types

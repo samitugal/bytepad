@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { JournalEntry } from '../types'
 
 // Cross-tab sync channel
-const syncChannel = new BroadcastChannel('myflowspace-journal')
+const syncChannel = new BroadcastChannel('bytepad-journal')
 
 interface JournalState {
   entries: JournalEntry[]
@@ -59,7 +59,7 @@ export const useJournalStore = create<JournalState>()(
       },
     }),
     {
-      name: 'myflowspace-journal',
+      name: 'bytepad-journal',
       partialize: (state) => ({ entries: state.entries }),
     }
   )

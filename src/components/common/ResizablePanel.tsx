@@ -20,7 +20,7 @@ export function ResizablePanel({
     className = '',
 }: ResizablePanelProps) {
     const [width, setWidth] = useState(() => {
-        const saved = localStorage.getItem(`myflowspace-panel-${storageKey}`)
+        const saved = localStorage.getItem(`bytepad-panel-${storageKey}`)
         return saved ? parseInt(saved, 10) : defaultWidth
     })
     const [isResizing, setIsResizing] = useState(false)
@@ -28,7 +28,7 @@ export function ResizablePanel({
 
     // Save width to localStorage
     useEffect(() => {
-        localStorage.setItem(`myflowspace-panel-${storageKey}`, width.toString())
+        localStorage.setItem(`bytepad-panel-${storageKey}`, width.toString())
     }, [width, storageKey])
 
     const startResizing = useCallback((e: React.MouseEvent) => {

@@ -12,10 +12,10 @@ export interface ExportData {
 }
 
 export function exportAllData(): ExportData {
-  const notes = JSON.parse(localStorage.getItem('myflowspace-notes') || '{"state":{"notes":[]}}')
-  const habits = JSON.parse(localStorage.getItem('myflowspace-habits') || '{"state":{"habits":[]}}')
-  const tasks = JSON.parse(localStorage.getItem('myflowspace-tasks') || '{"state":{"tasks":[]}}')
-  const journal = JSON.parse(localStorage.getItem('myflowspace-journal') || '{"state":{"entries":[]}}')
+  const notes = JSON.parse(localStorage.getItem('bytepad-notes') || '{"state":{"notes":[]}}')
+  const habits = JSON.parse(localStorage.getItem('bytepad-habits') || '{"state":{"habits":[]}}')
+  const tasks = JSON.parse(localStorage.getItem('bytepad-tasks') || '{"state":{"tasks":[]}}')
+  const journal = JSON.parse(localStorage.getItem('bytepad-journal') || '{"state":{"entries":[]}}')
 
   return {
     version: '1.0.0',
@@ -52,25 +52,25 @@ export function importData(data: ExportData): { success: boolean; error?: string
     // Validate and import notes
     if (Array.isArray(data.data.notes)) {
       const notesState = { state: { notes: data.data.notes }, version: 0 }
-      localStorage.setItem('myflowspace-notes', JSON.stringify(notesState))
+      localStorage.setItem('bytepad-notes', JSON.stringify(notesState))
     }
 
     // Validate and import habits
     if (Array.isArray(data.data.habits)) {
       const habitsState = { state: { habits: data.data.habits }, version: 0 }
-      localStorage.setItem('myflowspace-habits', JSON.stringify(habitsState))
+      localStorage.setItem('bytepad-habits', JSON.stringify(habitsState))
     }
 
     // Validate and import tasks
     if (Array.isArray(data.data.tasks)) {
       const tasksState = { state: { tasks: data.data.tasks }, version: 0 }
-      localStorage.setItem('myflowspace-tasks', JSON.stringify(tasksState))
+      localStorage.setItem('bytepad-tasks', JSON.stringify(tasksState))
     }
 
     // Validate and import journal entries
     if (Array.isArray(data.data.journalEntries)) {
       const journalState = { state: { entries: data.data.journalEntries }, version: 0 }
-      localStorage.setItem('myflowspace-journal', JSON.stringify(journalState))
+      localStorage.setItem('bytepad-journal', JSON.stringify(journalState))
     }
 
     return { success: true }
@@ -96,17 +96,17 @@ export function readFileAsJson(file: File): Promise<ExportData> {
 }
 
 export function clearAllData() {
-  localStorage.removeItem('myflowspace-notes')
-  localStorage.removeItem('myflowspace-habits')
-  localStorage.removeItem('myflowspace-tasks')
-  localStorage.removeItem('myflowspace-journal')
+  localStorage.removeItem('bytepad-notes')
+  localStorage.removeItem('bytepad-habits')
+  localStorage.removeItem('bytepad-tasks')
+  localStorage.removeItem('bytepad-journal')
 }
 
 export function getDataStats() {
-  const notes = JSON.parse(localStorage.getItem('myflowspace-notes') || '{"state":{"notes":[]}}')
-  const habits = JSON.parse(localStorage.getItem('myflowspace-habits') || '{"state":{"habits":[]}}')
-  const tasks = JSON.parse(localStorage.getItem('myflowspace-tasks') || '{"state":{"tasks":[]}}')
-  const journal = JSON.parse(localStorage.getItem('myflowspace-journal') || '{"state":{"entries":[]}}')
+  const notes = JSON.parse(localStorage.getItem('bytepad-notes') || '{"state":{"notes":[]}}')
+  const habits = JSON.parse(localStorage.getItem('bytepad-habits') || '{"state":{"habits":[]}}')
+  const tasks = JSON.parse(localStorage.getItem('bytepad-tasks') || '{"state":{"tasks":[]}}')
+  const journal = JSON.parse(localStorage.getItem('bytepad-journal') || '{"state":{"entries":[]}}')
 
   return {
     notes: notes.state?.notes?.length || 0,
