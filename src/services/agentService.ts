@@ -65,17 +65,22 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
       case 'create_task': {
         const taskStore = useTaskStore.getState()
         const deadline = args.deadline ? new Date(args.deadline as string) : undefined
+        const tags = (args.tags as string[]) || []
         const id = taskStore.addTask({
           title: args.title as string,
           priority: (args.priority as 'P1' | 'P2' | 'P3' | 'P4') || 'P2',
           description: args.description as string | undefined,
           deadline,
           deadlineTime: args.deadlineTime as string | undefined,
+          tags,
         })
+        let message = `Task "${args.title}" created with priority ${args.priority || 'P2'}`
+        if (deadline) message += ` (deadline: ${args.deadline})`
+        if (tags.length > 0) message += ` [tags: ${tags.map(t => `#${t}`).join(' ')}]`
         return {
           success: true,
-          message: `Task "${args.title}" created with priority ${args.priority || 'P2'}${deadline ? ` (deadline: ${args.deadline})` : ''}`,
-          data: { id, title: args.title },
+          message,
+          data: { id, title: args.title, tags },
         }
       }
 
@@ -807,12 +812,14 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
         const resources = args.resources as Array<{ url: string; title: string; description?: string }> || []
         const tags = (args.tags as string[]) || [topic.toLowerCase().replace(/\s+/g, '-')]
         const priority = (args.priority as 'P1' | 'P2' | 'P3' | 'P4') || 'P2'
+        const finalTags = [...tags, 'research']
         
-        // 1. Create main task with subtasks
+        // 1. Create main task with tags
         const taskId = taskStore.addTask({
           title: taskTitle,
           priority,
           description: `Research plan for: ${topic}\n\nResources: ${resources.length} bookmarks linked`,
+          tags: finalTags,
         })
         
         // Add subtasks
@@ -828,17 +835,23 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
             title: resource.title,
             description: resource.description,
             collection: 'Gold', // Research resources go to Gold
-            tags: [...tags, 'research', topic.toLowerCase().replace(/\s+/g, '-')],
+            tags: finalTags,
             linkedTaskId: taskId,
             sourceQuery: topic,
           })
           bookmarkIds.push(bookmarkId)
         }
         
+        // 3. Link bookmarks to task (bidirectional linking)
+        if (bookmarkIds.length > 0) {
+          taskStore.updateTask(taskId, { linkedBookmarkIds: bookmarkIds })
+        }
+        
         // Build response
         let message = `📚 **Research Plan Created: "${taskTitle}"**\n\n`
         message += `**Task ID:** ${taskId}\n`
         message += `**Priority:** ${priority}\n`
+        message += `**Tags:** ${finalTags.map(t => `#${t}`).join(' ')}\n`
         
         if (subtasks.length > 0) {
           message += `\n**Subtasks (${subtasks.length}):**\n`
@@ -857,7 +870,7 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
           }
         }
         
-        message += `\n✅ All bookmarks are linked to this task with tag: #${tags[0]}`
+        message += `\n✅ Task and bookmarks are bidirectionally linked with tags: ${finalTags.map(t => `#${t}`).join(' ')}`
         
         return {
           success: true,
@@ -868,7 +881,7 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
             subtaskCount: subtasks.length,
             bookmarkIds,
             bookmarkCount: bookmarkIds.length,
-            tags,
+            tags: finalTags,
             topic,
           },
         }
