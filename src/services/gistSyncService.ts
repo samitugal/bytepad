@@ -305,9 +305,83 @@ export async function readFromGist(token: string, gistId: string): Promise<SyncD
     }
 }
 
+// Validate data before pushing - prevent accidental data loss
+function validateDataBeforePush(localData: SyncData, remoteData: SyncData | null): { valid: boolean; warnings: string[] } {
+    const warnings: string[] = []
+    
+    // Check if local data seems incomplete (might be corrupted localStorage)
+    const totalLocalItems = 
+        (localData.data.notes?.length || 0) +
+        (localData.data.tasks?.length || 0) +
+        (localData.data.habits?.length || 0) +
+        (localData.data.journal?.length || 0) +
+        (localData.data.bookmarks?.length || 0) +
+        (localData.data.dailyNotes?.length || 0)
+    
+    if (remoteData) {
+        const totalRemoteItems = 
+            (remoteData.data.notes?.length || 0) +
+            (remoteData.data.tasks?.length || 0) +
+            (remoteData.data.habits?.length || 0) +
+            (remoteData.data.journal?.length || 0) +
+            (remoteData.data.bookmarks?.length || 0) +
+            (remoteData.data.dailyNotes?.length || 0)
+        
+        // Warn if local has significantly less data than remote (potential data loss)
+        if (totalRemoteItems > 0 && totalLocalItems < totalRemoteItems * 0.5) {
+            warnings.push(`Local data (${totalLocalItems} items) is much smaller than remote (${totalRemoteItems} items)`)
+        }
+        
+        // Check each store for potential data loss
+        if ((remoteData.data.notes?.length || 0) > 0 && (localData.data.notes?.length || 0) === 0) {
+            warnings.push('Local notes are empty but remote has notes')
+        }
+        if ((remoteData.data.tasks?.length || 0) > 0 && (localData.data.tasks?.length || 0) === 0) {
+            warnings.push('Local tasks are empty but remote has tasks')
+        }
+        if ((remoteData.data.habits?.length || 0) > 0 && (localData.data.habits?.length || 0) === 0) {
+            warnings.push('Local habits are empty but remote has habits')
+        }
+        
+        // Check for content loss in notes (notes exist but content is empty)
+        const localNotes = localData.data.notes as Array<{ id: string; title: string; content: string }> || []
+        const remoteNotes = remoteData.data.notes as Array<{ id: string; title: string; content: string }> || []
+        
+        for (const localNote of localNotes) {
+            const remoteNote = remoteNotes.find(n => n.id === localNote.id)
+            if (remoteNote && remoteNote.content && remoteNote.content.length > 10 && (!localNote.content || localNote.content.length === 0)) {
+                warnings.push(`Note "${localNote.title || localNote.id}" has empty content but remote has content`)
+            }
+        }
+    }
+    
+    // If there are critical warnings, don't allow push
+    const hasCriticalWarning = warnings.some(w => 
+        w.includes('empty content but remote has content') ||
+        w.includes('much smaller than remote')
+    )
+    
+    return { valid: !hasCriticalWarning, warnings }
+}
+
 // Write data to Gist
-export async function writeToGist(token: string, gistId: string): Promise<void> {
+export async function writeToGist(token: string, gistId: string, skipValidation: boolean = false): Promise<void> {
     const data = collectAllData()
+    
+    // Validate data before pushing (unless explicitly skipped)
+    if (!skipValidation) {
+        const remoteData = await readFromGist(token, gistId)
+        const validation = validateDataBeforePush(data, remoteData)
+        
+        if (!validation.valid) {
+            console.warn('[GistSync] Push blocked due to potential data loss:', validation.warnings)
+            throw new Error(`Push blocked: ${validation.warnings.join('; ')}`)
+        }
+        
+        if (validation.warnings.length > 0) {
+            console.warn('[GistSync] Push warnings:', validation.warnings)
+        }
+    }
 
     const response = await fetch(`https://api.github.com/gists/${gistId}`, {
         method: 'PATCH',
@@ -395,7 +469,8 @@ export async function forcePushToGist(): Promise<{ success: boolean; message: st
     setGistSync({ lastSyncStatus: 'pending' })
 
     try {
-        await writeToGist(gistSync.githubToken, gistSync.gistId)
+        // Skip validation for force push - user explicitly wants to overwrite remote
+        await writeToGist(gistSync.githubToken, gistSync.gistId, true)
 
         setGistSync({
             lastSyncAt: new Date().toISOString(),
