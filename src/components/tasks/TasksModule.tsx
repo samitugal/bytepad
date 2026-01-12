@@ -45,6 +45,18 @@ export function TasksModule() {
     taskId: null,
     title: ''
   })
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+  const [editTaskForm, setEditTaskForm] = useState<{
+    title: string
+    priority: Task['priority']
+    description: string
+    startDate: string
+    startTime: string
+    deadline: string
+    deadlineTime: string
+    reminderEnabled: boolean
+    reminderMinutesBefore: number
+  } | null>(null)
 
   // Auto-complete parent task when all subtasks are done
   useEffect(() => {
@@ -101,6 +113,45 @@ export function TasksModule() {
     setDeleteConfirm({ isOpen: false, taskId: null, title: '' })
   }
 
+  const openEditTaskModal = (taskId: string) => {
+    const task = allTasks.find(t => t.id === taskId)
+    if (!task) return
+    setEditingTaskId(taskId)
+    setEditTaskForm({
+      title: task.title,
+      priority: task.priority,
+      description: task.description || '',
+      startDate: task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : '',
+      startTime: task.startTime || '',
+      deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
+      deadlineTime: task.deadlineTime || '',
+      reminderEnabled: task.reminderEnabled || false,
+      reminderMinutesBefore: task.reminderMinutesBefore || 30
+    })
+  }
+
+  const handleSaveTaskEdit = () => {
+    if (!editingTaskId || !editTaskForm) return
+    updateTask(editingTaskId, {
+      title: editTaskForm.title,
+      priority: editTaskForm.priority,
+      description: editTaskForm.description || undefined,
+      startDate: editTaskForm.startDate ? new Date(editTaskForm.startDate) : undefined,
+      startTime: editTaskForm.startTime || undefined,
+      deadline: editTaskForm.deadline ? new Date(editTaskForm.deadline) : undefined,
+      deadlineTime: editTaskForm.deadlineTime || undefined,
+      reminderEnabled: editTaskForm.reminderEnabled,
+      reminderMinutesBefore: editTaskForm.reminderMinutesBefore
+    })
+    setEditingTaskId(null)
+    setEditTaskForm(null)
+  }
+
+  const handleCancelTaskEdit = () => {
+    setEditingTaskId(null)
+    setEditTaskForm(null)
+  }
+
   const pendingCount = activeTasks.length
   const doneCount = completedTasks.length
 
@@ -113,7 +164,7 @@ export function TasksModule() {
             <span className="text-np-green">// </span>{t('tasks.title')}
           </h2>
           <p className="text-sm text-np-text-secondary mt-1">
-            {pendingCount === 1 
+            {pendingCount === 1
               ? t('tasks.pendingCount', { count: pendingCount })
               : t('tasks.pendingCountPlural', { count: pendingCount })}
           </p>
@@ -292,11 +343,10 @@ export function TasksModule() {
 
                     {/* Subtask count badge */}
                     {task.subtasks.length > 0 && (
-                      <span className={`text-xs px-2 py-0.5 rounded ${
-                        completedSubtasks === task.subtasks.length
-                          ? 'bg-np-green/20 text-np-green'
-                          : 'bg-np-bg-tertiary text-np-text-secondary'
-                      }`}>
+                      <span className={`text-xs px-2 py-0.5 rounded ${completedSubtasks === task.subtasks.length
+                        ? 'bg-np-green/20 text-np-green'
+                        : 'bg-np-bg-tertiary text-np-text-secondary'
+                        }`}>
                         {completedSubtasks}/{task.subtasks.length}
                       </span>
                     )}
@@ -329,7 +379,7 @@ export function TasksModule() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        setExpandedTask(isExpanded ? null : task.id)
+                        openEditTaskModal(task.id)
                       }}
                       className="text-np-text-secondary hover:text-np-blue text-sm px-1"
                       title="Edit task"
@@ -491,7 +541,7 @@ export function TasksModule() {
                       </span>
                     )}
                     <button
-                      onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+                      onClick={() => openEditTaskModal(task.id)}
                       className="text-np-text-secondary hover:text-np-blue text-sm px-1"
                       title="Edit task"
                     >
@@ -515,6 +565,126 @@ export function TasksModule() {
           </div>
         )}
       </div>
+
+      {/* Edit Task Modal */}
+      {editingTaskId && editTaskForm && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={handleCancelTaskEdit}
+          />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] bg-np-bg-primary border border-np-border shadow-xl z-50 p-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-np-green mb-4">// {t('tasks.editTask') || 'Edit Task'}</h3>
+
+            {/* Title */}
+            <div className="mb-3">
+              <label className="text-xs text-np-text-secondary block mb-1">{t('tasks.taskTitle')}</label>
+              <input
+                type="text"
+                value={editTaskForm.title}
+                onChange={(e) => setEditTaskForm({ ...editTaskForm, title: e.target.value })}
+                className="w-full np-input"
+                autoFocus
+              />
+            </div>
+
+            {/* Priority */}
+            <div className="mb-3">
+              <label className="text-xs text-np-text-secondary block mb-1">{t('tasks.priority')}</label>
+              <select
+                value={editTaskForm.priority}
+                onChange={(e) => setEditTaskForm({ ...editTaskForm, priority: e.target.value as Task['priority'] })}
+                className="w-full np-input"
+              >
+                {PRIORITIES.map(p => (
+                  <option key={p} value={p}>{p} - {p === 'P1' ? 'Critical' : p === 'P2' ? 'High' : p === 'P3' ? 'Medium' : 'Low'}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Description */}
+            <div className="mb-3">
+              <label className="text-xs text-np-text-secondary block mb-1">{t('tasks.descriptionOptional')}</label>
+              <textarea
+                value={editTaskForm.description}
+                onChange={(e) => setEditTaskForm({ ...editTaskForm, description: e.target.value })}
+                className="w-full np-input h-20 resize-none"
+                placeholder={t('tasks.descriptionOptional')}
+              />
+            </div>
+
+            {/* Start Date & Time */}
+            <div className="mb-3">
+              <label className="text-xs text-np-text-secondary block mb-1">{t('tasks.start')}</label>
+              <div className="flex gap-2">
+                <DateTimePicker
+                  type="date"
+                  value={editTaskForm.startDate}
+                  onChange={(val) => setEditTaskForm({ ...editTaskForm, startDate: val })}
+                  placeholder={t('tasks.startDate')}
+                />
+                <DateTimePicker
+                  type="time"
+                  value={editTaskForm.startTime}
+                  onChange={(val) => setEditTaskForm({ ...editTaskForm, startTime: val })}
+                  placeholder={t('tasks.time')}
+                />
+              </div>
+            </div>
+
+            {/* Deadline & Time */}
+            <div className="mb-3">
+              <label className="text-xs text-np-text-secondary block mb-1">{t('tasks.end')}</label>
+              <div className="flex gap-2">
+                <DateTimePicker
+                  type="date"
+                  value={editTaskForm.deadline}
+                  onChange={(val) => setEditTaskForm({ ...editTaskForm, deadline: val })}
+                  placeholder={t('tasks.endDate')}
+                />
+                <DateTimePicker
+                  type="time"
+                  value={editTaskForm.deadlineTime}
+                  onChange={(val) => setEditTaskForm({ ...editTaskForm, deadlineTime: val })}
+                  placeholder={t('tasks.time')}
+                />
+              </div>
+            </div>
+
+            {/* Reminder */}
+            <div className="mb-4">
+              <label className="flex items-center gap-2 text-sm text-np-text-secondary mb-2">
+                <input
+                  type="checkbox"
+                  checked={editTaskForm.reminderEnabled}
+                  onChange={(e) => setEditTaskForm({ ...editTaskForm, reminderEnabled: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <span>🔔 {t('tasks.remindMe')}</span>
+              </label>
+              {editTaskForm.reminderEnabled && (
+                <select
+                  value={editTaskForm.reminderMinutesBefore}
+                  onChange={(e) => setEditTaskForm({ ...editTaskForm, reminderMinutesBefore: Number(e.target.value) })}
+                  className="np-input text-sm"
+                >
+                  <option value={15}>{t('tasks.minBefore', { min: 15 })}</option>
+                  <option value={30}>{t('tasks.minBefore', { min: 30 })}</option>
+                  <option value={60}>{t('tasks.hourBefore')}</option>
+                  <option value={120}>{t('tasks.hoursBefore', { hours: 2 })}</option>
+                  <option value={1440}>{t('tasks.dayBefore')}</option>
+                </select>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 justify-end border-t border-np-border pt-3">
+              <button onClick={handleCancelTaskEdit} className="np-btn">{t('common.cancel')}</button>
+              <button onClick={handleSaveTaskEdit} className="np-btn text-np-green">{t('tasks.save') || 'Save'}</button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Keyboard hints */}
       <div className="mt-4 pt-3 border-t border-np-border text-xs text-np-text-secondary">
