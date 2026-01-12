@@ -405,6 +405,18 @@ export async function writeToGist(token: string, gistId: string, skipValidation:
     }
 }
 
+// Count total items in sync data
+function countTotalItems(data: SyncData): number {
+    return (
+        (data.data.notes?.length || 0) +
+        (data.data.tasks?.length || 0) +
+        (data.data.habits?.length || 0) +
+        (data.data.journal?.length || 0) +
+        (data.data.bookmarks?.length || 0) +
+        (data.data.dailyNotes?.length || 0)
+    )
+}
+
 // Sync: Pull from Gist, merge, push back
 export async function syncWithGist(): Promise<{ success: boolean; message: string }> {
     const settings = useSettingsStore.getState()
@@ -422,6 +434,23 @@ export async function syncWithGist(): Promise<{ success: boolean; message: strin
         const localData = collectAllData()
 
         if (remoteData) {
+            const remoteItemCount = countTotalItems(remoteData)
+            const localItemCount = countTotalItems(localData)
+            
+            // SAFETY: If remote has more data than local, always pull first
+            // This prevents pushing incomplete/corrupted local data
+            if (remoteItemCount > localItemCount) {
+                console.log(`[GistSync] Remote has more data (${remoteItemCount} vs ${localItemCount}), pulling...`)
+                applyData(remoteData)
+                setGistSync({
+                    lastSyncAt: new Date().toISOString(),
+                    lastSyncStatus: 'success',
+                    lastSyncError: null,
+                })
+                return { success: true, message: 'Pulled latest data from Gist (remote has more data)' }
+            }
+            
+            // If counts are equal or local has more, check timestamps
             const remoteTime = new Date(remoteData.lastModified).getTime()
             const localTime = new Date(localData.lastModified).getTime()
 
@@ -437,7 +466,7 @@ export async function syncWithGist(): Promise<{ success: boolean; message: strin
             }
         }
 
-        // Push local data to Gist
+        // Push local data to Gist (validation happens inside writeToGist)
         await writeToGist(gistSync.githubToken, gistSync.gistId)
 
         setGistSync({
@@ -530,7 +559,9 @@ export async function forcePullFromGist(): Promise<{ success: boolean; message: 
 // Auto-sync interval manager
 let syncIntervalId: number | null = null
 let debouncedSyncTimeoutId: number | null = null
+let isInitialSyncDone = false
 const DEBOUNCE_DELAY_MS = 30000 // 30 seconds debounce for data change sync
+const INITIAL_SYNC_DELAY_MS = 5000 // Wait 5 seconds before first sync to let stores hydrate
 
 export function startAutoSync(): void {
     stopAutoSync()
@@ -544,12 +575,29 @@ export function startAutoSync(): void {
 
     const intervalMs = gistSync.syncInterval * 60 * 1000 // Convert minutes to ms
 
+    // On app start, do a PULL-ONLY sync first to get latest data
+    // This prevents pushing potentially corrupted/incomplete local data
+    if (!isInitialSyncDone) {
+        console.log('[GistSync] Waiting for stores to hydrate before initial sync...')
+        setTimeout(async () => {
+            console.log('[GistSync] Performing initial pull-only sync...')
+            try {
+                const remoteData = await readFromGist(gistSync.githubToken, gistSync.gistId)
+                if (remoteData) {
+                    // Only apply remote data, don't push anything
+                    applyData(remoteData, false)
+                    console.log('[GistSync] Initial pull completed successfully')
+                }
+            } catch (error) {
+                console.error('[GistSync] Initial pull failed:', error)
+            }
+            isInitialSyncDone = true
+        }, INITIAL_SYNC_DELAY_MS)
+    }
+
     syncIntervalId = window.setInterval(() => {
         syncWithGist()
     }, intervalMs)
-
-    // Also sync immediately on start
-    syncWithGist()
 }
 
 export function stopAutoSync(): void {
