@@ -16,6 +16,8 @@ interface NoteState {
   setActiveNote: (id: string | null) => void
   setSearchQuery: (query: string) => void
   getActiveNote: () => Note | null
+  togglePin: (id: string) => void
+  getSortedNotes: () => Note[]
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 15)
@@ -76,6 +78,26 @@ export const useNoteStore = create<NoteState>()(
       getActiveNote: () => {
         const state = get()
         return state.notes.find((note) => note.id === state.activeNoteId) || null
+      },
+
+      togglePin: (id) => {
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id
+              ? { ...note, pinned: !note.pinned, updatedAt: new Date() }
+              : note
+          ),
+        }))
+      },
+
+      getSortedNotes: () => {
+        const state = get()
+        // Pinned notes first, then by createdAt (newest first)
+        return [...state.notes].sort((a, b) => {
+          if (a.pinned && !b.pinned) return -1
+          if (!a.pinned && b.pinned) return 1
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        })
       },
     }),
     {

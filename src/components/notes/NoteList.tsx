@@ -6,7 +6,7 @@ import { useTranslation } from '../../i18n'
 
 export function NoteList() {
   const { t, language } = useTranslation()
-  const { notes, activeNoteId, searchQuery, setActiveNote, setSearchQuery, addNote } = useNoteStore()
+  const { notes, activeNoteId, searchQuery, setActiveNote, setSearchQuery, addNote, togglePin, getSortedNotes } = useNoteStore()
   const { addTab } = useTabStore()
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showTagCloud, setShowTagCloud] = useState(false)
@@ -24,9 +24,9 @@ export function NoteList() {
       .map(([tag, count]) => ({ tag, count }))
   }, [notes])
 
-  // Filter notes by search query AND selected tags
+  // Filter and sort notes: pinned first, then by createdAt (newest first)
   const filteredNotes = useMemo(() => {
-    let result = notes
+    let result = getSortedNotes()
 
     // Filter by search query
     if (searchQuery) {
@@ -46,7 +46,7 @@ export function NoteList() {
     }
 
     return result
-  }, [notes, searchQuery, selectedTags])
+  }, [notes, searchQuery, selectedTags, getSortedNotes])
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev =>
@@ -160,14 +160,27 @@ export function NoteList() {
             <div
               key={note.id}
               onClick={() => handleNoteClick(note.id, note.title)}
-              className={`px-3 py-2 border-b border-np-border cursor-pointer transition-colors
+              className={`px-3 py-2 border-b border-np-border cursor-pointer transition-colors group
                 ${activeNoteId === note.id
                   ? 'bg-np-selection'
                   : 'hover:bg-np-bg-tertiary'
                 }`}
             >
-              <div className="text-sm text-np-text-primary truncate">
-                {note.title || t('notes.untitled')}
+              <div className="text-sm text-np-text-primary truncate flex items-center gap-1">
+                {note.pinned && <span className="text-np-yellow" title="Pinned">📌</span>}
+                <span className="truncate">{note.title || t('notes.untitled')}</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    togglePin(note.id)
+                  }}
+                  className={`ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-xs px-1 hover:bg-np-bg-hover ${
+                    note.pinned ? 'text-np-yellow' : 'text-np-text-secondary'
+                  }`}
+                  title={note.pinned ? 'Unpin' : 'Pin'}
+                >
+                  {note.pinned ? '📌' : '📍'}
+                </button>
               </div>
               <div className="text-xs text-np-text-secondary mt-1 flex items-center justify-between">
                 <span className="truncate max-w-[120px]">
