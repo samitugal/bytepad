@@ -5,6 +5,7 @@
 - [x] Sprint 29: Knowledge Graph Interactivity ✓
 - [x] Sprint 30: Performance Optimization ✓
 - [x] Sprint 31: Image Support ❌ (CANCELLED - Gist storage limits)
+- [ ] Sprint 32: UX Enhancements & Sync Improvements 🔄 (PLANNED)
 
 ### Tüm Tamamlanan Sprint'ler
 - [x] MVP1: Foundation + Notes ✓
@@ -26,6 +27,7 @@
 - [x] Sprint 29: Graph Interactivity (Drag & drop nodes) ✓
 - [x] Sprint 30: Performance Optimization (80% bundle reduction) ✓
 - [ ] Sprint 31: Image Support ❌ CANCELLED (Gist storage limits)
+- [ ] Sprint 32: UX Enhancements & Sync Improvements 🔄 (PLANNED)
 
 ### Son Yapılan İyileştirmeler
 - Backlinks panel: Max 3 link gösterimi, "+X more" butonu ile genişletme
@@ -92,7 +94,8 @@ docs/
 │   ├── SPRINT_28_UX_BUG_FIXES.md ✅
 │   ├── SPRINT_29_GRAPH_INTERACTIVITY.md ✅
 │   ├── SPRINT_30_PERFORMANCE.md ✅
-│   └── SPRINT_31_IMAGE_SUPPORT.md ❌ CANCELLED
+│   ├── SPRINT_31_IMAGE_SUPPORT.md ❌ CANCELLED
+│   └── SPRINT_32_UX_ENHANCEMENTS.md 🔄 PLANNED
 ```
 
 ## i18n (Localization)
