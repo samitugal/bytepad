@@ -58,7 +58,7 @@ export function StatusBar() {
             <span>⚡</span> {language === 'tr' ? 'Çevrimdışı' : 'Offline'}
           </span>
         )}
-        <span>bytepad v0.15.0</span>
+        <span>bytepad v0.17.0</span>
       </div>
     </div>
   )
