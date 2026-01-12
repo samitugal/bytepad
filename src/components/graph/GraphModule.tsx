@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNoteStore } from '../../stores/noteStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useHabitStore } from '../../stores/habitStore'
@@ -11,6 +11,29 @@ import { GraphControls } from './GraphControls'
 import { buildGraphData, collectAllTags } from '../../utils/graphUtils'
 import type { GraphEntityType } from '../../types'
 
+const GRAPH_FILTERS_KEY = 'bytepad-graph-filters'
+
+const defaultFilters = {
+  showNotes: true,
+  showTasks: true,
+  showHabits: true,
+  showJournals: false,
+  showBookmarks: false,
+  showTags: true,
+}
+
+function loadFilters() {
+  try {
+    const saved = localStorage.getItem(GRAPH_FILTERS_KEY)
+    if (saved) {
+      return { ...defaultFilters, ...JSON.parse(saved) }
+    }
+  } catch (e) {
+    console.error('Failed to load graph filters:', e)
+  }
+  return defaultFilters
+}
+
 export function GraphModule() {
   const { t } = useTranslation()
   const notes = useNoteStore((s) => s.notes)
@@ -21,15 +44,13 @@ export function GraphModule() {
   const bookmarks = useBookmarkStore((s) => s.bookmarks)
   const setActiveModule = useUIStore((s) => s.setActiveModule)
 
-  const [filters, setFilters] = useState({
-    showNotes: true,
-    showTasks: true,
-    showHabits: true,
-    showJournals: false,
-    showBookmarks: false,
-    showTags: true,
-  })
+  const [filters, setFilters] = useState(loadFilters)
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Persist filters to localStorage
+  useEffect(() => {
+    localStorage.setItem(GRAPH_FILTERS_KEY, JSON.stringify(filters))
+  }, [filters])
 
   const { nodes, edges } = useMemo(
     () => buildGraphData(notes, tasks, habits, journals, bookmarks, filters),
@@ -49,7 +70,7 @@ export function GraphModule() {
   }, [notes, tasks, habits, journals, bookmarks])
 
   const handleFilterChange = (key: string, value: boolean) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
+    setFilters((prev: typeof defaultFilters) => ({ ...prev, [key]: value }))
   }
 
   const handleNodeClick = (nodeId: string, nodeType: GraphEntityType) => {
