@@ -46,44 +46,45 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Windows artifacts (unsigned)
+      - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build-unsigned
+          name: windows-build
           path: |
             dist-electron/*.exe
             dist-electron/*.exe.blockmap
           retention-days: 5
 
-  sign-windows:
-    needs: build-windows
-    runs-on: ubuntu-latest
-    if: github.repository == 'samitugal/bytepad'
-    steps:
-      - name: Download unsigned Windows artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-build-unsigned
-          path: ./unsigned
-
-      - name: Sign with SignPath
-        uses: signpath/github-action-submit-signing-request@v1
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: 'bytepad'
-          signing-policy-slug: 'release-signing'
-          artifact-configuration-slug: 'windows-exe'
-          github-artifact-id: windows-build-unsigned
-          wait-for-completion: true
-          output-artifact-directory: ./signed
-
-      - name: Upload signed Windows artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-build
-          path: ./signed/*.exe
-          retention-days: 5
+  # SignPath code signing - uncomment when SignPath is configured
+  # sign-windows:
+  #   needs: build-windows
+  #   runs-on: ubuntu-latest
+  #   if: github.repository == 'samitugal/bytepad'
+  #   steps:
+  #     - name: Download unsigned Windows artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: windows-build-unsigned
+  #         path: ./unsigned
+  #
+  #     - name: Sign with SignPath
+  #       uses: signpath/github-action-submit-signing-request@v1
+  #       with:
+  #         api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+  #         organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+  #         project-slug: 'bytepad'
+  #         signing-policy-slug: 'release-signing'
+  #         artifact-configuration-slug: 'windows-exe'
+  #         github-artifact-id: windows-build-unsigned
+  #         wait-for-completion: true
+  #         output-artifact-directory: ./signed
+  #
+  #     - name: Upload signed Windows artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: windows-build
+  #         path: ./signed/*.exe
+  #         retention-days: 5
 
   build-macos:
     runs-on: macos-latest
@@ -119,7 +120,7 @@ jobs:
           retention-days: 5
 
   create-release:
-    needs: [sign-windows, build-macos]
+    needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
     steps:
@@ -174,7 +175,7 @@ jobs:
             ## bytepad v${{ steps.version.outputs.version }}
             
             ### Downloads
-            - **Windows**: `bytepad-${{ steps.version.outputs.version }}-win-x64.exe` (Signed)
+            - **Windows**: `bytepad-${{ steps.version.outputs.version }}-win-x64.exe`
             - **macOS (Intel)**: `bytepad-${{ steps.version.outputs.version }}-mac-x64.dmg`
             - **macOS (Apple Silicon)**: `bytepad-${{ steps.version.outputs.version }}-mac-arm64.dmg`
             
