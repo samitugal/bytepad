@@ -59,9 +59,9 @@ function MarkdownWithPreview({ content, notes, onNavigate }: {
             }
 
             return (
-              <div className="relative my-3">
+              <div className="relative my-3 overflow-x-auto" style={{ maxWidth: '100%' }}>
                 {match && (
-                  <div className="absolute top-0 right-0 px-2 py-1 text-[10px] text-np-text-secondary bg-np-bg-tertiary border-b border-l border-np-border">
+                  <div className="absolute top-0 right-0 px-2 py-1 text-[10px] text-np-text-secondary bg-np-bg-tertiary border-b border-l border-np-border z-10">
                     {match[1]}
                   </div>
                 )}
@@ -69,6 +69,7 @@ function MarkdownWithPreview({ content, notes, onNavigate }: {
                   style={vscDarkPlus}
                   language={match ? match[1] : 'text'}
                   PreTag="div"
+                  wrapLongLines={true}
                   customStyle={{
                     margin: 0,
                     padding: '1rem',
@@ -77,6 +78,9 @@ function MarkdownWithPreview({ content, notes, onNavigate }: {
                     border: '1px solid #3c3c3c',
                     borderRadius: 0,
                     fontSize: '13px',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all',
+                    overflowWrap: 'break-word',
                   }}
                 >
                   {String(children).replace(/\n$/, '')}
@@ -258,9 +262,9 @@ export function NoteEditor() {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col overflow-hidden max-w-full">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-np-border bg-np-bg-secondary">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-np-border bg-np-bg-secondary flex-shrink-0 z-10 relative">
         <div className="flex-1 min-w-0 mr-4">
           <input
             type="text"
@@ -325,7 +329,7 @@ export function NoteEditor() {
       </div>
 
       {/* Tags input */}
-      <div className="px-3 py-2 border-b border-np-border bg-np-bg-secondary">
+      <div className="px-3 py-2 border-b border-np-border bg-np-bg-secondary flex-shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-np-text-secondary text-sm">{t('notes.tags')}:</span>
           <input
@@ -341,10 +345,10 @@ export function NoteEditor() {
       </div>
 
       {/* Content area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0 max-w-full">
         {/* Editor Panel */}
         {(viewMode === 'edit' || viewMode === 'split') && (
-          <div className={`relative ${viewMode === 'split' ? 'w-1/2 border-r border-np-border' : 'flex-1'} overflow-hidden`}>
+          <div className={`relative ${viewMode === 'split' ? 'w-1/2 border-r border-np-border' : 'flex-1'} overflow-hidden min-w-0`}>
             {/* Line numbers - absolutely positioned, syncs scroll with textarea */}
             <div
               ref={lineNumbersRef}
@@ -419,12 +423,14 @@ export function NoteEditor() {
               }}
               placeholder="Start writing in Markdown..."
               className="w-full h-full bg-np-bg-primary text-np-text-primary font-mono text-sm
-                         pr-4 resize-none focus:outline-none"
+                         pr-4 resize-none focus:outline-none overflow-x-hidden"
               style={{
                 lineHeight: '24px',
                 paddingLeft: '56px',
                 paddingTop: '12px',
-                paddingBottom: '16px'
+                paddingBottom: '16px',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
               }}
               spellCheck={false}
             />
@@ -440,8 +446,8 @@ export function NoteEditor() {
 
         {/* Preview Panel */}
         {(viewMode === 'preview' || viewMode === 'split') && (
-          <div className={`overflow-auto ${viewMode === 'split' ? 'w-1/2' : 'flex-1'}`}>
-            <div className="p-4 prose prose-invert prose-sm max-w-none
+          <div className={`overflow-auto overflow-x-hidden ${viewMode === 'split' ? 'w-1/2' : 'flex-1'}`}>
+            <div className="p-4 prose prose-invert prose-sm max-w-none overflow-x-hidden break-words
                             prose-headings:text-np-blue prose-headings:font-mono prose-headings:border-b prose-headings:border-np-border prose-headings:pb-2 prose-headings:mb-4 prose-headings:mt-6
                             prose-h1:text-xl prose-h1:text-np-cyan
                             prose-h2:text-lg prose-h2:text-np-blue
