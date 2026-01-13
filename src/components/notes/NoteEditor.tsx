@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useNoteStore } from '../../stores/noteStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useTabStore } from '../../stores/tabStore'
@@ -44,6 +46,44 @@ function MarkdownWithPreview({ content, notes, onNavigate }: {
     <>
       <ReactMarkdown
         components={{
+          code: ({ className, children, ...props }) => {
+            const match = /language-(\w+)/.exec(className || '')
+            const isInline = !match && !className
+
+            if (isInline) {
+              return (
+                <code className="text-np-green bg-np-bg-tertiary px-1 py-0.5 rounded text-sm" {...props}>
+                  {children}
+                </code>
+              )
+            }
+
+            return (
+              <div className="relative my-3">
+                {match && (
+                  <div className="absolute top-0 right-0 px-2 py-1 text-[10px] text-np-text-secondary bg-np-bg-tertiary border-b border-l border-np-border">
+                    {match[1]}
+                  </div>
+                )}
+                <SyntaxHighlighter
+                  style={vscDarkPlus}
+                  language={match ? match[1] : 'text'}
+                  PreTag="div"
+                  customStyle={{
+                    margin: 0,
+                    padding: '1rem',
+                    paddingTop: match ? '2rem' : '1rem',
+                    background: '#1e1e1e',
+                    border: '1px solid #3c3c3c',
+                    borderRadius: 0,
+                    fontSize: '13px',
+                  }}
+                >
+                  {String(children).replace(/\n$/, '')}
+                </SyntaxHighlighter>
+              </div>
+            )
+          },
           a: ({ href, children }) => {
             if (href?.startsWith('#note-')) {
               const noteId = href.replace('#note-', '')
@@ -238,8 +278,8 @@ export function NoteEditor() {
             <button
               onClick={() => setViewMode('edit')}
               className={`px-2 py-1 text-xs font-mono ${viewMode === 'edit'
-                  ? 'bg-np-bg-hover text-np-text-primary'
-                  : 'text-np-text-secondary hover:text-np-text-primary'
+                ? 'bg-np-bg-hover text-np-text-primary'
+                : 'text-np-text-secondary hover:text-np-text-primary'
                 }`}
               title={t('common.edit')}
             >
@@ -248,8 +288,8 @@ export function NoteEditor() {
             <button
               onClick={() => setViewMode('split')}
               className={`px-2 py-1 text-xs font-mono border-x border-np-border ${viewMode === 'split'
-                  ? 'bg-np-bg-hover text-np-text-primary'
-                  : 'text-np-text-secondary hover:text-np-text-primary'
+                ? 'bg-np-bg-hover text-np-text-primary'
+                : 'text-np-text-secondary hover:text-np-text-primary'
                 }`}
               title="Split"
             >
@@ -258,8 +298,8 @@ export function NoteEditor() {
             <button
               onClick={() => setViewMode('preview')}
               className={`px-2 py-1 text-xs font-mono ${viewMode === 'preview'
-                  ? 'bg-np-bg-hover text-np-text-primary'
-                  : 'text-np-text-secondary hover:text-np-text-primary'
+                ? 'bg-np-bg-hover text-np-text-primary'
+                : 'text-np-text-secondary hover:text-np-text-primary'
                 }`}
               title="Preview"
             >
