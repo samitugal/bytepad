@@ -15,12 +15,12 @@ function ImageRenderer({ src, alt }: { src?: string; alt?: string }) {
   if (!src || src.startsWith('local:') || src.startsWith('img:') || src.startsWith('stored:') || src.startsWith('data:')) {
     return <span className="text-np-text-secondary italic">[Use image URL: ![alt](https://...)]</span>
   }
-  
+
   return (
     <span className="block my-2">
-      <img 
-        src={src} 
-        alt={alt || 'image'} 
+      <img
+        src={src}
+        alt={alt || 'image'}
         className="max-w-full h-auto rounded border border-np-border cursor-pointer
                    hover:border-np-blue transition-colors"
         style={{ maxHeight: '400px', objectFit: 'contain' }}
@@ -50,7 +50,7 @@ function MarkdownWithPreview({ content, notes, onNavigate }: {
               const linkedNote = notes.find(n => n.id === noteId)
               const preview = linkedNote?.content.substring(0, 80) || ''
               return (
-                <span 
+                <span
                   onClick={() => onNavigate('note', noteId)}
                   className="text-np-cyan cursor-pointer hover:underline no-underline relative group inline-block"
                 >
@@ -120,7 +120,7 @@ export function NoteEditor() {
       content,
       tags: parseTags(tags),
     })
-    
+
     // Update tab title if exists
     const tab = tabs.find(t => t.type === 'note' && t.entityId === activeNoteId)
     if (tab && tab.title !== (title || 'Untitled')) {
@@ -155,11 +155,11 @@ export function NoteEditor() {
     const afterCursor = content.slice(endPos)
     // Check if there's already ]] after cursor
     const hasClosingBrackets = afterCursor.startsWith(']]')
-    
+
     // Only add ]] if not already present
     const wikilink = hasClosingBrackets ? `[[${suggestion.title}` : `[[${suggestion.title}]]`
     const skipChars = hasClosingBrackets ? 0 : (afterCursor.startsWith(']') ? 1 : 0)
-    
+
     const newContent = content.slice(0, startPos) + wikilink + content.slice(endPos + skipChars)
     setContent(newContent)
 
@@ -183,7 +183,7 @@ export function NoteEditor() {
     return content.replace(/\[\[([^\]]+)\]\]/g, (_, linkText) => {
       const linkedNote = notes.find(n => n.title.toLowerCase() === linkText.toLowerCase())
       const linkedTask = tasks.find(t => t.title.toLowerCase() === linkText.toLowerCase())
-      
+
       if (linkedNote) {
         return `**[📝 ${linkText}](#note-${linkedNote.id})**`
       } else if (linkedTask) {
@@ -237,39 +237,36 @@ export function NoteEditor() {
           <div className="flex items-center border border-np-border">
             <button
               onClick={() => setViewMode('edit')}
-              className={`px-2 py-1 text-xs font-mono ${
-                viewMode === 'edit' 
-                  ? 'bg-np-bg-hover text-np-text-primary' 
+              className={`px-2 py-1 text-xs font-mono ${viewMode === 'edit'
+                  ? 'bg-np-bg-hover text-np-text-primary'
                   : 'text-np-text-secondary hover:text-np-text-primary'
-              }`}
+                }`}
               title={t('common.edit')}
             >
               {t('common.edit')}
             </button>
             <button
               onClick={() => setViewMode('split')}
-              className={`px-2 py-1 text-xs font-mono border-x border-np-border ${
-                viewMode === 'split' 
-                  ? 'bg-np-bg-hover text-np-text-primary' 
+              className={`px-2 py-1 text-xs font-mono border-x border-np-border ${viewMode === 'split'
+                  ? 'bg-np-bg-hover text-np-text-primary'
                   : 'text-np-text-secondary hover:text-np-text-primary'
-              }`}
+                }`}
               title="Split"
             >
               Split
             </button>
             <button
               onClick={() => setViewMode('preview')}
-              className={`px-2 py-1 text-xs font-mono ${
-                viewMode === 'preview' 
-                  ? 'bg-np-bg-hover text-np-text-primary' 
+              className={`px-2 py-1 text-xs font-mono ${viewMode === 'preview'
+                  ? 'bg-np-bg-hover text-np-text-primary'
                   : 'text-np-text-secondary hover:text-np-text-primary'
-              }`}
+                }`}
               title="Preview"
             >
               Preview
             </button>
           </div>
-          
+
           <button
             onClick={handleSave}
             className="np-btn text-np-green"
@@ -330,6 +327,56 @@ export function NoteEditor() {
               onChange={(e) => setContent(e.target.value)}
               onBlur={handleSave}
               onScroll={handleScroll}
+              onKeyDown={(e) => {
+                // Tab key - insert indent instead of focus change
+                if (e.key === 'Tab' && !e.shiftKey) {
+                  e.preventDefault()
+                  const textarea = e.currentTarget
+                  const start = textarea.selectionStart
+                  const end = textarea.selectionEnd
+                  const indent = '  ' // 2 spaces
+                  const newContent = content.slice(0, start) + indent + content.slice(end)
+                  setContent(newContent)
+                  // Move cursor after indent
+                  requestAnimationFrame(() => {
+                    textarea.selectionStart = textarea.selectionEnd = start + indent.length
+                  })
+                }
+                // Shift+Tab - remove indent
+                if (e.key === 'Tab' && e.shiftKey) {
+                  e.preventDefault()
+                  const textarea = e.currentTarget
+                  const start = textarea.selectionStart
+                  // Check if there are spaces before cursor to remove
+                  const beforeCursor = content.slice(0, start)
+                  if (beforeCursor.endsWith('  ')) {
+                    const newContent = content.slice(0, start - 2) + content.slice(start)
+                    setContent(newContent)
+                    requestAnimationFrame(() => {
+                      textarea.selectionStart = textarea.selectionEnd = start - 2
+                    })
+                  }
+                }
+                // Ctrl+Shift+C - insert code block
+                if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                  e.preventDefault()
+                  const textarea = e.currentTarget
+                  const start = textarea.selectionStart
+                  const end = textarea.selectionEnd
+                  const selectedText = content.slice(start, end)
+                  const codeBlock = selectedText
+                    ? `\`\`\`\n${selectedText}\n\`\`\``
+                    : '```\n\n```'
+                  const newContent = content.slice(0, start) + codeBlock + content.slice(end)
+                  setContent(newContent)
+                  // Position cursor inside code block
+                  requestAnimationFrame(() => {
+                    const cursorPos = selectedText ? start + codeBlock.length : start + 4
+                    textarea.selectionStart = textarea.selectionEnd = cursorPos
+                    textarea.focus()
+                  })
+                }
+              }}
               placeholder="Start writing in Markdown..."
               className="w-full h-full bg-np-bg-primary text-np-text-primary font-mono text-sm
                          pr-4 resize-none focus:outline-none"
@@ -370,8 +417,8 @@ export function NoteEditor() {
                             prose-li:marker:text-np-green prose-li:my-1
                             prose-hr:border-np-border">
               {content ? (
-                <MarkdownWithPreview 
-                  content={processedContent} 
+                <MarkdownWithPreview
+                  content={processedContent}
                   notes={notes}
                   onNavigate={handleWikilinkNavigate}
                 />

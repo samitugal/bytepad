@@ -18,13 +18,13 @@ export function collectAllTags(
   bookmarks: Bookmark[]
 ): Set<string> {
   const tags = new Set<string>()
-  
+
   notes.forEach(n => n.tags.forEach(t => tags.add(t)))
   tasks.forEach(t => (t.tags || []).forEach(tag => tags.add(tag)))
   journals.forEach(j => j.tags.forEach(t => tags.add(t)))
   bookmarks.forEach(b => b.tags.forEach(t => tags.add(t)))
   habits.forEach(h => tags.add(h.category))
-  
+
   return tags
 }
 
@@ -78,10 +78,10 @@ export function buildGraphData(
     if (edgeSet.has(key)) return
     if (source === target) return
     if (!nodeMap.has(source) || !nodeMap.has(target)) return
-    
+
     edgeSet.add(key)
     edges.push({ source, target, type })
-    
+
     connectionCount.set(source, (connectionCount.get(source) || 0) + 1)
     connectionCount.set(target, (connectionCount.get(target) || 0) + 1)
   }
@@ -220,6 +220,100 @@ export function buildGraphData(
       if (bookmark.linkedTaskId) {
         addEdge(`bookmark:${bookmark.id}`, `task:${bookmark.linkedTaskId}`, 'wikilink')
       }
+    })
+  }
+
+  // Bookmark description wikilinks → Notes, Tasks, Habits
+  if (filters.showBookmarks) {
+    bookmarks.forEach(bookmark => {
+      if (bookmark.description) {
+        const wikilinks = extractWikilinks(bookmark.description)
+        wikilinks.forEach(linkTitle => {
+          // Check notes
+          if (filters.showNotes) {
+            const targetNote = notes.find(n => n.title.toLowerCase() === linkTitle)
+            if (targetNote) {
+              addEdge(`bookmark:${bookmark.id}`, `note:${targetNote.id}`, 'wikilink')
+            }
+          }
+          // Check tasks
+          if (filters.showTasks) {
+            const targetTask = tasks.find(t => t.title.toLowerCase() === linkTitle)
+            if (targetTask) {
+              addEdge(`bookmark:${bookmark.id}`, `task:${targetTask.id}`, 'wikilink')
+            }
+          }
+          // Check habits
+          if (filters.showHabits) {
+            const targetHabit = habits.find(h => h.name.toLowerCase() === linkTitle)
+            if (targetHabit) {
+              addEdge(`bookmark:${bookmark.id}`, `habit:${targetHabit.id}`, 'wikilink')
+            }
+          }
+        })
+      }
+    })
+  }
+
+  // Task description wikilinks → Notes, Bookmarks, Habits
+  if (filters.showTasks) {
+    tasks.forEach(task => {
+      if (task.description) {
+        const wikilinks = extractWikilinks(task.description)
+        wikilinks.forEach(linkTitle => {
+          // Check notes
+          if (filters.showNotes) {
+            const targetNote = notes.find(n => n.title.toLowerCase() === linkTitle)
+            if (targetNote) {
+              addEdge(`task:${task.id}`, `note:${targetNote.id}`, 'wikilink')
+            }
+          }
+          // Check bookmarks
+          if (filters.showBookmarks) {
+            const targetBookmark = bookmarks.find(b => b.title.toLowerCase() === linkTitle)
+            if (targetBookmark) {
+              addEdge(`task:${task.id}`, `bookmark:${targetBookmark.id}`, 'wikilink')
+            }
+          }
+          // Check habits
+          if (filters.showHabits) {
+            const targetHabit = habits.find(h => h.name.toLowerCase() === linkTitle)
+            if (targetHabit) {
+              addEdge(`task:${task.id}`, `habit:${targetHabit.id}`, 'wikilink')
+            }
+          }
+        })
+      }
+    })
+  }
+
+  // Note content wikilinks → Tasks, Bookmarks, Habits (in addition to notes)
+  if (filters.showNotes) {
+    notes.forEach(note => {
+      const wikilinks = extractWikilinks(note.content)
+      wikilinks.forEach(linkTitle => {
+        // Check tasks
+        if (filters.showTasks) {
+          const targetTask = tasks.find(t => t.title.toLowerCase() === linkTitle)
+          if (targetTask) {
+            addEdge(`note:${note.id}`, `task:${targetTask.id}`, 'wikilink')
+          }
+        }
+        // Check bookmarks
+        if (filters.showBookmarks) {
+          const targetBookmark = bookmarks.find(b => b.title.toLowerCase() === linkTitle)
+          if (targetBookmark) {
+            addEdge(`note:${note.id}`, `bookmark:${targetBookmark.id}`, 'wikilink')
+          }
+        }
+        // Check habits
+        if (filters.showHabits) {
+          const targetHabit = habits.find(h => h.name.toLowerCase() === linkTitle)
+          if (targetHabit) {
+            addEdge(`note:${note.id}`, `habit:${targetHabit.id}`, 'wikilink')
+          }
+        }
+      })
     })
   }
 
