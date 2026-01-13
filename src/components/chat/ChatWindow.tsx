@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useChatStore } from '../../stores/chatStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useHabitStore } from '../../stores/habitStore'
 import { useJournalStore } from '../../stores/journalStore'
-import { sendMessage, getQuickActions } from '../../services/aiService'
+import { sendMessage } from '../../services/aiService'
 import { useTranslation } from '../../i18n'
 import type { ChatContext } from '../../types'
 
@@ -68,7 +68,11 @@ export function ChatWindow() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  const quickActions = getQuickActions()
+  const quickActions = useMemo(() => [
+    { id: 'plan', label: `📋 ${t('flowbot.quickActions.planDay')}`, prompt: t('flowbot.quickActions.planDay') },
+    { id: 'motivate', label: `💪 ${t('flowbot.quickActions.motivate')}`, prompt: t('flowbot.quickActions.motivate') },
+    { id: 'stuck', label: `🤔 ${t('flowbot.quickActions.stuck')}`, prompt: t('flowbot.quickActions.stuck') },
+  ], [t])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

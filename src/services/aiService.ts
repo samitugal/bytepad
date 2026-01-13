@@ -136,7 +136,7 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
     const tags = (args.tags as string[]) || []
     const taskId = addTask({
       title: args.title as string,
-      priority: args.priority as 'P1'|'P2'|'P3'|'P4',
+      priority: args.priority as 'P1' | 'P2' | 'P3' | 'P4',
       description: args.description as string | undefined,
       deadline: args.deadline ? new Date(args.deadline as string) : undefined,
       startTime: args.startTime as string | undefined,
@@ -207,7 +207,7 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
     const { addTask } = useTaskStore.getState()
     const taskId = addTask({
       title: args.title as string,
-      priority: (args.priority as 'P1'|'P2'|'P3'|'P4') || 'P2',
+      priority: (args.priority as 'P1' | 'P2' | 'P3' | 'P4') || 'P2',
       description: args.description as string | undefined,
       startTime: args.startTime as string,
       deadlineTime: args.endTime as string,
@@ -434,8 +434,8 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
     addEntry({
       date: new Date().toISOString().split('T')[0],
       content: args.content as string,
-      mood: ((args.mood as number) || 3) as 1|2|3|4|5,
-      energy: ((args.energy as number) || 3) as 1|2|3|4|5,
+      mood: ((args.mood as number) || 3) as 1 | 2 | 3 | 4 | 5,
+      energy: ((args.energy as number) || 3) as 1 | 2 | 3 | 4 | 5,
       tags: []
     })
     return JSON.stringify({
@@ -451,7 +451,7 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
     const { addBookmark } = useBookmarkStore.getState()
     const linkedTaskId = args.linkedTaskId as string | undefined
     const sourceQuery = args.sourceQuery as string | undefined
-    
+
     const bookmarkId = addBookmark({
       url: args.url as string,
       title: args.title as string,
@@ -461,7 +461,7 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
       linkedTaskId,
       sourceQuery,
     })
-    
+
     let message = `Bookmark "${args.title}" saved`
     if (linkedTaskId) {
       const task = useTaskStore.getState().tasks.find(t => t.id === linkedTaskId)
@@ -469,7 +469,7 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
         message += ` (linked to task: "${task.title}")`
       }
     }
-    
+
     return JSON.stringify({
       success: true,
       bookmarkId,
@@ -532,7 +532,7 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
     const { addTask, addSubtask } = useTaskStore.getState()
     const title = args.title as string
     const subtasks = args.subtasks as string[]
-    const priority = (args.priority as 'P1'|'P2'|'P3'|'P4') || 'P1'
+    const priority = (args.priority as 'P1' | 'P2' | 'P3' | 'P4') || 'P1'
     const startTime = args.startTime as string | undefined
     const endTime = args.endTime as string | undefined
     const deadline = args.deadline as string | undefined
@@ -708,14 +708,14 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
   research_and_plan: async (args) => {
     const { addTask, addSubtask, updateTask } = useTaskStore.getState()
     const { addBookmark } = useBookmarkStore.getState()
-    
+
     const topic = args.topic as string
     const taskTitle = args.taskTitle as string
     const subtasks = (args.subtasks as string[]) || []
     const resources = args.resources as Array<{ url: string; title: string; description?: string }> || []
     const tags = (args.tags as string[]) || [topic.toLowerCase().replace(/\s+/g, '-')]
-    const priority = (args.priority as 'P1'|'P2'|'P3'|'P4') || 'P2'
-    
+    const priority = (args.priority as 'P1' | 'P2' | 'P3' | 'P4') || 'P2'
+
     // Create main task with tags
     const taskId = addTask({
       title: taskTitle,
@@ -723,12 +723,12 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
       description: `Research plan for: ${topic}`,
       tags: [...tags],
     })
-    
+
     // Add subtasks
     for (const st of subtasks) {
       addSubtask(taskId, st)
     }
-    
+
     // Create linked bookmarks
     const bookmarkIds: string[] = []
     for (const resource of resources) {
@@ -743,12 +743,12 @@ const toolExecutors: Record<string, (args: Record<string, unknown>) => Promise<s
       })
       bookmarkIds.push(bookmarkId)
     }
-    
+
     // Link bookmarks to task (bidirectional)
     if (bookmarkIds.length > 0) {
       updateTask(taskId, { linkedBookmarkIds: bookmarkIds })
     }
-    
+
     return JSON.stringify({
       success: true,
       taskId,
@@ -817,7 +817,7 @@ function getToolDefinitions() {
       description: 'Create a new task in the task list. Use this when the user wants to add a todo item, reminder, or action item. Always set an appropriate priority based on urgency.',
       schema: z.object({
         title: z.string().describe('Task title - be specific and actionable (e.g., "Review project proposal" not just "Work")'),
-        priority: z.enum(['P1','P2','P3','P4']).describe('Priority level: P1=urgent+important (do today), P2=important (this week), P3=normal, P4=someday/low'),
+        priority: z.enum(['P1', 'P2', 'P3', 'P4']).describe('Priority level: P1=urgent+important (do today), P2=important (this week), P3=normal, P4=someday/low'),
         description: z.string().optional().describe('Additional context, notes, or details about the task'),
         deadline: z.string().optional().describe('Due date in YYYY-MM-DD format (e.g., "2026-01-15")'),
         startTime: z.string().optional().describe('Start time in HH:mm format for time-blocking (e.g., "14:00")'),
@@ -848,7 +848,7 @@ function getToolDefinitions() {
         title: z.string().describe('What will be done during this time block'),
         startTime: z.string().describe('Start time in HH:mm format (e.g., "14:00")'),
         endTime: z.string().describe('End time in HH:mm format (e.g., "15:30")'),
-        priority: z.enum(['P1','P2','P3','P4']).optional().describe('Priority level (defaults to P2 if not specified)'),
+        priority: z.enum(['P1', 'P2', 'P3', 'P4']).optional().describe('Priority level (defaults to P2 if not specified)'),
         description: z.string().optional().describe('Additional details about what to accomplish'),
       }),
     }),
@@ -899,7 +899,7 @@ function getToolDefinitions() {
       description: 'Create a new habit to track. Use when user wants to build a new routine or track recurring behaviors.',
       schema: z.object({
         name: z.string().describe('Habit name - clear and specific (e.g., "30 min exercise" not "exercise")'),
-        frequency: z.enum(['daily','weekly']).describe('How often: daily or weekly'),
+        frequency: z.enum(['daily', 'weekly']).describe('How often: daily or weekly'),
         category: z.string().describe('Category for grouping (e.g., "Health", "Learning", "Productivity")'),
       }),
     }),
@@ -964,7 +964,7 @@ function getToolDefinitions() {
       schema: z.object({
         title: z.string().describe('Main task title (e.g., "Blog yazısı: LLM Metamodel")'),
         subtasks: z.array(z.string()).describe('List of subtask titles (e.g., ["Araştırma yap", "Taslak oluştur", "Düzenle ve yayınla"])'),
-        priority: z.enum(['P1','P2','P3','P4']).optional().describe('Priority (default: P1)'),
+        priority: z.enum(['P1', 'P2', 'P3', 'P4']).optional().describe('Priority (default: P1)'),
         startTime: z.string().optional().describe('Start time in HH:mm format (e.g., "13:00")'),
         endTime: z.string().optional().describe('End time in HH:mm format (e.g., "16:00")'),
         deadline: z.string().optional().describe('Date in YYYY-MM-DD format'),
@@ -1048,29 +1048,29 @@ function getToolDefinitions() {
 function getLLM() {
   const { llmProvider, llmModel, apiKeys } = useSettingsStore.getState()
   const apiKey = apiKeys[llmProvider]
-  
+
   console.log('[AI Service] Provider:', llmProvider, 'Model:', llmModel, 'API Key exists:', !!apiKey, 'Key length:', apiKey?.length)
-  
+
   if (!apiKey) {
     throw new Error(`API key for ${llmProvider} is not configured. Please set it in Settings → AI.`)
   }
-  
+
   if (llmProvider === 'anthropic') {
-    return new ChatAnthropic({ 
-      anthropicApiKey: apiKey, 
+    return new ChatAnthropic({
+      anthropicApiKey: apiKey,
       model: llmModel,
-      maxTokens: 1000 
+      maxTokens: 1000
     })
   }
-  
+
   // OpenAI - GPT-5 doesn't support temperature parameter
   const isGPT5 = llmModel?.startsWith('gpt-5')
-  
-  return new ChatOpenAI({ 
+
+  return new ChatOpenAI({
     apiKey: apiKey,
-    model: llmModel || 'gpt-4o-mini', 
+    model: llmModel || 'gpt-4o-mini',
     ...(isGPT5 ? {} : { temperature: 0.7 }),
-    maxTokens: 1000 
+    maxTokens: 1000
   })
 }
 
@@ -1215,11 +1215,3 @@ export async function sendMessage(
   }
 }
 
-export interface QuickAction { id: string; label: string; prompt: string }
-export function getQuickActions(): QuickAction[] {
-  return [
-    { id: 'plan', label: '📋 Günümü planla', prompt: 'Bugün için plan yap' },
-    { id: 'motivate', label: '💪 Motivasyon', prompt: 'Motivasyon ver' },
-    { id: 'stuck', label: '🤔 Sıkıştım', prompt: 'Sıkıştım, yardım et' },
-  ]
-}
