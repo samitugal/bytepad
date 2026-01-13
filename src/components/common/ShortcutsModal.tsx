@@ -65,6 +65,15 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
       ],
     },
     {
+      title: 'Notes Editor',
+      shortcuts: [
+        { keys: 'Tab', description: 'Insert indent (2 spaces)' },
+        { keys: 'Shift+Tab', description: 'Remove indent' },
+        { keys: 'Ctrl+Shift+C', description: 'Insert code block' },
+        { keys: '[[', description: 'Link to note/task/bookmark' },
+      ],
+    },
+    {
       title: 'FlowBot & Modals',
       shortcuts: [
         { keys: 'Ctrl+/', description: 'Open FlowBot' },
