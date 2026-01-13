@@ -80,15 +80,6 @@ function App() {
       }
     }
 
-    // Push on visibility hidden (tab switch, minimize)
-    const handleVisibilityChange = () => {
-      if (gistSync.enabled && gistSync.githubToken && gistSync.gistId) {
-        if (document.visibilityState === 'hidden') {
-          pushOnClose()
-        }
-      }
-    }
-
     // Listen for Electron app quit event
     if (window.electronAPI?.onBeforeQuit) {
       window.electronAPI.onBeforeQuit(() => {
@@ -99,11 +90,9 @@ function App() {
     }
 
     window.addEventListener('beforeunload', handleBeforeUnload)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
       if (window.electronAPI?.removeBeforeQuitListener) {
         window.electronAPI.removeBeforeQuitListener()
       }
