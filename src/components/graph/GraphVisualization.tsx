@@ -2,6 +2,11 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import type { GraphNode, GraphEdge, GraphEntityType } from '../../types'
 import { nodeColors } from '../../utils/graphUtils'
 
+// Get CSS variable value from document
+function getCSSVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
 interface GraphVisualizationProps {
   nodes: GraphNode[]
   edges: GraphEdge[]
@@ -59,7 +64,7 @@ export function GraphVisualization({
     const simulate = () => {
       simNodes.forEach((node) => {
         if (draggedNode?.id === node.id) return
-        
+
         node.vx += (centerX - node.x) * 0.0008
         node.vy += (centerY - node.y) * 0.0008
 
@@ -93,7 +98,7 @@ export function GraphVisualization({
 
       simNodes.forEach((node) => {
         if (draggedNode?.id === node.id) return
-        
+
         node.vx *= 0.92
         node.vy *= 0.92
         node.x += node.vx
@@ -103,7 +108,12 @@ export function GraphVisualization({
         node.y = Math.max(60, Math.min(height - 60, node.y))
       })
 
-      ctx.fillStyle = '#1E1E1E'
+      // Get theme colors from CSS variables
+      const bgColor = getCSSVar('--bg-primary') || '#1E1E1E'
+      const textColor = getCSSVar('--text-primary') || '#D4D4D4'
+      const isLightTheme = document.documentElement.getAttribute('data-theme') === 'light'
+
+      ctx.fillStyle = bgColor
       ctx.fillRect(0, 0, width, height)
 
       edges.forEach((edge) => {
@@ -114,7 +124,9 @@ export function GraphVisualization({
         ctx.beginPath()
         ctx.moveTo(source.x, source.y)
         ctx.lineTo(target.x, target.y)
-        ctx.strokeStyle = edge.type === 'tag' ? 'rgba(220, 220, 170, 0.3)' : 'rgba(80, 80, 80, 0.5)'
+        ctx.strokeStyle = edge.type === 'tag'
+          ? (isLightTheme ? 'rgba(121, 94, 38, 0.4)' : 'rgba(220, 220, 170, 0.3)')
+          : (isLightTheme ? 'rgba(180, 180, 180, 0.6)' : 'rgba(80, 80, 80, 0.5)')
         ctx.lineWidth = edge.type === 'wikilink' ? 1.5 : 1
         ctx.stroke()
       })
@@ -129,23 +141,27 @@ export function GraphVisualization({
 
         ctx.beginPath()
         ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI)
-        
+
         let fillColor = nodeColors[node.type]
         if (query && !isHighlighted) {
-          fillColor = 'rgba(60, 60, 60, 0.5)'
+          fillColor = isLightTheme ? 'rgba(200, 200, 200, 0.5)' : 'rgba(60, 60, 60, 0.5)'
         }
-        
+
         ctx.fillStyle = fillColor
         ctx.fill()
 
         if (isHovered || isSelected || isHighlighted) {
-          ctx.strokeStyle = isSelected ? '#FFFFFF' : isHighlighted ? '#FFD700' : '#D4D4D4'
+          ctx.strokeStyle = isSelected
+            ? (isLightTheme ? '#000000' : '#FFFFFF')
+            : isHighlighted
+              ? '#FFD700'
+              : (isLightTheme ? '#1E1E1E' : '#D4D4D4')
           ctx.lineWidth = 2
           ctx.stroke()
         }
 
         if (isHovered || isSelected || isHighlighted || node.connections > 2) {
-          ctx.fillStyle = query && !isHighlighted ? 'rgba(128, 128, 128, 0.5)' : '#D4D4D4'
+          ctx.fillStyle = query && !isHighlighted ? 'rgba(128, 128, 128, 0.5)' : textColor
           ctx.font = '11px JetBrains Mono, monospace'
           ctx.textAlign = 'center'
           const label = node.label.length > 18 ? node.label.substring(0, 15) + '...' : node.label
@@ -266,7 +282,7 @@ export function GraphVisualization({
       />
 
       {hoveredNode && (
-        <div 
+        <div
           className="absolute bottom-4 left-4 bg-np-bg-tertiary border border-np-border px-3 py-2 text-sm pointer-events-none"
           style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
         >
