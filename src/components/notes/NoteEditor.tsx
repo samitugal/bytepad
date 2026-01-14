@@ -4,6 +4,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useNoteStore } from '../../stores/noteStore'
 import { useTaskStore } from '../../stores/taskStore'
+import { useIdeaStore } from '../../stores/ideaStore'
 import { useTabStore } from '../../stores/tabStore'
 import { BacklinksPanel } from './BacklinksPanel'
 import { WikilinkAutocomplete, type WikilinkSuggestion } from './WikilinkAutocomplete'
@@ -121,6 +122,13 @@ function MarkdownWithPreview({ content, notes, onNavigate }: {
                 </span>
               )
             }
+            if (href?.startsWith('#idea-')) {
+              return (
+                <span className="text-yellow-400 cursor-pointer hover:underline no-underline">
+                  {children}
+                </span>
+              )
+            }
             return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
           },
           img: ({ src, alt }) => <ImageRenderer src={src} alt={alt} />
@@ -134,6 +142,7 @@ export function NoteEditor() {
   const { t } = useTranslation()
   const { activeNoteId, notes, updateNote, deleteNote, setActiveNote } = useNoteStore()
   const tasks = useTaskStore((s) => s.tasks)
+  const ideas = useIdeaStore((s) => s.ideas)
   const { tabs, updateTabTitle } = useTabStore()
   const activeNote = notes.find(n => n.id === activeNoteId)
 
@@ -227,15 +236,18 @@ export function NoteEditor() {
     return content.replace(/\[\[([^\]]+)\]\]/g, (_, linkText) => {
       const linkedNote = notes.find(n => n.title.toLowerCase() === linkText.toLowerCase())
       const linkedTask = tasks.find(t => t.title.toLowerCase() === linkText.toLowerCase())
+      const linkedIdea = ideas.find(i => i.status === 'active' && (i.title?.toLowerCase() === linkText.toLowerCase() || i.content.toLowerCase().startsWith(linkText.toLowerCase())))
 
       if (linkedNote) {
         return `**[📝 ${linkText}](#note-${linkedNote.id})**`
       } else if (linkedTask) {
         return `**[✓ ${linkText}](#task-${linkedTask.id})**`
+      } else if (linkedIdea) {
+        return `**[💡 ${linkText}](#idea-${linkedIdea.id})**`
       }
       return `*⚠ ${linkText}*`
     })
-  }, [content, notes, tasks])
+  }, [content, notes, tasks, ideas])
 
   const handleDelete = () => {
     if (!activeNoteId) return

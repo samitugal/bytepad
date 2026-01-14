@@ -355,6 +355,13 @@ export function buildGraphData(
             addEdge(`note:${note.id}`, `habit:${targetHabit.id}`, 'wikilink')
           }
         }
+        // Check ideas
+        if (filters.showIdeas) {
+          const targetIdea = ideas.find(i => i.status === 'active' && (i.title?.toLowerCase() === linkTitle || i.content.toLowerCase().startsWith(linkTitle)))
+          if (targetIdea) {
+            addEdge(`note:${note.id}`, `idea:${targetIdea.id}`, 'wikilink')
+          }
+        }
       })
     })
   }
