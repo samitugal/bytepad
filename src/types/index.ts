@@ -1,4 +1,4 @@
-export type ModuleType = 'notes' | 'habits' | 'tasks' | 'journal' | 'analysis' | 'bookmarks' | 'calendar' | 'dailynotes' | 'graph'
+export type ModuleType = 'notes' | 'habits' | 'tasks' | 'journal' | 'analysis' | 'bookmarks' | 'calendar' | 'dailynotes' | 'ideas' | 'graph'
 
 // Re-export report types
 export * from './report'
@@ -41,6 +41,7 @@ export interface Task {
   allDay?: boolean // Is this an all-day task? (Calendar)
   completed: boolean
   completedAt?: Date
+  archivedAt?: Date // Auto-archive after X days
   subtasks: SubTask[]
   createdAt: Date
   order?: number // Manual sort order for drag & drop (lower = higher in list)
@@ -153,8 +154,25 @@ export interface Bookmark {
   sourceQuery?: string // Original search query that found this bookmark
 }
 
+// Idea types
+export type IdeaColor = 'yellow' | 'green' | 'blue' | 'purple' | 'orange' | 'red' | 'cyan'
+
+export interface Idea {
+  id: string
+  title: string // Short title
+  content: string // Description (max 280 characters)
+  color: IdeaColor
+  tags: string[]
+  linkedNoteIds: string[]
+  linkedTaskIds: string[]
+  status: 'active' | 'archived' | 'converted'
+  order: number // For drag & drop sorting
+  createdAt: Date
+  updatedAt: Date
+}
+
 // Knowledge Graph types
-export type GraphEntityType = 'note' | 'task' | 'habit' | 'journal' | 'bookmark' | 'tag'
+export type GraphEntityType = 'note' | 'task' | 'habit' | 'journal' | 'bookmark' | 'idea' | 'tag'
 
 export interface GraphNode {
   id: string

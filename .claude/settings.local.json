@@ -22,7 +22,8 @@
       "Bash(npm run lint:*)",
       "Bash(ls:*)",
       "Bash(git push:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(git tag:*)"
     ]
   }
 }

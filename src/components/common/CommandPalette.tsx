@@ -25,16 +25,17 @@ export function CommandPalette() {
   const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
   const commands: Command[] = useMemo(() => [
-    // Navigation
+    // Navigation (matches Sidebar order)
     { id: 'goto-notes', title: 'Go to Notes', shortcut: 'Ctrl+1', category: 'navigation', action: () => setActiveModule('notes') },
     { id: 'goto-dailynotes', title: 'Go to Daily Notes', shortcut: 'Ctrl+2', category: 'navigation', action: () => setActiveModule('dailynotes') },
-    { id: 'goto-habits', title: 'Go to Habits', shortcut: 'Ctrl+3', category: 'navigation', action: () => setActiveModule('habits') },
-    { id: 'goto-tasks', title: 'Go to Tasks', shortcut: 'Ctrl+4', category: 'navigation', action: () => setActiveModule('tasks') },
-    { id: 'goto-journal', title: 'Go to Journal', shortcut: 'Ctrl+5', category: 'navigation', action: () => setActiveModule('journal') },
-    { id: 'goto-bookmarks', title: 'Go to Bookmarks', shortcut: 'Ctrl+6', category: 'navigation', action: () => setActiveModule('bookmarks') },
-    { id: 'goto-calendar', title: 'Go to Calendar', shortcut: 'Ctrl+7', category: 'navigation', action: () => setActiveModule('calendar') },
-    { id: 'goto-graph', title: 'Go to Knowledge Graph', shortcut: 'Ctrl+8', category: 'navigation', action: () => setActiveModule('graph') },
-    { id: 'goto-analysis', title: 'Go to Analysis', shortcut: 'Ctrl+9', category: 'navigation', action: () => setActiveModule('analysis') },
+    { id: 'goto-ideas', title: 'Go to Ideas', shortcut: 'Ctrl+3', category: 'navigation', action: () => setActiveModule('ideas') },
+    { id: 'goto-habits', title: 'Go to Habits', shortcut: 'Ctrl+4', category: 'navigation', action: () => setActiveModule('habits') },
+    { id: 'goto-tasks', title: 'Go to Tasks', shortcut: 'Ctrl+5', category: 'navigation', action: () => setActiveModule('tasks') },
+    { id: 'goto-journal', title: 'Go to Journal', shortcut: 'Ctrl+6', category: 'navigation', action: () => setActiveModule('journal') },
+    { id: 'goto-bookmarks', title: 'Go to Bookmarks', shortcut: 'Ctrl+7', category: 'navigation', action: () => setActiveModule('bookmarks') },
+    { id: 'goto-calendar', title: 'Go to Calendar', shortcut: 'Ctrl+8', category: 'navigation', action: () => setActiveModule('calendar') },
+    { id: 'goto-graph', title: 'Go to Knowledge Graph', shortcut: 'Ctrl+9', category: 'navigation', action: () => setActiveModule('graph') },
+    { id: 'goto-analysis', title: 'Go to Analysis', shortcut: 'Ctrl+0', category: 'navigation', action: () => setActiveModule('analysis') },
     // Actions
     { id: 'new-note', title: 'New Note', shortcut: 'Ctrl+N', category: 'action', action: () => {
       setActiveModule('notes')

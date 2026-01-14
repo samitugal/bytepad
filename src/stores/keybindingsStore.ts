@@ -14,16 +14,17 @@ export interface Keybinding {
 
 // Default keybindings
 export const DEFAULT_KEYBINDINGS: Keybinding[] = [
-  // Navigation
+  // Navigation (matches Sidebar order)
   { id: 'nav-notes', action: 'navigate:notes', label: 'Notes', description: 'Switch to Notes module', keys: 'ctrl+1', category: 'navigation' },
   { id: 'nav-dailynotes', action: 'navigate:dailynotes', label: 'Daily Notes', description: 'Switch to Daily Notes', keys: 'ctrl+2', category: 'navigation' },
-  { id: 'nav-habits', action: 'navigate:habits', label: 'Habits', description: 'Switch to Habits module', keys: 'ctrl+3', category: 'navigation' },
-  { id: 'nav-tasks', action: 'navigate:tasks', label: 'Tasks', description: 'Switch to Tasks module', keys: 'ctrl+4', category: 'navigation' },
-  { id: 'nav-journal', action: 'navigate:journal', label: 'Journal', description: 'Switch to Journal module', keys: 'ctrl+5', category: 'navigation' },
-  { id: 'nav-bookmarks', action: 'navigate:bookmarks', label: 'Bookmarks', description: 'Switch to Bookmarks', keys: 'ctrl+6', category: 'navigation' },
-  { id: 'nav-calendar', action: 'navigate:calendar', label: 'Calendar', description: 'Switch to Calendar', keys: 'ctrl+7', category: 'navigation' },
-  { id: 'nav-graph', action: 'navigate:graph', label: 'Graph', description: 'Switch to Knowledge Graph', keys: 'ctrl+8', category: 'navigation' },
-  { id: 'nav-analysis', action: 'navigate:analysis', label: 'Analysis', description: 'Switch to Analysis', keys: 'ctrl+9', category: 'navigation' },
+  { id: 'nav-ideas', action: 'navigate:ideas', label: 'Ideas', description: 'Switch to Ideas module', keys: 'ctrl+3', category: 'navigation' },
+  { id: 'nav-habits', action: 'navigate:habits', label: 'Habits', description: 'Switch to Habits module', keys: 'ctrl+4', category: 'navigation' },
+  { id: 'nav-tasks', action: 'navigate:tasks', label: 'Tasks', description: 'Switch to Tasks module', keys: 'ctrl+5', category: 'navigation' },
+  { id: 'nav-journal', action: 'navigate:journal', label: 'Journal', description: 'Switch to Journal module', keys: 'ctrl+6', category: 'navigation' },
+  { id: 'nav-bookmarks', action: 'navigate:bookmarks', label: 'Bookmarks', description: 'Switch to Bookmarks', keys: 'ctrl+7', category: 'navigation' },
+  { id: 'nav-calendar', action: 'navigate:calendar', label: 'Calendar', description: 'Switch to Calendar', keys: 'ctrl+8', category: 'navigation' },
+  { id: 'nav-graph', action: 'navigate:graph', label: 'Graph', description: 'Switch to Knowledge Graph', keys: 'ctrl+9', category: 'navigation' },
+  { id: 'nav-analysis', action: 'navigate:analysis', label: 'Analysis', description: 'Switch to Analysis', keys: 'ctrl+0', category: 'navigation' },
 
   // System
   { id: 'sys-command-palette', action: 'system:commandPalette', label: 'Command Palette', description: 'Open command palette', keys: 'ctrl+k', category: 'system' },

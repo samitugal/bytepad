@@ -15,6 +15,7 @@ import { useSettingsStore, FONT_SIZES, FONT_FAMILIES } from './stores/settingsSt
 import { useUIStore } from './stores/uiStore'
 import { useAuthStore } from './stores/authStore'
 import { useGamificationStore } from './stores/gamificationStore'
+import { useTaskStore } from './stores/taskStore'
 
 function App() {
   const fontSize = useSettingsStore((state) => state.fontSize)
@@ -28,6 +29,7 @@ function App() {
   const setSettingsOpen = useUIStore((state) => state.setSettingsOpen)
   const initializeAuth = useAuthStore((state) => state.initialize)
   const { checkStreak, resetDailyStats, lastActiveDate } = useGamificationStore()
+  const autoArchiveOldTasks = useTaskStore((state) => state.autoArchiveOldTasks)
   const gistSync = useSettingsStore((state) => state.gistSync)
 
   useKeyboardShortcuts()
@@ -65,6 +67,11 @@ function App() {
       }
     }
   }, [gamificationEnabled, checkStreak, resetDailyStats, lastActiveDate])
+
+  // Auto-archive old completed tasks (3 days default)
+  useEffect(() => {
+    autoArchiveOldTasks(3)
+  }, [autoArchiveOldTasks])
 
   // Initialize Gist sync on mount - simplified: pull on open, push on close
   useEffect(() => {

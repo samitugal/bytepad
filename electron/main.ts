@@ -141,15 +141,8 @@ function createTray() {
 }
 
 function registerGlobalShortcuts() {
-  // Toggle app visibility
-  globalShortcut.register('CommandOrControl+Shift+F', () => {
-    if (mainWindow?.isVisible()) {
-      mainWindow.hide()
-    } else {
-      mainWindow?.show()
-      mainWindow?.focus()
-    }
-  })
+  // NOTE: Ctrl+Shift+F removed - was bringing app to front when minimized (unwanted behavior)
+  // Users can use tray icon or taskbar to show the app
 
   // Quick add task
   globalShortcut.register('CommandOrControl+Shift+T', () => {

@@ -3,11 +3,12 @@ import { useNoteStore } from '../../stores/noteStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useHabitStore } from '../../stores/habitStore'
 import { useBookmarkStore } from '../../stores/bookmarkStore'
+import { useIdeaStore } from '../../stores/ideaStore'
 
 export interface WikilinkSuggestion {
   id: string
   title: string
-  type: 'note' | 'task' | 'habit' | 'bookmark'
+  type: 'note' | 'task' | 'habit' | 'bookmark' | 'idea'
   icon: string
 }
 
@@ -22,6 +23,7 @@ const TYPE_ICONS: Record<WikilinkSuggestion['type'], string> = {
   task: 'T',
   habit: 'H',
   bookmark: 'B',
+  idea: 'I',
 }
 
 const TYPE_COLORS: Record<WikilinkSuggestion['type'], string> = {
@@ -29,13 +31,18 @@ const TYPE_COLORS: Record<WikilinkSuggestion['type'], string> = {
   task: 'text-np-orange',
   habit: 'text-np-green',
   bookmark: 'text-np-cyan',
+  idea: 'text-yellow-400',
 }
+
+// Type filter prefixes (case-insensitive) - both singular and plural
+const TYPE_PREFIXES = ['notes:', 'note:', 'tasks:', 'task:', 'habits:', 'habit:', 'bookmarks:', 'bookmark:', 'ideas:', 'idea:'] as const
 
 export function WikilinkAutocomplete({ textareaRef, content, onInsert }: WikilinkAutocompleteProps) {
   const { notes } = useNoteStore()
   const { tasks } = useTaskStore()
   const { habits } = useHabitStore()
   const { bookmarks } = useBookmarkStore()
+  const { ideas } = useIdeaStore()
 
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -47,17 +54,53 @@ export function WikilinkAutocomplete({ textareaRef, content, onInsert }: Wikilin
   // Build suggestions list
   const allSuggestions: WikilinkSuggestion[] = [
     ...notes.map(n => ({ id: n.id, title: n.title || 'Untitled', type: 'note' as const, icon: TYPE_ICONS.note })),
-    ...tasks.filter(t => !t.completed).map(t => ({ id: t.id, title: t.title, type: 'task' as const, icon: TYPE_ICONS.task })),
+    ...tasks.filter(t => !t.completed && !t.archivedAt).map(t => ({ id: t.id, title: t.title, type: 'task' as const, icon: TYPE_ICONS.task })),
     ...habits.map(h => ({ id: h.id, title: h.name, type: 'habit' as const, icon: TYPE_ICONS.habit })),
     ...bookmarks.slice(0, 20).map(b => ({ id: b.id, title: b.title, type: 'bookmark' as const, icon: TYPE_ICONS.bookmark })),
+    ...ideas.filter(i => i.status === 'active').map(i => ({ id: i.id, title: i.title || i.content.slice(0, 50), type: 'idea' as const, icon: TYPE_ICONS.idea })),
   ]
 
-  // Filter suggestions based on query
-  const filteredSuggestions = query
-    ? allSuggestions.filter(s =>
-        s.title.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 10)
-    : allSuggestions.slice(0, 10)
+  // Filter suggestions based on query (with type prefix support)
+  const filteredSuggestions = (() => {
+    if (!query) return allSuggestions.slice(0, 10)
+    
+    const lowerQuery = query.toLowerCase()
+    
+    // Check for type prefix filter (case-insensitive)
+    let typeFilter: string | null = null
+    let searchQuery = lowerQuery
+    
+    for (const prefix of TYPE_PREFIXES) {
+      if (lowerQuery.startsWith(prefix)) {
+        typeFilter = prefix.slice(0, -1) // 'notes:' -> 'notes'
+        searchQuery = lowerQuery.slice(prefix.length).trim()
+        break
+      }
+    }
+    
+    // Map prefix to type (both singular and plural)
+    const typeMap: Record<string, WikilinkSuggestion['type']> = {
+      notes: 'note',
+      note: 'note',
+      tasks: 'task',
+      task: 'task',
+      habits: 'habit',
+      habit: 'habit',
+      bookmarks: 'bookmark',
+      bookmark: 'bookmark',
+      ideas: 'idea',
+      idea: 'idea',
+    }
+    
+    return allSuggestions.filter(s => {
+      // If type filter is active, only show that type
+      if (typeFilter && s.type !== typeMap[typeFilter]) return false
+      // If no search query after prefix, show all of that type
+      if (!searchQuery) return true
+      // Otherwise filter by title
+      return s.title.toLowerCase().includes(searchQuery)
+    }).slice(0, 10)
+  })()
 
   // Detect [[ trigger
   const checkForTrigger = useCallback(() => {

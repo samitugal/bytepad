@@ -12,6 +12,7 @@ const AnalysisModule = lazy(() => import('../analysis').then(m => ({ default: m.
 const BookmarksModule = lazy(() => import('../bookmarks').then(m => ({ default: m.BookmarksModule })))
 const CalendarModule = lazy(() => import('../calendar').then(m => ({ default: m.CalendarModule })))
 const DailyNotesModule = lazy(() => import('../dailynotes/DailyNotesModule').then(m => ({ default: m.DailyNotesModule })))
+const IdeasModule = lazy(() => import('../ideas').then(m => ({ default: m.IdeasModule })))
 const GraphModule = lazy(() => import('../graph').then(m => ({ default: m.GraphModule })))
 
 function LoadingFallback() {
@@ -43,6 +44,8 @@ export function MainContent() {
         return <AnalysisModule />
       case 'dailynotes':
         return <DailyNotesModule />
+      case 'ideas':
+        return <IdeasModule />
       case 'graph':
         return <GraphModule />
       default:

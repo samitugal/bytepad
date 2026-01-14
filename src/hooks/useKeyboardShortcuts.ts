@@ -13,6 +13,7 @@ import type { ModuleType } from '../types'
 const MODULE_ACTION_MAP: Record<string, ModuleType> = {
   'navigate:notes': 'notes',
   'navigate:dailynotes': 'dailynotes',
+  'navigate:ideas': 'ideas',
   'navigate:habits': 'habits',
   'navigate:tasks': 'tasks',
   'navigate:journal': 'journal',
@@ -76,6 +77,7 @@ export function useKeyboardShortcuts() {
       // Navigation actions
       case 'navigate:notes':
       case 'navigate:dailynotes':
+      case 'navigate:ideas':
       case 'navigate:habits':
       case 'navigate:tasks':
       case 'navigate:journal':

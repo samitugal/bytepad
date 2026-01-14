@@ -1,4 +1,4 @@
-import type { Note, Task, Habit, JournalEntry, Bookmark, GraphNode, GraphEdge, GraphEntityType } from '../types'
+import type { Note, Task, Habit, JournalEntry, Bookmark, Idea, GraphNode, GraphEdge, GraphEntityType } from '../types'
 
 export function extractWikilinks(content: string): string[] {
   const regex = /\[\[([^\]]+)\]\]/g
@@ -15,7 +15,8 @@ export function collectAllTags(
   tasks: Task[],
   habits: Habit[],
   journals: JournalEntry[],
-  bookmarks: Bookmark[]
+  bookmarks: Bookmark[],
+  ideas: Idea[] = []
 ): Set<string> {
   const tags = new Set<string>()
 
@@ -24,6 +25,7 @@ export function collectAllTags(
   journals.forEach(j => j.tags.forEach(t => tags.add(t)))
   bookmarks.forEach(b => b.tags.forEach(t => tags.add(t)))
   habits.forEach(h => tags.add(h.category))
+  ideas.forEach(i => i.tags.forEach(t => tags.add(t)))
 
   return tags
 }
@@ -40,8 +42,10 @@ export function buildGraphData(
     showHabits: boolean
     showJournals: boolean
     showBookmarks: boolean
+    showIdeas: boolean
     showTags: boolean
-  }
+  },
+  ideas: Idea[] = []
 ): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const nodes: GraphNode[] = []
   const edges: GraphEdge[] = []
@@ -146,8 +150,20 @@ export function buildGraphData(
     })
   }
 
+  if (filters.showIdeas) {
+    ideas.filter(i => i.status === 'active').forEach(idea => {
+      addNode(
+        `idea:${idea.id}`,
+        'idea',
+        idea.content.slice(0, 30) + (idea.content.length > 30 ? '...' : ''),
+        idea.tags,
+        idea.createdAt.toString()
+      )
+    })
+  }
+
   if (filters.showTags) {
-    const allTags = collectAllTags(notes, tasks, habits, journals, bookmarks)
+    const allTags = collectAllTags(notes, tasks, habits, journals, bookmarks, ideas)
     allTags.forEach(tag => {
       addNode(`tag:${tag}`, 'tag', `#${tag}`, [], new Date().toISOString())
     })
@@ -203,6 +219,32 @@ export function buildGraphData(
         })
       })
     }
+
+    if (filters.showIdeas) {
+      ideas.filter(i => i.status === 'active').forEach(idea => {
+        idea.tags.forEach(tag => {
+          addEdge(`idea:${idea.id}`, `tag:${tag}`, 'tag')
+        })
+      })
+    }
+  }
+
+  // Idea-Note links
+  if (filters.showIdeas && filters.showNotes) {
+    ideas.filter(i => i.status === 'active').forEach(idea => {
+      idea.linkedNoteIds.forEach(noteId => {
+        addEdge(`idea:${idea.id}`, `note:${noteId}`, 'wikilink')
+      })
+    })
+  }
+
+  // Idea-Task links
+  if (filters.showIdeas && filters.showTasks) {
+    ideas.filter(i => i.status === 'active').forEach(idea => {
+      idea.linkedTaskIds.forEach(taskId => {
+        addEdge(`idea:${idea.id}`, `task:${taskId}`, 'wikilink')
+      })
+    })
   }
 
   // Task-Bookmark links (linkedBookmarkIds)
@@ -330,6 +372,7 @@ export const nodeColors: Record<GraphEntityType, string> = {
   habit: '#CE9178',
   journal: '#C586C0',
   bookmark: '#4EC9B0',
+  idea: '#EAB308',
   tag: '#DCDCAA',
 }
 
@@ -339,5 +382,6 @@ export const nodeLabels: Record<GraphEntityType, string> = {
   habit: 'Habits',
   journal: 'Journal',
   bookmark: 'Bookmarks',
+  idea: 'Ideas',
   tag: 'Tags',
 }
