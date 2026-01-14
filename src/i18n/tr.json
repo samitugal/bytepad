@@ -240,6 +240,26 @@
         "deleteCard": "Kartı Sil",
         "deleteCardConfirm": "\"{title}\" kartını silmek istediğinize emin misiniz?"
     },
+    "ideas": {
+        "title": "Fikirler",
+        "idea": "fikir",
+        "ideas": "fikir",
+        "add": "Ekle",
+        "placeholder": "Fikrinizi yazın...",
+        "titlePlaceholder": "Fikir başlığı...",
+        "descriptionPlaceholder": "Açıklama (opsiyonel)...",
+        "selectColor": "Renk seç",
+        "noIdeas": "Henüz fikir yok",
+        "createFirst": "İlk fikrinizi yakalayın!",
+        "archive": "Arşivle",
+        "unarchive": "Arşivden çıkar",
+        "convertToNote": "Nota dönüştür",
+        "addHint": "Fikir ekle",
+        "reorderHint": "Sırala",
+        "active": "Aktif",
+        "archived": "Arşiv",
+        "all": "Tümü"
+    },
     "flowbot": {
         "title": "FlowBot",
         "subtitle": "AI Koçu",

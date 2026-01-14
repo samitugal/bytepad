@@ -30,6 +30,10 @@ interface TaskState {
   unlinkBookmark: (taskId: string, bookmarkId: string) => void
   linkNote: (taskId: string, noteId: string) => void
   unlinkNote: (taskId: string, noteId: string) => void
+  // Archive
+  archiveTask: (id: string) => void
+  unarchiveTask: (id: string) => void
+  autoArchiveOldTasks: (daysOld: number) => void
   // Getters
   getAllTags: () => string[]
   getTasksByTag: (tag: string) => Task[]
@@ -260,6 +264,41 @@ export const useTaskStore = create<TaskState>()(
         }))
       },
 
+      // Archive
+      archiveTask: (id) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === id ? { ...task, archivedAt: new Date() } : task
+          ),
+        }))
+      },
+
+      unarchiveTask: (id) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === id ? { ...task, archivedAt: undefined } : task
+          ),
+        }))
+      },
+
+      autoArchiveOldTasks: (daysOld) => {
+        const cutoffDate = new Date()
+        cutoffDate.setDate(cutoffDate.getDate() - daysOld)
+        
+        set((state) => ({
+          tasks: state.tasks.map((task) => {
+            // Only archive completed tasks that are older than cutoff and not already archived
+            if (task.completed && task.completedAt && !task.archivedAt) {
+              const completedDate = new Date(task.completedAt)
+              if (completedDate < cutoffDate) {
+                return { ...task, archivedAt: new Date() }
+              }
+            }
+            return task
+          }),
+        }))
+      },
+
       // Getters
       getAllTags: () => {
         const allTags = new Set<string>()
@@ -300,7 +339,8 @@ useTaskStore.subscribe((state) => {
 })
 
 export const getFilteredTasks = (state: TaskState) => {
-  let filtered = [...state.tasks]
+  // Exclude archived tasks from normal view
+  let filtered = state.tasks.filter(t => !t.archivedAt)
 
   // Apply filter
   if (state.filter === 'active') {

@@ -240,6 +240,26 @@
         "deleteCard": "Delete Card",
         "deleteCardConfirm": "Are you sure you want to delete \"{title}\"?"
     },
+    "ideas": {
+        "title": "Ideas",
+        "idea": "idea",
+        "ideas": "ideas",
+        "add": "Add",
+        "placeholder": "Type your idea...",
+        "titlePlaceholder": "Idea title...",
+        "descriptionPlaceholder": "Description (optional)...",
+        "selectColor": "Select color",
+        "noIdeas": "No ideas yet",
+        "createFirst": "Capture your first idea!",
+        "archive": "Archive",
+        "unarchive": "Unarchive",
+        "convertToNote": "Convert to note",
+        "addHint": "Add idea",
+        "reorderHint": "Reorder",
+        "active": "Active",
+        "archived": "Archived",
+        "all": "All"
+    },
     "flowbot": {
         "title": "FlowBot",
         "subtitle": "AI Coach",

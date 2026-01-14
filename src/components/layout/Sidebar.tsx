@@ -8,15 +8,16 @@ import { useTranslation } from '../../i18n'
 import type { ModuleType } from '../../types'
 
 const MODULE_IDS: { id: ModuleType; shortcut: string }[] = [
-  { id: 'notes', shortcut: '1' },
-  { id: 'dailynotes', shortcut: '2' },
-  { id: 'habits', shortcut: '3' },
-  { id: 'tasks', shortcut: '4' },
-  { id: 'journal', shortcut: '5' },
-  { id: 'bookmarks', shortcut: '6' },
-  { id: 'calendar', shortcut: '7' },
-  { id: 'graph', shortcut: '8' },
-  { id: 'analysis', shortcut: '9' },
+  { id: 'notes', shortcut: '1' },       // Ctrl+1
+  { id: 'dailynotes', shortcut: '2' },  // Ctrl+2
+  { id: 'ideas', shortcut: '3' },       // Ctrl+3
+  { id: 'habits', shortcut: '4' },      // Ctrl+4
+  { id: 'tasks', shortcut: '5' },       // Ctrl+5
+  { id: 'journal', shortcut: '6' },     // Ctrl+6
+  { id: 'bookmarks', shortcut: '7' },   // Ctrl+7
+  { id: 'calendar', shortcut: '8' },    // Ctrl+8
+  { id: 'graph', shortcut: '9' },       // Ctrl+9
+  { id: 'analysis', shortcut: '0' },    // Ctrl+0
 ]
 
 const MIN_WIDTH = 80
@@ -72,6 +73,7 @@ export function Sidebar() {
     const labelMap: Record<ModuleType, string> = {
       notes: t('nav.notes'),
       dailynotes: t('dailyNotes.title'),
+      ideas: t('ideas.title'),
       habits: t('nav.habits'),
       tasks: t('nav.tasks'),
       journal: t('nav.journal'),

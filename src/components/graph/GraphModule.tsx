@@ -4,6 +4,7 @@ import { useTaskStore } from '../../stores/taskStore'
 import { useHabitStore } from '../../stores/habitStore'
 import { useJournalStore } from '../../stores/journalStore'
 import { useBookmarkStore } from '../../stores/bookmarkStore'
+import { useIdeaStore } from '../../stores/ideaStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useTranslation } from '../../i18n'
 import { GraphVisualization } from './GraphVisualization'
@@ -19,6 +20,7 @@ const defaultFilters = {
   showHabits: true,
   showJournals: false,
   showBookmarks: false,
+  showIdeas: true,
   showTags: true,
 }
 
@@ -42,6 +44,7 @@ export function GraphModule() {
   const habits = useHabitStore((s) => s.habits)
   const journals = useJournalStore((s) => s.entries)
   const bookmarks = useBookmarkStore((s) => s.bookmarks)
+  const ideas = useIdeaStore((s) => s.ideas)
   const setActiveModule = useUIStore((s) => s.setActiveModule)
 
   const [filters, setFilters] = useState(loadFilters)
@@ -53,21 +56,22 @@ export function GraphModule() {
   }, [filters])
 
   const { nodes, edges } = useMemo(
-    () => buildGraphData(notes, tasks, habits, journals, bookmarks, filters),
-    [notes, tasks, habits, journals, bookmarks, filters]
+    () => buildGraphData(notes, tasks, habits, journals, bookmarks, filters, ideas),
+    [notes, tasks, habits, journals, bookmarks, filters, ideas]
   )
 
   const counts = useMemo(() => {
-    const allTags = collectAllTags(notes, tasks, habits, journals, bookmarks)
+    const allTags = collectAllTags(notes, tasks, habits, journals, bookmarks, ideas)
     return {
       note: notes.length,
       task: tasks.length,
       habit: habits.length,
       journal: journals.length,
       bookmark: bookmarks.length,
+      idea: ideas.filter(i => i.status === 'active').length,
       tag: allTags.size,
     } as Record<GraphEntityType, number>
-  }, [notes, tasks, habits, journals, bookmarks])
+  }, [notes, tasks, habits, journals, bookmarks, ideas])
 
   const handleFilterChange = (key: string, value: boolean) => {
     setFilters((prev: typeof defaultFilters) => ({ ...prev, [key]: value }))
@@ -92,6 +96,9 @@ export function GraphModule() {
         break
       case 'bookmark':
         setActiveModule('bookmarks')
+        break
+      case 'idea':
+        setActiveModule('ideas')
         break
       case 'tag':
         break

@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, ChangeEvent, KeyboardEvent } from 'react'
 import { useNoteStore } from '../../stores/noteStore'
 import { useBookmarkStore } from '../../stores/bookmarkStore'
 import { useTaskStore } from '../../stores/taskStore'
+import { useIdeaStore } from '../../stores/ideaStore'
 
 interface EntityLinkInputProps {
   value: string
@@ -19,36 +20,87 @@ export function EntityLinkInput({ value, onChange, placeholder, className }: Ent
   const notes = useNoteStore((state) => state.notes)
   const bookmarks = useBookmarkStore((state) => state.bookmarks)
   const tasks = useTaskStore((state) => state.tasks)
+  const ideas = useIdeaStore((state) => state.ideas)
+
+  // Type filter prefixes (both singular and plural)
+  const TYPE_PREFIXES = ['notes:', 'note:', 'ideas:', 'idea:', 'tasks:', 'task:', 'bookmarks:', 'bookmark:'] as const
 
   // Get filtered suggestions based on query
   const suggestions = useMemo(() => {
     if (!suggestionQuery) return []
+    
     const query = suggestionQuery.toLowerCase()
-    const results: Array<{ type: 'note' | 'bookmark' | 'task'; id: string; title: string }> = []
+    const results: Array<{ type: 'note' | 'bookmark' | 'task' | 'idea' | 'filter'; id: string; title: string }> = []
 
-    // Search notes
-    notes.forEach(note => {
-      if (note.title.toLowerCase().includes(query)) {
-        results.push({ type: 'note', id: note.id, title: note.title })
-      }
+    // Check if user is typing a type prefix (e.g., "no" for "notes:")
+    const matchingPrefixes = TYPE_PREFIXES.filter(prefix => 
+      prefix.startsWith(query) && query.length > 0 && !query.includes(':')
+    )
+    
+    // Add type filter suggestions first
+    matchingPrefixes.forEach(prefix => {
+      const label = prefix.slice(0, -1) // Remove trailing ':'
+      results.push({ 
+        type: 'filter', 
+        id: prefix, 
+        title: `${prefix} (filter by ${label})` 
+      })
     })
 
-    // Search bookmarks
-    bookmarks.forEach(bookmark => {
-      if (bookmark.title.toLowerCase().includes(query)) {
-        results.push({ type: 'bookmark', id: bookmark.id, title: bookmark.title })
+    // Check if query has a type prefix filter (case-insensitive)
+    let typeFilter: string | null = null
+    let searchQuery = query
+    
+    for (const prefix of TYPE_PREFIXES) {
+      if (query.toLowerCase().startsWith(prefix.toLowerCase())) {
+        typeFilter = prefix.slice(0, -1) // 'notes:', 'note:' -> 'notes' or 'note'
+        searchQuery = query.slice(prefix.length).trim()
+        break
       }
-    })
+    }
+    
+    // Normalize typeFilter to handle both singular and plural
+    const normalizedFilter = typeFilter ? typeFilter.replace(/s$/, '') : null // 'notes' -> 'note', 'note' -> 'note'
 
-    // Search tasks
-    tasks.forEach(task => {
-      if (task.title.toLowerCase().includes(query)) {
-        results.push({ type: 'task', id: task.id, title: task.title })
-      }
-    })
+    // Search notes (if no filter or filter is 'note/notes')
+    if (!normalizedFilter || normalizedFilter === 'note') {
+      notes.forEach(note => {
+        if (note.title.toLowerCase().includes(searchQuery)) {
+          results.push({ type: 'note', id: note.id, title: note.title })
+        }
+      })
+    }
 
-    return results.slice(0, 8) // Limit to 8 suggestions
-  }, [suggestionQuery, notes, bookmarks, tasks])
+    // Search bookmarks (if no filter or filter is 'bookmark/bookmarks')
+    if (!normalizedFilter || normalizedFilter === 'bookmark') {
+      bookmarks.forEach(bookmark => {
+        if (bookmark.title.toLowerCase().includes(searchQuery)) {
+          results.push({ type: 'bookmark', id: bookmark.id, title: bookmark.title })
+        }
+      })
+    }
+
+    // Search tasks (if no filter or filter is 'task/tasks')
+    if (!normalizedFilter || normalizedFilter === 'task') {
+      tasks.filter(t => !t.archivedAt).forEach(task => {
+        if (task.title.toLowerCase().includes(searchQuery)) {
+          results.push({ type: 'task', id: task.id, title: task.title })
+        }
+      })
+    }
+
+    // Search ideas (if no filter or filter is 'idea/ideas')
+    if (!normalizedFilter || normalizedFilter === 'idea') {
+      ideas.filter(i => i.status === 'active').forEach(idea => {
+        const ideaTitle = idea.title || idea.content.slice(0, 50)
+        if (ideaTitle.toLowerCase().includes(searchQuery.toLowerCase())) {
+          results.push({ type: 'idea', id: idea.id, title: ideaTitle + (idea.title ? '' : (idea.content.length > 50 ? '...' : '')) })
+        }
+      })
+    }
+
+    return results.slice(0, 10) // Limit to 10 suggestions
+  }, [suggestionQuery, notes, bookmarks, tasks, ideas])
 
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value
@@ -76,6 +128,23 @@ export function EntityLinkInput({ value, onChange, placeholder, className }: Ent
     const textBeforeCursor = value.slice(0, cursorPosition)
     const textAfterCursor = value.slice(cursorPosition)
     const lastOpenBracket = textBeforeCursor.lastIndexOf('[[')
+
+    // If selecting a filter, insert the prefix and keep suggestions open
+    if (suggestion.type === 'filter') {
+      const newValue = textBeforeCursor.slice(0, lastOpenBracket + 2) + suggestion.id + textAfterCursor
+      onChange(newValue)
+      setSuggestionQuery(suggestion.id)
+      // Keep suggestions open, update cursor position
+      setTimeout(() => {
+        if (textareaRef.current) {
+          const newPos = lastOpenBracket + 2 + suggestion.id.length
+          textareaRef.current.focus()
+          textareaRef.current.setSelectionRange(newPos, newPos)
+          setCursorPosition(newPos)
+        }
+      }, 0)
+      return
+    }
 
     // Check if there's already ]] after cursor
     const hasClosingBrackets = textAfterCursor.startsWith(']]')
@@ -134,9 +203,14 @@ export function EntityLinkInput({ value, onChange, placeholder, className }: Ent
               <span className={`text-xs px-1.5 py-0.5 rounded ${
                 suggestion.type === 'note' ? 'bg-np-green/20 text-np-green' :
                 suggestion.type === 'bookmark' ? 'bg-np-cyan/20 text-np-cyan' :
+                suggestion.type === 'idea' ? 'bg-yellow-500/20 text-yellow-300' :
+                suggestion.type === 'filter' ? 'bg-np-purple/20 text-np-purple' :
                 'bg-np-orange/20 text-np-orange'
               }`}>
-                {suggestion.type === 'note' ? '📝' : suggestion.type === 'bookmark' ? '🔗' : '✓'}
+                {suggestion.type === 'note' ? '📝' : 
+                 suggestion.type === 'bookmark' ? '🔗' : 
+                 suggestion.type === 'idea' ? '💡' : 
+                 suggestion.type === 'filter' ? '🔍' : '✓'}
               </span>
               <span className="text-np-text-primary truncate">{suggestion.title}</span>
             </button>
