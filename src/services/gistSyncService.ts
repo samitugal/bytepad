@@ -10,6 +10,7 @@ import { useBookmarkStore } from '../stores/bookmarkStore'
 import { useDailyNotesStore } from '../stores/dailyNotesStore'
 import { useFocusStore } from '../stores/focusStore'
 import { useGamificationStore } from '../stores/gamificationStore'
+import { useIdeaStore } from '../stores/ideaStore'
 
 const GIST_FILENAME = 'bytepad-data.json'
 
@@ -23,6 +24,7 @@ interface SyncData {
         journal: unknown[]
         bookmarks: unknown[]
         dailyNotes: unknown[]
+        ideas: unknown[]
         focusSessions: unknown[]
         gamification: {
             level: number
@@ -57,6 +59,7 @@ function collectAllData(): SyncData {
     const journal = useJournalStore.getState().entries
     const bookmarks = useBookmarkStore.getState().bookmarks
     const dailyNotes = useDailyNotesStore.getState().dailyNotes
+    const ideas = useIdeaStore.getState().ideas
     const focusState = useFocusStore.getState()
     const gamificationState = useGamificationStore.getState()
 
@@ -70,6 +73,7 @@ function collectAllData(): SyncData {
             journal,
             bookmarks,
             dailyNotes,
+            ideas,
             focusSessions: focusState.sessions,
             gamification: {
                 level: gamificationState.level,
@@ -141,6 +145,7 @@ function applyData(syncData: SyncData, forceOverwrite: boolean = false): void {
     const currentJournal = useJournalStore.getState().entries
     const currentBookmarks = useBookmarkStore.getState().bookmarks
     const currentDailyNotes = useDailyNotesStore.getState().dailyNotes
+    const currentIdeas = useIdeaStore.getState().ideas
     const currentFocusSessions = useFocusStore.getState().sessions
 
     // Only add updates for stores that have actually changed AND remote has data
@@ -170,6 +175,9 @@ function applyData(syncData: SyncData, forceOverwrite: boolean = false): void {
     }
     if (shouldApply(currentDailyNotes, data.dailyNotes as unknown[])) {
         updates.push(() => useDailyNotesStore.setState({ dailyNotes: data.dailyNotes as never[] }))
+    }
+    if (shouldApply(currentIdeas, data.ideas as unknown[])) {
+        updates.push(() => useIdeaStore.setState({ ideas: data.ideas as never[] }))
     }
     if (shouldApply(currentFocusSessions, data.focusSessions as unknown[])) {
         updates.push(() => useFocusStore.setState({ sessions: data.focusSessions as never[] }))
