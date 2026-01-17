@@ -11,6 +11,8 @@ interface UIState {
   globalSearchQuery: string
   shortcutsModalOpen: boolean
   settingsOpen: boolean
+  pageSearchOpen: boolean
+  pageSearchQuery: string
   setActiveModule: (module: ModuleType) => void
   toggleCommandPalette: () => void
   setCommandPaletteOpen: (open: boolean) => void
@@ -27,6 +29,9 @@ interface UIState {
   setShortcutsModalOpen: (open: boolean) => void
   toggleSettings: () => void
   setSettingsOpen: (open: boolean) => void
+  togglePageSearch: () => void
+  setPageSearchOpen: (open: boolean) => void
+  setPageSearchQuery: (query: string) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -39,6 +44,8 @@ export const useUIStore = create<UIState>((set) => ({
   globalSearchQuery: '',
   shortcutsModalOpen: false,
   settingsOpen: false,
+  pageSearchOpen: false,
+  pageSearchQuery: '',
   setActiveModule: (module) => set({ activeModule: module }),
   toggleCommandPalette: () => set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
@@ -55,4 +62,7 @@ export const useUIStore = create<UIState>((set) => ({
   setShortcutsModalOpen: (open) => set({ shortcutsModalOpen: open }),
   toggleSettings: () => set((state) => ({ settingsOpen: !state.settingsOpen })),
   setSettingsOpen: (open) => set({ settingsOpen: open }),
+  togglePageSearch: () => set((state) => ({ pageSearchOpen: !state.pageSearchOpen, pageSearchQuery: state.pageSearchOpen ? '' : state.pageSearchQuery })),
+  setPageSearchOpen: (open) => set({ pageSearchOpen: open, pageSearchQuery: open ? '' : '' }),
+  setPageSearchQuery: (query) => set({ pageSearchQuery: query }),
 }))

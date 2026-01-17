@@ -65,7 +65,9 @@ export function useKeyboardShortcuts() {
       'focus:toggle',
       'system:notifications',
       'system:globalSearch',
+      'system:pageSearch',
       'action:new',
+      'action:save',
     ].includes(kb.action)
 
     if (isInput && !worksInInput) return
@@ -109,6 +111,10 @@ export function useKeyboardShortcuts() {
         useUIStore.getState().toggleGlobalSearch()
         break
 
+      case 'system:pageSearch':
+        useUIStore.getState().togglePageSearch()
+        break
+
       case 'system:notifications':
         useUIStore.getState().toggleNotificationCenter()
         break
@@ -121,6 +127,10 @@ export function useKeyboardShortcuts() {
       // Item actions
       case 'action:new':
         handleNewItem()
+        break
+
+      case 'action:save':
+        handleSave()
         break
 
       case 'action:newTab':
@@ -211,6 +221,19 @@ function handleNewItem() {
       useNoteStore.getState().setActiveNote(newNoteId)
     }
   }
+}
+
+function handleSave() {
+  // Trigger blur to save any active input (most components auto-save on blur)
+  const activeElement = document.activeElement as HTMLElement
+  if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+    activeElement.blur()
+    // Re-focus after a short delay
+    setTimeout(() => activeElement.focus(), 50)
+  }
+
+  // Dispatch a custom event for components that want explicit save notification
+  window.dispatchEvent(new CustomEvent('bytepad:save'))
 }
 
 function handleNewTab() {

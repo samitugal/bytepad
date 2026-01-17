@@ -32,6 +32,7 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
   { id: 'sys-shortcuts', action: 'system:shortcuts', label: 'Shortcuts Help', description: 'Show keyboard shortcuts', keys: 'ctrl+?', category: 'system' },
   { id: 'sys-chat', action: 'system:chat', label: 'Toggle FlowBot', description: 'Open/close AI chat', keys: 'ctrl+/', category: 'system' },
   { id: 'sys-search', action: 'system:globalSearch', label: 'Global Search', description: 'Open global search', keys: 'alt+u', category: 'system' },
+  { id: 'sys-page-search', action: 'system:pageSearch', label: 'Page Search', description: 'Search within current page', keys: 'ctrl+f', category: 'system' },
   { id: 'sys-notifications', action: 'system:notifications', label: 'Notifications', description: 'Toggle notification center', keys: 'ctrl+shift+n', category: 'system' },
 
   // Focus
@@ -39,6 +40,7 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
 
   // Actions
   { id: 'action-new', action: 'action:new', label: 'New Item', description: 'Create new item in current module', keys: 'ctrl+n', category: 'actions' },
+  { id: 'action-save', action: 'action:save', label: 'Save', description: 'Save current item', keys: 'ctrl+enter', category: 'actions' },
   { id: 'action-new-tab', action: 'action:newTab', label: 'New Tab', description: 'Open new tab (Notes)', keys: 'ctrl+t', category: 'actions' },
   { id: 'action-close-tab', action: 'action:closeTab', label: 'Close Tab', description: 'Close current tab', keys: 'ctrl+w', category: 'actions' },
   { id: 'action-next-tab', action: 'action:nextTab', label: 'Next Tab', description: 'Switch to next tab', keys: 'ctrl+tab', category: 'actions' },

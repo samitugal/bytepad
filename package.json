@@ -1,7 +1,7 @@
 {
   "name": "bytepad",
   "private": true,
-  "version": "0.21.2",
+  "version": "0.22.0",
   "type": "module",
   "main": "out/main/index.js",
   "scripts": {
@@ -32,7 +32,9 @@
     "@tailwindcss/typography": "^0.5.19",
     "@types/react-syntax-highlighter": "^15.5.13",
     "ai": "^6.0.27",
+    "file-saver": "^2.0.5",
     "firebase": "^12.7.0",
+    "jszip": "^3.10.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^10.1.0",
@@ -42,6 +44,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@types/file-saver": "^2.0.7",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",

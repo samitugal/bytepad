@@ -199,6 +199,7 @@ interface SettingsState {
 
   // Editor Settings
   noteMarkdownPreview: boolean
+  noteFontSize: FontSize // Separate font size for note editor content
 
   // Email Notifications
   emailPreferences: EmailPreferences
@@ -218,6 +219,11 @@ interface SettingsState {
   // Locale Settings
   timezone: string // e.g., 'Europe/Istanbul', 'America/New_York'
 
+  // Local Storage Settings
+  localNotesEnabled: boolean
+  localNotesPath: string // User-selected directory path for saving notes as .txt files
+  localNotesDirHandle: FileSystemDirectoryHandle | null // For File System Access API
+
   // Actions
   setLLMProvider: (provider: LLMProvider) => void
   setLLMModel: (model: string) => void
@@ -226,12 +232,16 @@ interface SettingsState {
   setFontSize: (size: FontSize) => void
   setFontFamily: (family: FontFamily) => void
   setNoteMarkdownPreview: (enabled: boolean) => void
+  setNoteFontSize: (size: FontSize) => void
   setEmailPreferences: (prefs: Partial<EmailPreferences>) => void
   setGistSync: (prefs: Partial<GistSyncPreferences>) => void
   setFocusPreferences: (prefs: Partial<FocusPreferences>) => void
   setGamificationEnabled: (enabled: boolean) => void
   setTimezone: (timezone: string) => void
   completeOnboarding: () => void
+  setLocalNotesEnabled: (enabled: boolean) => void
+  setLocalNotesPath: (path: string) => void
+  setLocalNotesDirHandle: (handle: FileSystemDirectoryHandle | null) => void
 
   // Helpers
   getCurrentApiKey: () => string
@@ -256,6 +266,7 @@ export const useSettingsStore = create<SettingsState>()(
       fontSize: 'base',
       fontFamily: 'system',
       noteMarkdownPreview: false,
+      noteFontSize: 'base',
       emailPreferences: {
         enabled: false,
         userEmail: '',
@@ -296,6 +307,9 @@ export const useSettingsStore = create<SettingsState>()(
       gamificationEnabled: true,
       onboardingCompleted: false,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, // Auto-detect from browser
+      localNotesEnabled: false,
+      localNotesPath: '',
+      localNotesDirHandle: null,
 
       // Actions
       setLLMProvider: (provider) => {
@@ -320,6 +334,8 @@ export const useSettingsStore = create<SettingsState>()(
 
       setNoteMarkdownPreview: (enabled) => set({ noteMarkdownPreview: enabled }),
 
+      setNoteFontSize: (size) => set({ noteFontSize: size }),
+
       setEmailPreferences: (prefs) => set((state) => ({
         emailPreferences: { ...state.emailPreferences, ...prefs }
       })),
@@ -337,6 +353,12 @@ export const useSettingsStore = create<SettingsState>()(
       setTimezone: (timezone) => set({ timezone }),
 
       completeOnboarding: () => set({ onboardingCompleted: true }),
+
+      setLocalNotesEnabled: (enabled) => set({ localNotesEnabled: enabled }),
+
+      setLocalNotesPath: (path) => set({ localNotesPath: path }),
+
+      setLocalNotesDirHandle: (handle) => set({ localNotesDirHandle: handle }),
 
       // Helpers
       getCurrentApiKey: () => {
@@ -360,12 +382,16 @@ export const useSettingsStore = create<SettingsState>()(
         fontSize: state.fontSize,
         fontFamily: state.fontFamily,
         noteMarkdownPreview: state.noteMarkdownPreview,
+        noteFontSize: state.noteFontSize,
         emailPreferences: state.emailPreferences,
         gistSync: state.gistSync,
         focusPreferences: state.focusPreferences,
         gamificationEnabled: state.gamificationEnabled,
         onboardingCompleted: state.onboardingCompleted,
         timezone: state.timezone,
+        localNotesEnabled: state.localNotesEnabled,
+        localNotesPath: state.localNotesPath,
+        // Note: localNotesDirHandle cannot be serialized, user needs to re-select folder
       }),
       // Merge persisted state with initial state to handle new fields
       merge: (persistedState, currentState) => ({

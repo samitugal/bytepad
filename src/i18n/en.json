@@ -183,7 +183,9 @@
         "clickExpand": "Click to expand",
         "enterAddSubtask": "Enter to add subtask",
         "editTask": "Edit Task",
-        "save": "Save"
+        "save": "Save",
+        "listView": "List",
+        "kanbanView": "Kanban"
     },
     "habits": {
         "newHabit": "New Habit",
@@ -366,6 +368,26 @@
     "shortcuts": {
         "title": "Keyboard Shortcuts",
         "hint": "Press Escape to close"
+    },
+    "noteSearch": {
+        "placeholder": "Search in note...",
+        "noResults": "No results",
+        "prev": "Previous (Shift+Enter)",
+        "next": "Next (Enter)",
+        "close": "Close (Esc)",
+        "nextHint": "next",
+        "prevHint": "prev",
+        "closeHint": "close"
+    },
+    "pageSearch": {
+        "placeholder": "Search in page...",
+        "noResults": "No results",
+        "prev": "Previous (Shift+Enter)",
+        "next": "Next (Enter)",
+        "close": "Close (Esc)",
+        "nextHint": "next",
+        "prevHint": "prev",
+        "closeHint": "close"
     },
     "graph": {
         "title": "Knowledge Graph",

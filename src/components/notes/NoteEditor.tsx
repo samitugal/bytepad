@@ -6,8 +6,10 @@ import { useNoteStore } from '../../stores/noteStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useIdeaStore } from '../../stores/ideaStore'
 import { useTabStore } from '../../stores/tabStore'
+import { useSettingsStore, FONT_SIZES } from '../../stores/settingsStore'
 import { BacklinksPanel } from './BacklinksPanel'
 import { WikilinkAutocomplete, type WikilinkSuggestion } from './WikilinkAutocomplete'
+import { NoteSearch } from './NoteSearch'
 import { ConfirmModal } from '../common'
 import { useTranslation } from '../../i18n'
 import { parseTags } from '../../utils/storage'
@@ -144,13 +146,18 @@ export function NoteEditor() {
   const tasks = useTaskStore((s) => s.tasks)
   const ideas = useIdeaStore((s) => s.ideas)
   const { tabs, updateTabTitle } = useTabStore()
+  const noteFontSize = useSettingsStore((s) => s.noteFontSize)
   const activeNote = notes.find(n => n.id === activeNoteId)
+  
+  // Get font size value for note editor
+  const noteFontSizeValue = FONT_SIZES[noteFontSize]?.value || '14px'
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
   const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('edit')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showNoteSearch, setShowNoteSearch] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const lineNumbersRef = useRef<HTMLDivElement>(null)
 
@@ -166,7 +173,7 @@ export function NoteEditor() {
     }
   }, [activeNote])
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!activeNoteId) return
     updateNote(activeNoteId, {
       title,
@@ -179,19 +186,44 @@ export function NoteEditor() {
     if (tab && tab.title !== (title || 'Untitled')) {
       updateTabTitle(tab.id, title || 'Untitled')
     }
-  }, [activeNoteId, title, content, tags, updateNote, tabs, updateTabTitle])
 
-  // Auto-save on blur or Ctrl+S
+    // Auto-save to local txt file if enabled
+    try {
+      const { autoSaveNoteLocally } = await import('../../services/localNotesService')
+      const updatedNote = {
+        id: activeNoteId,
+        title,
+        content,
+        tags: parseTags(tags),
+        createdAt: activeNote?.createdAt || new Date(),
+        updatedAt: new Date(),
+        pinned: activeNote?.pinned || false,
+      }
+      await autoSaveNoteLocally(updatedNote)
+    } catch (error) {
+      // Silently fail - local save is optional
+      console.debug('Local note save skipped:', error)
+    }
+  }, [activeNoteId, title, content, tags, updateNote, tabs, updateTabTitle, activeNote])
+
+  // Auto-save on blur or Ctrl+S, and Ctrl+F for search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault()
         handleSave()
       }
+      // Ctrl+F for note search (only when in edit mode)
+      if (e.ctrlKey && e.key === 'f' && (viewMode === 'edit' || viewMode === 'split')) {
+        e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
+        setShowNoteSearch(true)
+      }
     }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleSave])
+    window.addEventListener('keydown', handleKeyDown, true) // capture phase
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [handleSave, viewMode])
 
   // Sync line numbers scroll with textarea
   const handleScroll = useCallback(() => {
@@ -437,7 +469,8 @@ export function NoteEditor() {
               className="w-full h-full bg-np-bg-primary text-np-text-primary font-mono text-sm
                          pr-4 resize-none focus:outline-none overflow-x-hidden"
               style={{
-                lineHeight: '24px',
+                fontSize: noteFontSizeValue,
+                lineHeight: '1.7',
                 paddingLeft: '56px',
                 paddingTop: '12px',
                 paddingBottom: '16px',
@@ -452,6 +485,14 @@ export function NoteEditor() {
               textareaRef={textareaRef}
               content={content}
               onInsert={handleWikilinkInsert}
+            />
+
+            {/* Note Search */}
+            <NoteSearch
+              isOpen={showNoteSearch}
+              onClose={() => setShowNoteSearch(false)}
+              content={content}
+              textareaRef={textareaRef}
             />
           </div>
         )}

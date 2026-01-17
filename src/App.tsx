@@ -1,6 +1,7 @@
 import { useEffect, lazy, Suspense } from 'react'
 import { MenuBar, Sidebar, TabBar, StatusBar, MainContent } from './components/layout'
 import { CommandPalette, MiniTimer, ErrorBoundary, NotificationCenter, Onboarding, GlobalSearch, ShortcutsModal } from './components/common'
+import { PageSearch } from './components/common/PageSearch'
 
 // Lazy load heavy components
 const SettingsPanel = lazy(() => import('./components/common/SettingsPanel').then(m => ({ default: m.SettingsPanel })))
@@ -23,6 +24,8 @@ function App() {
   const gamificationEnabled = useSettingsStore((state) => state.gamificationEnabled)
   const globalSearchOpen = useUIStore((state) => state.globalSearchOpen)
   const setGlobalSearchOpen = useUIStore((state) => state.setGlobalSearchOpen)
+  const pageSearchOpen = useUIStore((state) => state.pageSearchOpen)
+  const setPageSearchOpen = useUIStore((state) => state.setPageSearchOpen)
   const shortcutsModalOpen = useUIStore((state) => state.shortcutsModalOpen)
   const setShortcutsModalOpen = useUIStore((state) => state.setShortcutsModalOpen)
   const settingsOpen = useUIStore((state) => state.settingsOpen)
@@ -128,9 +131,13 @@ function App() {
         </Suspense>
         <NotificationCenter />
         <Onboarding />
-        <GlobalSearch 
-          isOpen={globalSearchOpen} 
-          onClose={() => setGlobalSearchOpen(false)} 
+        <GlobalSearch
+          isOpen={globalSearchOpen}
+          onClose={() => setGlobalSearchOpen(false)}
+        />
+        <PageSearch
+          isOpen={pageSearchOpen}
+          onClose={() => setPageSearchOpen(false)}
         />
         <Suspense fallback={null}>
           <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />

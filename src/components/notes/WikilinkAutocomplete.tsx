@@ -128,7 +128,7 @@ export function WikilinkAutocomplete({ textareaRef, content, onInsert }: Wikilin
       setTriggerStart(lastOpenBracket)
       setSelectedIndex(0)
 
-      // Calculate position
+      // Calculate position relative to viewport
       const textareaRect = textarea.getBoundingClientRect()
       const lineHeight = 24
       const charWidth = 8.4 // approximate for monospace
@@ -138,10 +138,37 @@ export function WikilinkAutocomplete({ textareaRef, content, onInsert }: Wikilin
       const currentLineIndex = linesBeforeCursor.length - 1
       const currentLineText = linesBeforeCursor[currentLineIndex]
 
-      const top = (currentLineIndex + 1) * lineHeight + 12 - textarea.scrollTop
-      const left = (currentLineText.length) * charWidth + 56 // 56px for line numbers
+      // Calculate position within textarea (relative to textarea's top-left)
+      const relativeTop = (currentLineIndex + 1) * lineHeight + 12 - textarea.scrollTop
+      const relativeLeft = (currentLineText.length) * charWidth + 56 // 56px for line numbers
 
-      setPosition({ top: Math.min(top, textareaRect.height - 200), left: Math.min(left, textareaRect.width - 250) })
+      // Convert to viewport coordinates
+      const viewportTop = textareaRect.top + relativeTop
+      const viewportLeft = textareaRect.left + relativeLeft
+
+      // Dropdown dimensions
+      const dropdownHeight = 220 // max-h-48 + footer
+      const dropdownWidth = 250
+
+      // Adjust if dropdown would go outside viewport
+      let finalTop = relativeTop
+      let finalLeft = relativeLeft
+
+      // Check bottom overflow - if dropdown would go below viewport, show it above cursor
+      if (viewportTop + dropdownHeight > window.innerHeight) {
+        finalTop = relativeTop - dropdownHeight - lineHeight
+      }
+
+      // Check right overflow - if dropdown would go outside right edge, align to right of textarea
+      if (viewportLeft + dropdownWidth > window.innerWidth) {
+        finalLeft = Math.max(0, textareaRect.width - dropdownWidth - 20)
+      }
+
+      // Ensure we don't go negative
+      finalTop = Math.max(0, finalTop)
+      finalLeft = Math.max(0, finalLeft)
+
+      setPosition({ top: finalTop, left: finalLeft })
       setIsOpen(true)
     } else {
       setIsOpen(false)

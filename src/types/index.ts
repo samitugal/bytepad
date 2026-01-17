@@ -52,6 +52,7 @@ export interface Task {
   tags?: string[] // Tags for organization and filtering
   linkedBookmarkIds?: string[] // IDs of linked bookmarks
   linkedNoteIds?: string[] // IDs of linked notes
+  kanbanStatus?: 'todo' | 'in_progress' // Kanban board status (done = completed)
 }
 
 export interface SubTask {
