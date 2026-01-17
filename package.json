@@ -1,7 +1,12 @@
 {
   "name": "bytepad",
   "private": true,
-  "version": "0.22.2",
+  "version": "0.22.3",
+  "description": "A modern productivity app for notes, tasks, habits, and journaling",
+  "author": {
+    "name": "Sami Tugal",
+    "email": "samitugal@outlook.com"
+  },
   "type": "module",
   "main": "out/main/index.js",
   "scripts": {
