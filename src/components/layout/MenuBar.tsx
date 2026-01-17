@@ -74,8 +74,8 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
 
   return (
     <div className="h-8 bg-np-bg-secondary border-b border-np-border flex items-center justify-between px-2 text-sm select-none app-drag-region">
-      {/* macOS traffic lights space */}
-      {isMac && <div className="w-16 flex-shrink-0" />}
+      {/* macOS traffic lights space - must be app-no-drag for buttons to work */}
+      {isMac && <div className="w-[70px] flex-shrink-0 app-no-drag" />}
       <div className="flex items-center gap-4 app-no-drag">
         <span className="text-np-text-primary font-medium">bytepad</span>
         <div className="flex items-center gap-3 text-np-text-secondary">
