@@ -166,7 +166,7 @@ Sprint XX: Description
 ## Sprint Dokümantasyon Kuralları
 Yeni bir sprint veya özellik planlandığında:
 
-1. **Ayrı MD dosyası oluştur:** `docs/sprints/SPRINT_XX_FEATURE_NAME.md`
+1. **Ayrı MD dosyası oluştur:** `docs/internal/sprints/SPRINT_XX_FEATURE_NAME.md`
 2. **Dosya formatı:**
    ```markdown
    # Sprint XX: Feature Name

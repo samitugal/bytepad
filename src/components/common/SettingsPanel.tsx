@@ -50,6 +50,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
         ollamaBaseUrl,
         fontSize,
         fontFamily,
+        noteFontSize,
         emailPreferences,
         gistSync,
         setLLMProvider,
@@ -58,6 +59,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
         setOllamaBaseUrl,
         setFontSize,
         setFontFamily,
+        setNoteFontSize,
         setEmailPreferences,
         setGistSync,
     } = useSettingsStore()
@@ -215,6 +217,8 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                             setFontSize={setFontSize}
                             fontFamily={fontFamily}
                             setFontFamily={setFontFamily}
+                            noteFontSize={noteFontSize}
+                            setNoteFontSize={setNoteFontSize}
                         />
                     )}
 
@@ -284,7 +288,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
                 {/* Footer */}
                 <div className="px-4 py-2 border-t border-np-border text-xs text-np-text-secondary flex justify-between shrink-0">
-                    <span>bytepad v0.15.0</span>
+                    <span>bytepad v0.22.0</span>
                     <span>Ctrl+, to open settings</span>
                 </div>
             </div>
@@ -294,11 +298,13 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
 // ============ TAB COMPONENTS ============
 
-function GeneralTab({ fontSize, setFontSize, fontFamily, setFontFamily }: {
+function GeneralTab({ fontSize, setFontSize, fontFamily, setFontFamily, noteFontSize, setNoteFontSize }: {
     fontSize: FontSize
     setFontSize: (size: FontSize) => void
     fontFamily: FontFamily
     setFontFamily: (family: FontFamily) => void
+    noteFontSize: FontSize
+    setNoteFontSize: (size: FontSize) => void
 }) {
     const { language, setLanguage } = useI18nStore()
     const { theme, setTheme } = useThemeStore()
@@ -368,7 +374,27 @@ function GeneralTab({ fontSize, setFontSize, fontFamily, setFontFamily }: {
                             ))}
                         </select>
                         <p className="text-xs text-np-text-secondary mt-1">
-                            Changes apply immediately to the entire app.
+                            Changes apply to UI elements (buttons, menus, etc.)
+                        </p>
+                    </div>
+
+                    {/* Note Font Size */}
+                    <div>
+                        <label className="block text-xs text-np-text-secondary mb-1">Note Editor Font Size</label>
+                        <select
+                            value={noteFontSize}
+                            onChange={(e) => setNoteFontSize(e.target.value as FontSize)}
+                            className="w-full bg-np-bg-primary border border-np-border text-np-text-primary
+                         font-mono text-sm px-2 py-1.5 focus:outline-none focus:border-np-blue"
+                        >
+                            {(Object.keys(FONT_SIZES) as FontSize[]).map((size) => (
+                                <option key={size} value={size}>
+                                    {FONT_SIZES[size].label}
+                                </option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-np-text-secondary mt-1">
+                            Separate font size for note content.
                         </p>
                     </div>
 
@@ -964,8 +990,167 @@ function DataTab({
     handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
     handleClearData: () => void
 }) {
+    const {
+        localNotesEnabled,
+        localNotesPath,
+        localNotesDirHandle,
+        setLocalNotesEnabled,
+        setLocalNotesPath,
+        setLocalNotesDirHandle,
+    } = useSettingsStore()
+    
+    const [localNotesStatus, setLocalNotesStatus] = useState<string | null>(null)
+    const [isSavingNotes, setIsSavingNotes] = useState(false)
+
+    const handleSelectFolder = async () => {
+        console.log('Select Folder clicked')
+        
+        // Check if File System Access API is supported
+        if (!('showDirectoryPicker' in window)) {
+            setLocalNotesStatus('Error: Your browser does not support folder selection. Please use Chrome, Edge, or Opera.')
+            console.error('showDirectoryPicker not supported')
+            return
+        }
+        
+        console.log('showDirectoryPicker is supported, opening dialog...')
+        setLocalNotesStatus('Opening folder picker...')
+        
+        try {
+            // @ts-expect-error - showDirectoryPicker is not in TypeScript's lib yet
+            const dirHandle = await window.showDirectoryPicker({
+                mode: 'readwrite',
+            })
+            
+            console.log('Folder selected:', dirHandle)
+            
+            if (dirHandle) {
+                setLocalNotesDirHandle(dirHandle)
+                setLocalNotesPath(dirHandle.name)
+                setLocalNotesEnabled(true)
+                setLocalNotesStatus(`✓ Folder selected: ${dirHandle.name}`)
+            }
+        } catch (error) {
+            console.error('Folder selection error:', error)
+            if ((error as Error).name === 'AbortError') {
+                // User cancelled
+                setLocalNotesStatus('Folder selection cancelled')
+                return
+            }
+            setLocalNotesStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        }
+    }
+
+    const handleSaveAllNotes = async () => {
+        if (!localNotesDirHandle) {
+            setLocalNotesStatus('Please select a folder first')
+            return
+        }
+        setIsSavingNotes(true)
+        try {
+            const { saveAllNotesToFiles } = await import('../../services/localNotesService')
+            const result = await saveAllNotesToFiles()
+            setLocalNotesStatus(`Saved ${result.success} notes${result.failed > 0 ? `, ${result.failed} failed` : ''}`)
+        } catch (error) {
+            setLocalNotesStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        }
+        setIsSavingNotes(false)
+    }
+
+    const handleDownloadNote = async () => {
+        const { downloadNoteAsTxt } = await import('../../services/localNotesService')
+        const { useNoteStore } = await import('../../stores/noteStore')
+        const activeNote = useNoteStore.getState().getActiveNote()
+        if (activeNote) {
+            downloadNoteAsTxt(activeNote)
+            setLocalNotesStatus(`Downloaded: ${activeNote.title || 'Untitled'}.txt`)
+        } else {
+            setLocalNotesStatus('No active note to download')
+        }
+    }
+
+    const handleDownloadAllAsZip = async () => {
+        setLocalNotesStatus('Creating ZIP file...')
+        try {
+            const { downloadAllDataAsZip } = await import('../../services/localNotesService')
+            const result = await downloadAllDataAsZip()
+            setLocalNotesStatus(`✓ Downloaded ZIP with ${result.notes} notes, ${result.tasks} tasks, ${result.habits} habits, ${result.journal} journal entries`)
+        } catch (error) {
+            console.error('ZIP download error:', error)
+            setLocalNotesStatus(`Error: ${error instanceof Error ? error.message : 'Failed to create ZIP'}`)
+        }
+    }
+
     return (
         <div className="space-y-6">
+            {/* Local Notes Storage */}
+            <div>
+                <h3 className="text-sm text-np-green mb-3">// Local Notes Storage</h3>
+                <p className="text-xs text-np-text-secondary mb-3">
+                    Save your notes as .txt files to a folder on your computer for easy access and backup.
+                </p>
+                
+                <div className="space-y-3">
+                    {/* Folder Selection */}
+                    <button
+                        onClick={handleSelectFolder}
+                        className="w-full np-btn text-left"
+                    >
+                        <span className="text-np-cyan">📁</span> {localNotesPath ? `Change Folder (${localNotesPath})` : 'Select Folder'}
+                    </button>
+
+                    {/* Save All Notes Button - always show but disable if no folder */}
+                    <button
+                        onClick={handleSaveAllNotes}
+                        disabled={isSavingNotes || !localNotesDirHandle}
+                        className={`w-full np-btn text-left ${!localNotesDirHandle ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        <span className="text-np-green">💾</span> {isSavingNotes ? 'Saving...' : 'Save All Notes to Folder'}
+                    </button>
+
+                    {/* Download Single Note (Fallback) */}
+                    <button
+                        onClick={handleDownloadNote}
+                        className="w-full np-btn text-left"
+                    >
+                        <span className="text-np-purple">↓</span> Download Current Note as .txt
+                    </button>
+
+                    {/* Download All Data as ZIP */}
+                    <button
+                        onClick={handleDownloadAllAsZip}
+                        className="w-full np-btn text-left"
+                    >
+                        <span className="text-np-orange">📦</span> Download All Data as ZIP
+                    </button>
+
+                    {/* Auto-save Toggle */}
+                    {localNotesDirHandle && (
+                        <label className="flex items-center gap-2 text-sm text-np-text-secondary cursor-pointer hover:text-np-text-primary">
+                            <input
+                                type="checkbox"
+                                checked={localNotesEnabled}
+                                onChange={(e) => setLocalNotesEnabled(e.target.checked)}
+                                className="w-4 h-4 accent-np-green"
+                            />
+                            Auto-save notes to folder when editing
+                        </label>
+                    )}
+
+                    {/* Status */}
+                    {localNotesStatus && (
+                        <div className={`text-xs p-2 border bg-np-bg-tertiary ${
+                            localNotesStatus.startsWith('Error') ? 'border-np-error text-np-error' : 'border-np-border text-np-text-secondary'
+                        }`}>
+                            {localNotesStatus}
+                        </div>
+                    )}
+
+                    <p className="text-xs text-np-text-secondary">
+                        💡 Note: You may need to re-select the folder after restarting the app due to browser security.
+                    </p>
+                </div>
+            </div>
+
             {/* Stats */}
             <div>
                 <h3 className="text-sm text-np-green mb-3">// Your Data</h3>

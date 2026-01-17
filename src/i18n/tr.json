@@ -183,7 +183,9 @@
         "clickExpand": "Genişletmek için tıkla",
         "enterAddSubtask": "Alt görev eklemek için Enter",
         "editTask": "Görevi Düzenle",
-        "save": "Kaydet"
+        "save": "Kaydet",
+        "listView": "Liste",
+        "kanbanView": "Kanban"
     },
     "habits": {
         "newHabit": "Yeni Alışkanlık",
@@ -366,6 +368,26 @@
     "shortcuts": {
         "title": "Klavye Kısayolları",
         "hint": "Kapatmak için Escape'e basın"
+    },
+    "noteSearch": {
+        "placeholder": "Notta ara...",
+        "noResults": "Sonuç yok",
+        "prev": "Önceki (Shift+Enter)",
+        "next": "Sonraki (Enter)",
+        "close": "Kapat (Esc)",
+        "nextHint": "sonraki",
+        "prevHint": "önceki",
+        "closeHint": "kapat"
+    },
+    "pageSearch": {
+        "placeholder": "Sayfada ara...",
+        "noResults": "Sonuç yok",
+        "prev": "Önceki (Shift+Enter)",
+        "next": "Sonraki (Enter)",
+        "close": "Kapat (Esc)",
+        "nextHint": "sonraki",
+        "prevHint": "önceki",
+        "closeHint": "kapat"
     },
     "graph": {
         "title": "Bilgi Grafiği",

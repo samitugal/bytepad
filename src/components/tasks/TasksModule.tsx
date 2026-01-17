@@ -6,6 +6,9 @@ import type { Task } from '../../types'
 import { TaskFilters } from './TaskFilters'
 import { NewTaskForm, EditTaskModal } from './TaskForm'
 import { TaskList } from './TaskList'
+import { TaskKanban } from './TaskKanban'
+
+type ViewMode = 'list' | 'kanban'
 
 export function TasksModule() {
   const { t } = useTranslation()
@@ -59,6 +62,7 @@ export function TasksModule() {
     linkedBookmarkIds: string[]
   } | null>(null)
   const [bookmarkSearchQuery, setBookmarkSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
 
   // Auto-complete parent task when all subtasks are done
   useEffect(() => {
@@ -169,19 +173,46 @@ export function TasksModule() {
               : t('tasks.pendingCountPlural', { count: pendingCount })}
           </p>
         </div>
-        <button onClick={() => setShowForm(true)} className="np-btn">
-          <span className="text-np-green">+</span> {t('tasks.newTask')}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex items-center border border-np-border">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-1.5 text-xs font-mono flex items-center gap-1 ${viewMode === 'list'
+                ? 'bg-np-bg-hover text-np-text-primary'
+                : 'text-np-text-secondary hover:text-np-text-primary'
+              }`}
+              title="List View"
+            >
+              <span>☰</span> {t('tasks.listView')}
+            </button>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`px-3 py-1.5 text-xs font-mono flex items-center gap-1 border-l border-np-border ${viewMode === 'kanban'
+                ? 'bg-np-bg-hover text-np-text-primary'
+                : 'text-np-text-secondary hover:text-np-text-primary'
+              }`}
+              title="Kanban Board"
+            >
+              <span>▦</span> {t('tasks.kanbanView')}
+            </button>
+          </div>
+          <button onClick={() => setShowForm(true)} className="np-btn">
+            <span className="text-np-green">+</span> {t('tasks.newTask')}
+          </button>
+        </div>
       </div>
 
-      {/* Filters */}
-      <TaskFilters
-        filter={filter}
-        sortBy={sortBy}
-        onFilterChange={setFilter}
-        onSortChange={setSortBy}
-        t={t}
-      />
+      {/* Filters - only show in list view */}
+      {viewMode === 'list' && (
+        <TaskFilters
+          filter={filter}
+          sortBy={sortBy}
+          onFilterChange={setFilter}
+          onSortChange={setSortBy}
+          t={t}
+        />
+      )}
 
       {/* New task form */}
       {showForm && (
@@ -196,28 +227,39 @@ export function TasksModule() {
         />
       )}
 
-      {/* Task List */}
-      <TaskList
-        activeTasks={activeTasks}
-        completedTasks={completedTasks}
-        expandedTask={expandedTask}
-        setExpandedTask={setExpandedTask}
-        newSubtaskTitle={newSubtaskTitle}
-        setNewSubtaskTitle={setNewSubtaskTitle}
-        showDoneSection={showDoneSection}
-        setShowDoneSection={setShowDoneSection}
-        sortBy={sortBy}
-        filter={filter}
-        onToggleTask={toggleTask}
-        onEditTask={openEditTaskModal}
-        onDeleteTask={handleDeleteTask}
-        onToggleSubtask={toggleSubtask}
-        onDeleteSubtask={deleteSubtask}
-        onAddSubtask={handleAddSubtask}
-        onUpdateTask={updateTask}
-        onReorderTasks={reorderTasks}
-        t={t}
-      />
+      {/* Task List or Kanban */}
+      {viewMode === 'list' ? (
+        <TaskList
+          activeTasks={activeTasks}
+          completedTasks={completedTasks}
+          expandedTask={expandedTask}
+          setExpandedTask={setExpandedTask}
+          newSubtaskTitle={newSubtaskTitle}
+          setNewSubtaskTitle={setNewSubtaskTitle}
+          showDoneSection={showDoneSection}
+          setShowDoneSection={setShowDoneSection}
+          sortBy={sortBy}
+          filter={filter}
+          onToggleTask={toggleTask}
+          onEditTask={openEditTaskModal}
+          onDeleteTask={handleDeleteTask}
+          onToggleSubtask={toggleSubtask}
+          onDeleteSubtask={deleteSubtask}
+          onAddSubtask={handleAddSubtask}
+          onUpdateTask={updateTask}
+          onReorderTasks={reorderTasks}
+          t={t}
+        />
+      ) : (
+        <TaskKanban
+          tasks={allTasks}
+          onToggleTask={toggleTask}
+          onEditTask={openEditTaskModal}
+          onDeleteTask={handleDeleteTask}
+          onUpdateTask={updateTask}
+          t={t}
+        />
+      )}
 
       {/* Edit Task Modal */}
       {editingTaskId && editTaskForm && (
@@ -232,11 +274,13 @@ export function TasksModule() {
         />
       )}
 
-      {/* Keyboard hints */}
-      <div className="mt-4 pt-3 border-t border-np-border text-xs text-np-text-secondary">
-        <span className="mr-4"><kbd className="bg-np-bg-tertiary px-1">Click</kbd> {t('tasks.clickExpand')}</span>
-        <span className="mr-4"><kbd className="bg-np-bg-tertiary px-1">Enter</kbd> {t('tasks.enterAddSubtask')}</span>
-      </div>
+      {/* Keyboard hints - only show in list view */}
+      {viewMode === 'list' && (
+        <div className="mt-4 pt-3 border-t border-np-border text-xs text-np-text-secondary">
+          <span className="mr-4"><kbd className="bg-np-bg-tertiary px-1">Click</kbd> {t('tasks.clickExpand')}</span>
+          <span className="mr-4"><kbd className="bg-np-bg-tertiary px-1">Enter</kbd> {t('tasks.enterAddSubtask')}</span>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
