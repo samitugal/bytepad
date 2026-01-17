@@ -1,6 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useUIStore } from '../../stores/uiStore'
-import { useTranslation } from '../../i18n'
 
 interface PageSearchProps {
   isOpen: boolean
@@ -8,7 +6,6 @@ interface PageSearchProps {
 }
 
 export function PageSearch({ isOpen, onClose }: PageSearchProps) {
-  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [currentMatch, setCurrentMatch] = useState(0)
   const [totalMatches, setTotalMatches] = useState(0)
@@ -199,7 +196,7 @@ export function PageSearch({ isOpen, onClose }: PageSearchProps) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={t('pageSearch.placeholder', 'Search in page...')}
+          placeholder="Search in page..."
           className="w-48 bg-transparent text-np-text-primary placeholder-np-text-secondary focus:outline-none font-mono text-sm"
           autoFocus
         />
@@ -207,7 +204,7 @@ export function PageSearch({ isOpen, onClose }: PageSearchProps) {
         {/* Match counter */}
         {query && (
           <span className="text-xs text-np-text-secondary whitespace-nowrap">
-            {totalMatches > 0 ? `${currentMatch}/${totalMatches}` : t('pageSearch.noResults', 'No results')}
+            {totalMatches > 0 ? `${currentMatch}/${totalMatches}` : 'No results'}
           </span>
         )}
 
@@ -216,7 +213,7 @@ export function PageSearch({ isOpen, onClose }: PageSearchProps) {
           onClick={goToPrevMatch}
           disabled={totalMatches === 0}
           className="p-1 text-np-text-secondary hover:text-np-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
-          title={t('pageSearch.prev', 'Previous (Shift+Enter)')}
+          title="Previous (Shift+Enter)"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -226,7 +223,7 @@ export function PageSearch({ isOpen, onClose }: PageSearchProps) {
           onClick={goToNextMatch}
           disabled={totalMatches === 0}
           className="p-1 text-np-text-secondary hover:text-np-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
-          title={t('pageSearch.next', 'Next (Enter)')}
+          title="Next (Enter)"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -237,7 +234,7 @@ export function PageSearch({ isOpen, onClose }: PageSearchProps) {
         <button
           onClick={onClose}
           className="p-1 text-np-text-secondary hover:text-np-text-primary"
-          title={t('pageSearch.close', 'Close (Esc)')}
+          title="Close (Esc)"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -247,9 +244,9 @@ export function PageSearch({ isOpen, onClose }: PageSearchProps) {
 
       {/* Keyboard hints */}
       <div className="px-3 py-1.5 border-t border-np-border text-[10px] text-np-text-secondary flex items-center gap-3">
-        <span><kbd className="bg-np-bg-tertiary px-1">Enter</kbd> {t('pageSearch.nextHint', 'next')}</span>
-        <span><kbd className="bg-np-bg-tertiary px-1">Shift+Enter</kbd> {t('pageSearch.prevHint', 'prev')}</span>
-        <span><kbd className="bg-np-bg-tertiary px-1">Esc</kbd> {t('pageSearch.closeHint', 'close')}</span>
+        <span><kbd className="bg-np-bg-tertiary px-1">Enter</kbd> next</span>
+        <span><kbd className="bg-np-bg-tertiary px-1">Shift+Enter</kbd> prev</span>
+        <span><kbd className="bg-np-bg-tertiary px-1">Esc</kbd> close</span>
       </div>
     </div>
   )

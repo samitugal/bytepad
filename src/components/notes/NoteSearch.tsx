@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useTranslation } from '../../i18n'
 
 interface NoteSearchProps {
   isOpen: boolean
@@ -9,7 +8,6 @@ interface NoteSearchProps {
 }
 
 export function NoteSearch({ isOpen, onClose, content, textareaRef }: NoteSearchProps) {
-  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [currentMatch, setCurrentMatch] = useState(0)
   const [matches, setMatches] = useState<number[]>([])
@@ -128,7 +126,7 @@ export function NoteSearch({ isOpen, onClose, content, textareaRef }: NoteSearch
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={t('noteSearch.placeholder', 'Search in note...')}
+          placeholder="Search in note..."
           className="w-48 bg-transparent text-np-text-primary placeholder-np-text-secondary focus:outline-none font-mono text-sm"
           autoFocus
         />
@@ -136,7 +134,7 @@ export function NoteSearch({ isOpen, onClose, content, textareaRef }: NoteSearch
         {/* Match counter */}
         {query && (
           <span className="text-xs text-np-text-secondary whitespace-nowrap">
-            {matches.length > 0 ? `${currentMatch}/${matches.length}` : t('noteSearch.noResults', 'No results')}
+            {matches.length > 0 ? `${currentMatch}/${matches.length}` : 'No results'}
           </span>
         )}
 
@@ -145,7 +143,7 @@ export function NoteSearch({ isOpen, onClose, content, textareaRef }: NoteSearch
           onClick={goToPrevMatch}
           disabled={matches.length === 0}
           className="p-1 text-np-text-secondary hover:text-np-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
-          title={t('noteSearch.prev', 'Previous (Shift+Enter)')}
+          title="Previous (Shift+Enter)"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -155,7 +153,7 @@ export function NoteSearch({ isOpen, onClose, content, textareaRef }: NoteSearch
           onClick={goToNextMatch}
           disabled={matches.length === 0}
           className="p-1 text-np-text-secondary hover:text-np-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
-          title={t('noteSearch.next', 'Next (Enter)')}
+          title="Next (Enter)"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -166,7 +164,7 @@ export function NoteSearch({ isOpen, onClose, content, textareaRef }: NoteSearch
         <button
           onClick={onClose}
           className="p-1 text-np-text-secondary hover:text-np-text-primary"
-          title={t('noteSearch.close', 'Close (Esc)')}
+          title="Close (Esc)"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -176,9 +174,9 @@ export function NoteSearch({ isOpen, onClose, content, textareaRef }: NoteSearch
 
       {/* Keyboard hints */}
       <div className="px-3 py-1.5 border-t border-np-border text-[10px] text-np-text-secondary flex items-center gap-3">
-        <span><kbd className="bg-np-bg-tertiary px-1">Enter</kbd> {t('noteSearch.nextHint', 'next')}</span>
-        <span><kbd className="bg-np-bg-tertiary px-1">Shift+Enter</kbd> {t('noteSearch.prevHint', 'prev')}</span>
-        <span><kbd className="bg-np-bg-tertiary px-1">Esc</kbd> {t('noteSearch.closeHint', 'close')}</span>
+        <span><kbd className="bg-np-bg-tertiary px-1">Enter</kbd> next</span>
+        <span><kbd className="bg-np-bg-tertiary px-1">Shift+Enter</kbd> prev</span>
+        <span><kbd className="bg-np-bg-tertiary px-1">Esc</kbd> close</span>
       </div>
     </div>
   )

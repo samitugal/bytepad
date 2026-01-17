@@ -24,6 +24,8 @@ function createWindow() {
   console.log('[Main] Preload path:', preloadPath)
   console.log('[Main] __dirname:', __dirname)
 
+  const isMac = process.platform === 'darwin'
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -31,8 +33,10 @@ function createWindow() {
     minHeight: 600,
     title: 'bytepad',
     icon: getIconPath(),
-    frame: false, // Remove native title bar
-    titleBarStyle: 'hidden',
+    // Platform-specific title bar settings
+    frame: isMac, // macOS needs frame for traffic lights
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden', // hiddenInset for macOS, hidden for Windows/Linux
+    trafficLightPosition: isMac ? { x: 12, y: 12 } : undefined, // Position traffic lights on macOS
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
