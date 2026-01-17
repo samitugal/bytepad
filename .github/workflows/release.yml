@@ -119,8 +119,40 @@ jobs:
             dist-electron/*.dmg.blockmap
           retention-days: 5
 
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Electron app
+        run: npm run build:electron
+
+      - name: Package Linux
+        run: npx electron-builder --linux --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: |
+            dist-electron/*.AppImage
+            dist-electron/*.deb
+          retention-days: 5
+
   create-release:
-    needs: [build-windows, build-macos]
+    needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
     steps:
@@ -154,12 +186,20 @@ jobs:
           name: macos-build
           path: ./artifacts/macos
 
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-build
+          path: ./artifacts/linux
+
       - name: List artifacts
         run: |
           echo "=== Windows Artifacts ==="
           ls -la ./artifacts/windows/ || echo "No Windows artifacts"
           echo "=== macOS Artifacts ==="
           ls -la ./artifacts/macos/ || echo "No macOS artifacts"
+          echo "=== Linux Artifacts ==="
+          ls -la ./artifacts/linux/ || echo "No Linux artifacts"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -169,6 +209,7 @@ jobs:
           files: |
             ./artifacts/windows/*
             ./artifacts/macos/*
+            ./artifacts/linux/*
           draft: true
           generate_release_notes: true
           body: |
@@ -178,10 +219,12 @@ jobs:
             - **Windows**: `bytepad-${{ steps.version.outputs.version }}-win-x64.exe`
             - **macOS (Intel)**: `bytepad-${{ steps.version.outputs.version }}-mac-x64.dmg`
             - **macOS (Apple Silicon)**: `bytepad-${{ steps.version.outputs.version }}-mac-arm64.dmg`
+            - **Linux**: `bytepad-${{ steps.version.outputs.version }}-linux-x64.AppImage`
             
             ### Installation
             - **Windows**: Download and run the `.exe` installer
             - **macOS**: Download the `.dmg` file, open it, and drag bytepad to Applications
+            - **Linux**: Download the `.AppImage` file, make it executable (`chmod +x`), and run it
             
             ### License
             This software is licensed for **personal, non-commercial use only**.
