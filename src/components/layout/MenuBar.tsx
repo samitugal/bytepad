@@ -8,6 +8,19 @@ interface MenuBarProps {
   onSettingsClick?: () => void
 }
 
+// Detect if running on macOS
+const isMacOS = (): boolean => {
+  // Check navigator.platform first (more reliable in Electron)
+  if (typeof navigator !== 'undefined') {
+    const platform = navigator.platform?.toLowerCase() || ''
+    if (platform.includes('mac')) return true
+    // Fallback to userAgent
+    const userAgent = navigator.userAgent?.toLowerCase() || ''
+    return userAgent.includes('mac os') || userAgent.includes('macintosh')
+  }
+  return false
+}
+
 // Window control functions - call Electron API if available
 const handleMinimize = () => {
   if (window.electronAPI?.minimize) {
@@ -228,30 +241,32 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
           )}
         </div>
 
-        {/* Window Controls */}
-        <div className="flex items-center gap-0 text-np-text-secondary">
-          <button
-            onClick={handleMinimize}
-            className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors app-no-drag"
-            title="Minimize"
-          >
-            ─
-          </button>
-          <button
-            onClick={handleMaximize}
-            className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors app-no-drag"
-            title="Maximize"
-          >
-            □
-          </button>
-          <button
-            onClick={handleClose}
-            className="w-10 h-8 hover:bg-np-error hover:text-white flex items-center justify-center transition-colors app-no-drag"
-            title="Close"
-          >
-            ×
-          </button>
-        </div>
+        {/* Window Controls - Hidden on macOS (uses native traffic lights) */}
+        {!isMacOS() && (
+          <div className="flex items-center gap-0 text-np-text-secondary">
+            <button
+              onClick={handleMinimize}
+              className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors app-no-drag"
+              title="Minimize"
+            >
+              ─
+            </button>
+            <button
+              onClick={handleMaximize}
+              className="w-10 h-8 hover:bg-np-bg-tertiary flex items-center justify-center transition-colors app-no-drag"
+              title="Maximize"
+            >
+              □
+            </button>
+            <button
+              onClick={handleClose}
+              className="w-10 h-8 hover:bg-np-error hover:text-white flex items-center justify-center transition-colors app-no-drag"
+              title="Close"
+            >
+              ×
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

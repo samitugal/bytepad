@@ -65,8 +65,12 @@ dmg:
 # Linux Configuration
 linux:
   target:
-    - AppImage
-    - deb
+    - target: AppImage
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
   icon: resources/icon.png
   category: Office
   artifactName: ${productName}-${version}-linux-${arch}.${ext}
