@@ -288,7 +288,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
                 {/* Footer */}
                 <div className="px-4 py-2 border-t border-np-border text-xs text-np-text-secondary flex justify-between shrink-0">
-                    <span>bytepad v0.22.4</span>
+                    <span>bytepad v0.22.5</span>
                     <span>Ctrl+, to open settings</span>
                 </div>
             </div>
@@ -323,8 +323,8 @@ function GeneralTab({ fontSize, setFontSize, fontFamily, setFontFamily, noteFont
                                     key={t}
                                     onClick={() => setTheme(t)}
                                     className={`flex-1 px-3 py-2 text-sm border transition-colors ${theme === t
-                                            ? 'bg-np-selection border-np-blue text-np-text-primary'
-                                            : 'bg-np-bg-tertiary border-np-border text-np-text-secondary hover:bg-np-bg-hover'
+                                        ? 'bg-np-selection border-np-blue text-np-text-primary'
+                                        : 'bg-np-bg-tertiary border-np-border text-np-text-secondary hover:bg-np-bg-hover'
                                         }`}
                                 >
                                     {t === 'dark' && '🌙 Dark'}
@@ -428,9 +428,9 @@ function GeneralTab({ fontSize, setFontSize, fontFamily, setFontFamily, noteFont
                         </select>
                         <p className="text-xs text-np-text-secondary mt-1">
                             Nerd Fonts must be installed on your system.
-                            <a 
-                                href="https://www.nerdfonts.com/font-downloads" 
-                                target="_blank" 
+                            <a
+                                href="https://www.nerdfonts.com/font-downloads"
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-np-cyan hover:underline ml-1"
                             >
@@ -902,25 +902,23 @@ function SyncTab({
                     {gistSync.enabled && gistSync.gistId && (
                         <div className="pt-2 border-t border-np-border space-y-3">
                             {/* Sync Status */}
-                            <div className={`flex items-center justify-between p-2 border ${
-                                isGistSyncing ? 'border-np-blue bg-np-blue/10' :
-                                gistSync.lastSyncStatus === 'error' ? 'border-np-error bg-np-error/10' :
-                                gistSync.lastSyncStatus === 'success' ? 'border-np-green bg-np-green/10' :
-                                'border-np-border bg-np-bg-tertiary'
-                            }`}>
+                            <div className={`flex items-center justify-between p-2 border ${isGistSyncing ? 'border-np-blue bg-np-blue/10' :
+                                    gistSync.lastSyncStatus === 'error' ? 'border-np-error bg-np-error/10' :
+                                        gistSync.lastSyncStatus === 'success' ? 'border-np-green bg-np-green/10' :
+                                            'border-np-border bg-np-bg-tertiary'
+                                }`}>
                                 <div className="flex items-center gap-2">
-                                    <span className={`text-lg ${
-                                        isGistSyncing ? 'animate-spin' : ''
-                                    }`}>
+                                    <span className={`text-lg ${isGistSyncing ? 'animate-spin' : ''
+                                        }`}>
                                         {isGistSyncing ? '🔄' :
-                                         gistSync.lastSyncStatus === 'error' ? '❌' :
-                                         gistSync.lastSyncStatus === 'success' ? '✅' : '⏳'}
+                                            gistSync.lastSyncStatus === 'error' ? '❌' :
+                                                gistSync.lastSyncStatus === 'success' ? '✅' : '⏳'}
                                     </span>
                                     <div>
                                         <div className="text-xs text-np-text-primary">
                                             {isGistSyncing ? 'Syncing...' :
-                                             gistSync.lastSyncStatus === 'error' ? 'Sync Failed' :
-                                             gistSync.lastSyncStatus === 'success' ? 'Synced' : 'Ready'}
+                                                gistSync.lastSyncStatus === 'error' ? 'Sync Failed' :
+                                                    gistSync.lastSyncStatus === 'success' ? 'Synced' : 'Ready'}
                                         </div>
                                         {gistSync.lastSyncAt && !isGistSyncing && (
                                             <div className="text-xs text-np-text-secondary">
@@ -998,31 +996,31 @@ function DataTab({
         setLocalNotesPath,
         setLocalNotesDirHandle,
     } = useSettingsStore()
-    
+
     const [localNotesStatus, setLocalNotesStatus] = useState<string | null>(null)
     const [isSavingNotes, setIsSavingNotes] = useState(false)
 
     const handleSelectFolder = async () => {
         console.log('Select Folder clicked')
-        
+
         // Check if File System Access API is supported
         if (!('showDirectoryPicker' in window)) {
             setLocalNotesStatus('Error: Your browser does not support folder selection. Please use Chrome, Edge, or Opera.')
             console.error('showDirectoryPicker not supported')
             return
         }
-        
+
         console.log('showDirectoryPicker is supported, opening dialog...')
         setLocalNotesStatus('Opening folder picker...')
-        
+
         try {
             // @ts-expect-error - showDirectoryPicker is not in TypeScript's lib yet
             const dirHandle = await window.showDirectoryPicker({
                 mode: 'readwrite',
             })
-            
+
             console.log('Folder selected:', dirHandle)
-            
+
             if (dirHandle) {
                 setLocalNotesDirHandle(dirHandle)
                 setLocalNotesPath(dirHandle.name)
@@ -1088,7 +1086,7 @@ function DataTab({
                 <p className="text-xs text-np-text-secondary mb-3">
                     Save your notes as .txt files to a folder on your computer for easy access and backup.
                 </p>
-                
+
                 <div className="space-y-3">
                     {/* Folder Selection */}
                     <button
@@ -1138,9 +1136,8 @@ function DataTab({
 
                     {/* Status */}
                     {localNotesStatus && (
-                        <div className={`text-xs p-2 border bg-np-bg-tertiary ${
-                            localNotesStatus.startsWith('Error') ? 'border-np-error text-np-error' : 'border-np-border text-np-text-secondary'
-                        }`}>
+                        <div className={`text-xs p-2 border bg-np-bg-tertiary ${localNotesStatus.startsWith('Error') ? 'border-np-error text-np-error' : 'border-np-border text-np-text-secondary'
+                            }`}>
                             {localNotesStatus}
                         </div>
                     )}
@@ -1347,11 +1344,10 @@ function KeyboardTab() {
                         {groupedKeybindings[category]?.map((kb) => (
                             <div
                                 key={kb.id}
-                                className={`flex items-center justify-between p-2 border transition-colors ${
-                                    editingId === kb.id
+                                className={`flex items-center justify-between p-2 border transition-colors ${editingId === kb.id
                                         ? 'bg-np-selection border-np-blue'
                                         : 'bg-np-bg-tertiary border-np-border hover:border-np-blue/50'
-                                } ${kb.isModified ? 'border-l-2 border-l-np-purple' : ''}`}
+                                    } ${kb.isModified ? 'border-l-2 border-l-np-purple' : ''}`}
                             >
                                 <div className="flex-1">
                                     <div className="text-sm text-np-text-primary">{kb.label}</div>
@@ -1380,9 +1376,8 @@ function KeyboardTab() {
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => handleStartEdit(kb)}
-                                            className={`px-2 py-1 text-xs font-mono ${
-                                                kb.isModified ? 'text-np-purple' : 'text-np-cyan'
-                                            } bg-np-bg-primary border border-np-border hover:border-np-blue`}
+                                            className={`px-2 py-1 text-xs font-mono ${kb.isModified ? 'text-np-purple' : 'text-np-cyan'
+                                                } bg-np-bg-primary border border-np-border hover:border-np-blue`}
                                         >
                                             {formatKeybinding(kb.keys)}
                                         </button>
