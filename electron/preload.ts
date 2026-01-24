@@ -57,4 +57,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Check if running in Electron
   isElectron: true,
+
+  // Local API handlers for MCP integration
+  api: {
+    // Register handler for API requests from main process
+    onApiRequest: (channel: string, handler: (requestId: string, data: unknown) => void) => {
+      ipcRenderer.on(channel, (_, { requestId, data }) => {
+        handler(requestId, data)
+      })
+    },
+    // Send response back to main process
+    sendResponse: (requestId: string, data: unknown, error?: string) => {
+      ipcRenderer.send('api:response', { requestId, data, error })
+    },
+    // Remove API listeners
+    removeApiListeners: () => {
+      const channels = [
+        'api:getTasks', 'api:createTask', 'api:updateTask', 'api:deleteTask', 'api:toggleTask',
+        'api:getNotes', 'api:getNote', 'api:createNote', 'api:updateNote', 'api:deleteNote',
+        'api:getHabits', 'api:createHabit', 'api:updateHabit', 'api:deleteHabit', 'api:toggleHabit',
+        'api:getBookmarks', 'api:createBookmark', 'api:updateBookmark', 'api:deleteBookmark',
+        'api:getJournal', 'api:createJournalEntry', 'api:updateJournalEntry', 'api:deleteJournalEntry',
+        'api:getDailySummary', 'api:getWeeklySummary'
+      ]
+      channels.forEach(ch => ipcRenderer.removeAllListeners(ch))
+    }
+  },
 })

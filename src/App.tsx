@@ -10,6 +10,7 @@ const ChatWindow = lazy(() => import('./components/chat/ChatWindow').then(m => (
 const LevelUpModal = lazy(() => import('./components/gamification/LevelUpModal').then(m => ({ default: m.LevelUpModal })))
 const AchievementToast = lazy(() => import('./components/gamification/AchievementToast').then(m => ({ default: m.AchievementToast })))
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useLocalApi } from './hooks/useLocalApi'
 import { initializeNotifications } from './services/notificationService'
 import { initializeSync, pushOnClose } from './services/gistSyncService'
 import { useSettingsStore, FONT_SIZES, FONT_FAMILIES } from './stores/settingsStore'
@@ -36,6 +37,7 @@ function App() {
   const gistSync = useSettingsStore((state) => state.gistSync)
 
   useKeyboardShortcuts()
+  useLocalApi() // Enable local API for MCP integration
 
   // Apply font size to document root
   useEffect(() => {

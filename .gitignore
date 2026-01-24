@@ -68,3 +68,6 @@ coverage/
 .cursorrules.json5
 .cursorrules.jsonp
 .cursorrules.jsonp5
+
+test*
+.claude/*

@@ -1,0 +1,37 @@
+{
+  "name": "bytepad-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for Bytepad productivity app",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "bytepad",
+    "productivity",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "rimraf": "^5.0.5",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}

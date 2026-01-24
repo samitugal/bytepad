@@ -39,6 +39,13 @@ export interface ElectronAPI {
 
   // Check if running in Electron
   isElectron: boolean
+
+  // Local API for MCP integration
+  api: {
+    onApiRequest: (channel: string, handler: (requestId: string, data: unknown) => void) => void
+    sendResponse: (requestId: string, data: unknown, error?: string) => void
+    removeApiListeners: () => void
+  }
 }
 
 declare global {

@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "bytepad": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v", "bytepad-data:/app/data",
+        "-e", "GITHUB_TOKEN",
+        "-e", "GIST_ID",
+        "bytepad-mcp-server"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "GIST_ID": "your-gist-id-here"
+      }
+    }
+  }
+}

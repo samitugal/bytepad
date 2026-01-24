@@ -82,6 +82,79 @@ Over time, these links form a personal knowledge graph that reflects how you act
 
 ---
 
+## MCP Server Integration
+
+bytepad includes a standalone [MCP Server](mcp-server/README.md) for integration with Claude Desktop and other MCP-compatible clients.
+
+### Features
+
+- **47 Tools** for managing tasks, habits, notes, journals, bookmarks, and more
+- **Read-only Resources** for quick data access
+- **Gist Sync** tools for cloud synchronization
+- **Docker support** for easy deployment
+
+### Quick Start
+
+```bash
+# Build the MCP server
+cd mcp-server
+npm install
+npm run build
+
+# Run with Docker
+docker build -t bytepad-mcp-server .
+```
+
+### Claude Desktop Configuration
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "bytepad": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-v", "bytepad-data:/app/data",
+        "-e", "GITHUB_TOKEN",
+        "-e", "GIST_ID",
+        "bytepad-mcp-server"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here",
+        "GIST_ID": "your_gist_id_here"
+      }
+    }
+  }
+}
+```
+
+### Available Tools
+
+- **Task Management** (6 tools): create, update, toggle, delete, list tasks
+- **Habit Tracking** (4 tools): create, toggle, get habits, streaks
+- **Notes** (5 tools): create, update, search, get, delete notes
+- **Journal** (4 tools): create entries, get by date, recent entries, mood trends
+- **Bookmarks** (5 tools): create, search, list, update, delete
+- **Summary & Stats** (3 tools): daily/weekly summary, productivity stats
+- **Gist Sync** (8 tools): configure, validate, create, pull, push, sync, export
+
+### Available Resources
+
+- `bytepad://tasks` - All tasks
+- `bytepad://tasks/pending` - Pending tasks
+- `bytepad://habits` - All habits
+- `bytepad://notes` - All notes
+- `bytepad://journal` - All journal entries
+- `bytepad://bookmarks` - All bookmarks
+- `bytepad://summary/daily` - Daily summary
+- `bytepad://gamification` - XP, levels, achievements
+
+See [mcp-server/README.md](mcp-server/README.md) for full documentation.
+
+---
+
 ## FlowBot AI
 
 Built-in AI assistant for productivity coaching and insights.

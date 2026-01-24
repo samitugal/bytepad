@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  bytepad-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bytepad-mcp-server
+    restart: unless-stopped
+
+    # Environment configuration
+    environment:
+      - NODE_ENV=production
+      - DATA_DIR=/app/data
+      - LOG_LEVEL=info
+      # GitHub token injected at runtime (use .env file or pass directly)
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GIST_ID=${GIST_ID:-}
+      # Optional: API keys for web search
+      - TAVILY_API_KEY=${TAVILY_API_KEY:-}
+
+    # Persistent data volume
+    volumes:
+      - bytepad-data:/app/data
+
+    # stdin/stdout for MCP stdio transport
+    stdin_open: true
+    tty: true
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+    # Logging
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  bytepad-data:
+    driver: local
