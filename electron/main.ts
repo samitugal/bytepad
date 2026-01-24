@@ -40,7 +40,7 @@ function createWindow() {
     // Platform-specific title bar settings
     frame: isMac, // macOS needs frame for traffic lights
     titleBarStyle: isMac ? 'hiddenInset' : 'hidden', // hiddenInset for macOS, hidden for Windows/Linux
-    trafficLightPosition: isMac ? { x: 12, y: 12 } : undefined, // Position traffic lights on macOS
+    trafficLightPosition: isMac ? { x: 8, y: 8 } : undefined, // Position traffic lights on macOS (left-aligned in 32px menu bar)
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
