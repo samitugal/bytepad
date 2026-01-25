@@ -6,7 +6,7 @@
 
 [![License](https://img.shields.io/badge/license-Personal%20Use-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#download)
-[![Version](https://img.shields.io/badge/version-0.23.0-green)](https://github.com/samitugal/bytepad/releases)
+[![Version](https://img.shields.io/badge/version-0.23.1-green)](https://github.com/samitugal/bytepad/releases)
 
 
 bytepad is a keyboard-first, privacy-first productivity app built for people who think better in plain text.
@@ -96,12 +96,12 @@ bytepad includes a standalone [MCP Server](mcp-server/README.md) for integration
 ### Quick Start
 
 ```bash
-# Build the MCP server
-cd mcp-server
-npm install
-npm run build
+# Using prebuilt image (recommended)
+docker pull ghcr.io/samitugal/bytepad-mcp-server:latest
 
-# Run with Docker
+# Or build locally
+cd mcp-server
+npm install && npm run build
 docker build -t bytepad-mcp-server .
 ```
 
@@ -119,7 +119,7 @@ Add to your `claude_desktop_config.json`:
         "-v", "bytepad-data:/app/data",
         "-e", "GITHUB_TOKEN",
         "-e", "GIST_ID",
-        "bytepad-mcp-server"
+        "ghcr.io/samitugal/bytepad-mcp-server:latest"
       ],
       "env": {
         "GITHUB_TOKEN": "ghp_your_token_here",
