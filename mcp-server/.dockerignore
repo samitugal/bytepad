@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Build output (we build in Docker)
+dist/
+
+# Development files
+*.log
+*.tmp
+.env
+.env.local
+.env.*.local
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation (not needed in image)
+*.md
+!README.md
+
+# Scripts (not needed in image)
+scripts/
+
+# Test files
+*.test.ts
+*.spec.ts
+__tests__/
+coverage/
+
+# TypeScript source maps
+*.map
+
+# NPM
+npm-debug.log*
+.npm/
+
+# Example configs
+*.example
+*.example.*
+claude_desktop_config.example.json

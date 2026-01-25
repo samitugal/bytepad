@@ -1,6 +1,11 @@
 # Bytepad MCP Server
 # Multi-stage build for smaller image
 
+# Build arguments for metadata
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION=1.0.0
+
 # Stage 1: Build
 FROM node:20-alpine AS builder
 
@@ -19,6 +24,21 @@ RUN npm run build
 
 # Stage 2: Production
 FROM node:20-alpine AS production
+
+# Re-declare ARGs for this stage (ARGs don't persist across stages)
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION=1.0.0
+
+# Image metadata
+LABEL org.opencontainers.image.title="Bytepad MCP Server" \
+      org.opencontainers.image.description="MCP server for Bytepad productivity app with 47+ tools" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.source="https://github.com/samitugal/bytepad" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.vendor="Bytepad"
 
 WORKDIR /app
 
