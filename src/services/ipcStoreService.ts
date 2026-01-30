@@ -137,27 +137,34 @@ const storeAccessors: Record<StoreName, {
       const store = useJournalStore.getState();
       const journalData = data as Record<string, unknown>;
       const date = String(journalData.date || new Date().toISOString().split('T')[0]);
-      const mood = journalData.mood as 1 | 2 | 3 | 4 | 5 | undefined;
-      const energy = journalData.energy as 1 | 2 | 3 | 4 | 5 | undefined;
-      store.updateEntry(date, {
-        content: journalData.content ? String(journalData.content) : undefined,
-        mood,
-        energy,
-      });
-      return store.entries.find(e => e.date === date);
+      const content = journalData.content ? String(journalData.content) : '';
+      const mood = (journalData.mood as 1 | 2 | 3 | 4 | 5) || 3;
+      const energy = (journalData.energy as 1 | 2 | 3 | 4 | 5) || 3;
+
+      // Check if entry for this date already exists
+      const existingEntry = store.entries.find(e => e.date === date);
+      if (existingEntry) {
+        // Update existing entry
+        store.updateEntry(existingEntry.id, { content, mood, energy });
+        return useJournalStore.getState().entries.find(e => e.date === date) || null;
+      }
+
+      // Create new entry
+      const id = store.addEntry({ date, content, mood, energy, tags: [] });
+      return useJournalStore.getState().entries.find(e => e.id === id) || null;
     },
     update: (id, data) => {
       const store = useJournalStore.getState();
       const entry = store.entries.find(e => e.id === id || e.date === id);
       if (entry) {
         const updateData = data as Record<string, unknown>;
-        store.updateEntry(entry.date, {
+        store.updateEntry(entry.id, {
           content: updateData.content ? String(updateData.content) : undefined,
           mood: updateData.mood as 1 | 2 | 3 | 4 | 5 | undefined,
           energy: updateData.energy as 1 | 2 | 3 | 4 | 5 | undefined,
         });
       }
-      return store.entries.find(e => e.id === id || e.date === id);
+      return useJournalStore.getState().entries.find(e => e.id === id || e.date === id) || null;
     },
     delete: () => {
       // Journal entries are typically not deleted
@@ -211,9 +218,10 @@ const storeAccessors: Record<StoreName, {
       const validColors = ['yellow', 'green', 'blue', 'purple', 'orange', 'red', 'cyan'];
       const color = validColors.includes(String(ideaData.color))
         ? (ideaData.color as 'yellow' | 'green' | 'blue' | 'purple' | 'orange' | 'red' | 'cyan')
-        : undefined;
+        : 'yellow';
       const id = useIdeaStore.getState().addIdea({
-        content: String(ideaData.content || ideaData.title || ''),
+        title: String(ideaData.title || ''),
+        content: String(ideaData.content || ''),
         color,
       });
       // Get fresh state and find the idea by id
