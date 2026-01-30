@@ -1,6 +1,6 @@
 {
   "name": "bytepad-mcp-server",
-  "version": "0.24.2",
+  "version": "0.24.3",
   "description": "Standalone MCP Server for bytepad",
   "type": "module",
   "main": "dist/server.js",

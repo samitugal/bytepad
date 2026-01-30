@@ -63,7 +63,7 @@ setInterval(() => {
 // Create MCP server with tools and resources
 function createMCPServer(): Server {
   const server = new Server(
-    { name: 'bytepad', version: '0.24.2' },
+    { name: 'bytepad', version: '0.24.3' },
     { capabilities: { resources: {}, tools: {} } }
   );
 
@@ -336,7 +336,7 @@ async function startServer(): Promise<void> {
       success: true,
       status: 'healthy',
       service: 'bytepad-mcp-docker',
-      version: process.env.npm_package_version || '0.24.2',
+      version: process.env.npm_package_version || '0.24.3',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
     });

@@ -4,7 +4,7 @@
  */
 
 const GITHUB_REPO = 'samitugal/bytepad';
-const CURRENT_VERSION = '0.24.2';
+const CURRENT_VERSION = '0.24.3';
 const CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours
 const CACHE_KEY = 'bytepad-update-check';
 

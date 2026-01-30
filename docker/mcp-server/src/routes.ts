@@ -23,7 +23,7 @@ export function createRoutes(storeBridge: StoreBridge): Router {
       success: true,
       status: 'healthy',
       service: 'bytepad-mcp-docker',
-      version: '0.24.2',
+      version: '0.24.3',
       timestamp: new Date().toISOString(),
     });
   });
