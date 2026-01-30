@@ -303,12 +303,28 @@ const actionExecutors: Record<string, Record<string, (...args: any[]) => unknown
   },
 };
 
+// Prevent double initialization (React Strict Mode + HMR can trigger multiple times)
+// Use window object to survive HMR reloads
+declare global {
+  interface Window {
+    __IPC_STORE_INITIALIZED__?: boolean;
+  }
+}
+
 // Initialize IPC listeners
 export function initializeIpcStoreService() {
+  if (window.__IPC_STORE_INITIALIZED__) {
+    console.log('[IPC Store] Already initialized, skipping');
+    return;
+  }
+
   if (!window.electronAPI) {
     console.log('[IPC Store] Not in Electron environment');
     return;
   }
+
+  window.__IPC_STORE_INITIALIZED__ = true;
+  console.log('[IPC Store] Initializing...');
 
   const { storeBridge } = window.electronAPI as { storeBridge?: {
     onStoreRequest: (handler: (channel: string, requestId: string, ...args: unknown[]) => void) => void;

@@ -17,8 +17,17 @@ import { logger } from '../utils/logger';
 let mcpServer: Server | null = null;
 
 // Idempotency cache for tool calls - prevents duplicate execution
-// Key: hash of (toolName + arguments), Value: { result, timestamp }
-const toolCallCache = new Map<string, { result: unknown; timestamp: number }>();
+// Key: hash of (toolName + arguments)
+interface CacheEntry {
+  result: unknown;
+  timestamp: number;
+}
+interface PendingEntry {
+  promise: Promise<unknown>;
+  resolvers: { resolve: (value: unknown) => void; reject: (error: unknown) => void }[];
+}
+const toolCallCache = new Map<string, CacheEntry>();
+const pendingOperations = new Map<string, PendingEntry>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
 
 // Generate cache key from tool name and arguments
@@ -97,22 +106,62 @@ export function createMCPServer(): Server {
 
     if (isCreateOperation) {
       const cacheKey = generateCacheKey(toolName, args);
-      const cached = toolCallCache.get(cacheKey);
+      const requestId = Math.random().toString(36).slice(2, 8);
+      logger.info(`MCP [${requestId}]: Processing ${toolName}, cacheKey=${cacheKey.slice(0, 50)}...`);
 
-      // Check if we have a recent cached result (within TTL)
+      // Step 1: Check completed cache
+      const cached = toolCallCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-        logger.info(`MCP: Returning cached result for ${toolName} (idempotency)`);
+        logger.info(`MCP [${requestId}]: Returning cached result for ${toolName} (idempotency)`);
         return cached.result as { content: { type: 'text'; text: string }[] };
       }
 
-      // Execute tool and cache result
-      logger.debug(`MCP: Calling tool ${toolName}`);
-      const result = await executeTool(toolName, args);
+      // Step 2: Check if operation is already pending
+      const pending = pendingOperations.get(cacheKey);
+      if (pending) {
+        logger.info(`MCP [${requestId}]: Waiting for pending operation for ${toolName} (idempotency)`);
+        // Create a new promise that will resolve when the original completes
+        return new Promise((resolve, reject) => {
+          pending.resolvers.push({ resolve, reject });
+        });
+      }
 
-      // Cache the result
-      toolCallCache.set(cacheKey, { result, timestamp: Date.now() });
+      // Step 3: Mark as pending SYNCHRONOUSLY before any async work
+      logger.info(`MCP [${requestId}]: Starting new operation for ${toolName}, pendingOps size before: ${pendingOperations.size}`);
+      const pendingEntry: PendingEntry = {
+        promise: Promise.resolve(), // Will be replaced
+        resolvers: [],
+      };
+      pendingOperations.set(cacheKey, pendingEntry);
+      logger.info(`MCP [${requestId}]: Pending set, size now: ${pendingOperations.size}`);
 
-      return result;
+      try {
+        // Execute the tool
+        const result = await executeTool(toolName, args);
+
+        // Store in completed cache
+        toolCallCache.set(cacheKey, { result, timestamp: Date.now() });
+
+        // Resolve all waiting promises
+        for (const resolver of pendingEntry.resolvers) {
+          resolver.resolve(result);
+        }
+
+        // Remove from pending
+        pendingOperations.delete(cacheKey);
+
+        return result;
+      } catch (error) {
+        // Reject all waiting promises
+        for (const resolver of pendingEntry.resolvers) {
+          resolver.reject(error);
+        }
+
+        // Remove from pending
+        pendingOperations.delete(cacheKey);
+
+        throw error;
+      }
     }
 
     // Non-create operations execute normally without caching

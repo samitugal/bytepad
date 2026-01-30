@@ -34,7 +34,15 @@ let wss: WebSocketServer | null = null;
 const mcpTransports: Map<string, SSEServerTransport> = new Map();
 
 // Idempotency cache for tool calls - prevents duplicate execution
-const toolCallCache = new Map<string, { result: unknown; timestamp: number }>();
+interface CacheEntry {
+  result: unknown;
+  timestamp: number;
+}
+interface PendingEntry {
+  resolvers: { resolve: (value: unknown) => void; reject: (error: unknown) => void }[];
+}
+const toolCallCache = new Map<string, CacheEntry>();
+const pendingOperations = new Map<string, PendingEntry>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function generateCacheKey(toolName: string, args: Record<string, unknown>): string {
@@ -147,22 +155,81 @@ function createMCPServer(): Server {
     const isCreateOperation = name.startsWith('create_') || name === 'write_journal';
     if (isCreateOperation) {
       const cacheKey = generateCacheKey(name, argsObj);
+
+      // Step 1: Check completed cache
       const cached = toolCallCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
         logger.info(`MCP: Returning cached result for ${name} (idempotency)`);
         return cached.result as { content: { type: 'text'; text: string }[] };
       }
+
+      // Step 2: Check if operation is already pending
+      const pending = pendingOperations.get(cacheKey);
+      if (pending) {
+        logger.info(`MCP: Waiting for pending operation for ${name} (idempotency)`);
+        return new Promise((resolve, reject) => {
+          pending.resolvers.push({ resolve, reject });
+        });
+      }
+
+      // Step 3: Mark as pending SYNCHRONOUSLY before any async work
+      logger.debug(`MCP: Calling tool ${name}`);
+      const pendingEntry: PendingEntry = { resolvers: [] };
+      pendingOperations.set(cacheKey, pendingEntry);
+
+      try {
+        let result: unknown;
+
+        switch (name) {
+          case 'create_note':
+            result = await fileStoreBridge.create('notes', { title: args?.title, content: args?.content || '', tags: args?.tags || [] });
+            break;
+          case 'create_task':
+            result = await fileStoreBridge.create('tasks', { title: args?.title, description: args?.description, priority: args?.priority || 'P3', deadline: args?.deadline });
+            break;
+          case 'write_journal': {
+            const date = (args?.date as string) || new Date().toISOString().split('T')[0];
+            result = await fileStoreBridge.create('journal', { id: date, date, content: args?.content || '', mood: args?.mood || 3, energy: args?.energy || 3 });
+            break;
+          }
+          case 'create_idea':
+            result = await fileStoreBridge.create('ideas', { title: args?.title, content: args?.content || '', color: args?.color || 'yellow', status: 'active' });
+            break;
+          default:
+            throw new Error(`Unknown create tool: ${name}`);
+        }
+
+        const response = { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+
+        // Store in completed cache
+        toolCallCache.set(cacheKey, { result: response, timestamp: Date.now() });
+
+        // Resolve all waiting promises
+        for (const resolver of pendingEntry.resolvers) {
+          resolver.resolve(response);
+        }
+
+        // Remove from pending
+        pendingOperations.delete(cacheKey);
+
+        return response;
+      } catch (error) {
+        // Reject all waiting promises
+        for (const resolver of pendingEntry.resolvers) {
+          resolver.reject(error);
+        }
+
+        // Remove from pending
+        pendingOperations.delete(cacheKey);
+
+        throw error;
+      }
     }
 
+    // Non-create operations execute normally without caching
     let result: unknown;
 
     switch (name) {
-      case 'create_note':
-        result = await fileStoreBridge.create('notes', { title: args?.title, content: args?.content || '', tags: args?.tags || [] });
-        break;
-      case 'create_task':
-        result = await fileStoreBridge.create('tasks', { title: args?.title, description: args?.description, priority: args?.priority || 'P3', deadline: args?.deadline });
-        break;
       case 'complete_task': {
         const task = await fileStoreBridge.getById('tasks', args?.id as string);
         if (task) {
@@ -180,14 +247,6 @@ function createMCPServer(): Server {
         }
         break;
       }
-      case 'write_journal': {
-        const date = (args?.date as string) || new Date().toISOString().split('T')[0];
-        result = await fileStoreBridge.create('journal', { id: date, date, content: args?.content || '', mood: args?.mood || 3, energy: args?.energy || 3 });
-        break;
-      }
-      case 'create_idea':
-        result = await fileStoreBridge.create('ideas', { title: args?.title, content: args?.content || '', color: args?.color || 'yellow', status: 'active' });
-        break;
       case 'search': {
         const query = (args?.query as string).toLowerCase();
         const type = (args?.type as string) || 'all';
@@ -207,16 +266,7 @@ function createMCPServer(): Server {
         throw new Error(`Unknown tool: ${name}`);
     }
 
-    const response = { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-
-    // Cache result for create operations (idempotency)
-    if (isCreateOperation) {
-      const cacheKey = generateCacheKey(name, argsObj);
-      toolCallCache.set(cacheKey, { result: response, timestamp: Date.now() });
-      logger.debug(`MCP: Cached result for ${name}`);
-    }
-
-    return response;
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
   });
 
   return server;

@@ -88,10 +88,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onStoreRequest: (handler: (channel: string, requestId: string, ...args: unknown[]) => void) => {
       const channels = ['store:getAll', 'store:getById', 'store:create', 'store:update', 'store:delete', 'store:search', 'store:action', 'store:getState']
       channels.forEach(channel => {
+        // Remove any existing listeners first to prevent duplicates from HMR
+        ipcRenderer.removeAllListeners(channel);
         ipcRenderer.on(channel, (_event: unknown, requestId: string, ...args: unknown[]) => {
           handler(channel, requestId, ...args)
         })
-      })
+      });
     },
     // Send response back to main process
     sendResponse: (requestId: string, data: unknown, error?: string) => {
