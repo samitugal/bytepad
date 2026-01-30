@@ -2,6 +2,7 @@ import { useEffect, lazy, Suspense } from 'react'
 import { MenuBar, Sidebar, TabBar, StatusBar, MainContent } from './components/layout'
 import { CommandPalette, MiniTimer, ErrorBoundary, NotificationCenter, Onboarding, GlobalSearch, ShortcutsModal } from './components/common'
 import { PageSearch } from './components/common/PageSearch'
+import { UpdateBanner } from './components/common/UpdateBanner'
 
 // Lazy load heavy components
 const SettingsPanel = lazy(() => import('./components/common/SettingsPanel').then(m => ({ default: m.SettingsPanel })))
@@ -10,6 +11,7 @@ const ChatWindow = lazy(() => import('./components/chat/ChatWindow').then(m => (
 const LevelUpModal = lazy(() => import('./components/gamification/LevelUpModal').then(m => ({ default: m.LevelUpModal })))
 const AchievementToast = lazy(() => import('./components/gamification/AchievementToast').then(m => ({ default: m.AchievementToast })))
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useUpdateCheck } from './hooks/useUpdateCheck'
 import { initializeNotifications } from './services/notificationService'
 import { initializeSync, pushOnClose } from './services/gistSyncService'
 import { initializeIpcStoreService } from './services/ipcStoreService'
@@ -35,6 +37,9 @@ function App() {
   const { checkStreak, resetDailyStats, lastActiveDate } = useGamificationStore()
   const autoArchiveOldTasks = useTaskStore((state) => state.autoArchiveOldTasks)
   const gistSync = useSettingsStore((state) => state.gistSync)
+
+  // GitHub Releases update check
+  const { isUpdateAvailable, releaseInfo, currentVersion, dismissCurrentUpdate, openReleasePage } = useUpdateCheck()
 
   useKeyboardShortcuts()
 
@@ -154,6 +159,15 @@ function App() {
             <LevelUpModal />
             <AchievementToast />
           </Suspense>
+        )}
+        {/* GitHub Release Update Banner */}
+        {isUpdateAvailable && releaseInfo && (
+          <UpdateBanner
+            releaseInfo={releaseInfo}
+            currentVersion={currentVersion}
+            onViewRelease={openReleasePage}
+            onDismiss={dismissCurrentUpdate}
+          />
         )}
       </div>
     </ErrorBoundary>

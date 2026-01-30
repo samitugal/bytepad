@@ -41,7 +41,12 @@ const storeAccessors: Record<StoreName, {
     getById: (id) => useNoteStore.getState().notes.find(n => n.id === id) || null,
     create: (data) => {
       // addNote returns the new note's id and adds to beginning of array
-      const id = useNoteStore.getState().addNote(data as { title: string; content?: string; tags?: string[] });
+      const noteData = data as Record<string, unknown>;
+      const id = useNoteStore.getState().addNote({
+        title: String(noteData.title || ''),
+        content: String(noteData.content || ''),
+        tags: Array.isArray(noteData.tags) ? noteData.tags : [],
+      });
       // Get fresh state and find the note by id
       return useNoteStore.getState().notes.find(n => n.id === id) || null;
     },
@@ -70,7 +75,14 @@ const storeAccessors: Record<StoreName, {
     getById: (id) => useTaskStore.getState().tasks.find(t => t.id === id) || null,
     create: (data) => {
       // addTask returns the new task's id
-      const id = useTaskStore.getState().addTask(data as { title: string; priority?: string; deadline?: string });
+      const taskData = data as Record<string, unknown>;
+      const id = useTaskStore.getState().addTask({
+        title: String(taskData.title || ''),
+        description: taskData.description ? String(taskData.description) : undefined,
+        priority: (taskData.priority as 'P1' | 'P2' | 'P3' | 'P4') || 'P3',
+        deadline: taskData.deadline ? new Date(String(taskData.deadline)) : undefined,
+        tags: Array.isArray(taskData.tags) ? taskData.tags : undefined,
+      });
       // Get fresh state and find the task by id
       return useTaskStore.getState().tasks.find(t => t.id === id) || null;
     },
@@ -98,7 +110,12 @@ const storeAccessors: Record<StoreName, {
     getById: (id) => useHabitStore.getState().habits.find(h => h.id === id) || null,
     create: (data) => {
       // addHabit returns the new habit's id
-      const id = useHabitStore.getState().addHabit(data as { name: string; frequency?: string; category?: string });
+      const habitData = data as Record<string, unknown>;
+      const id = useHabitStore.getState().addHabit({
+        name: String(habitData.name || ''),
+        frequency: (habitData.frequency as 'daily' | 'weekly') || 'daily',
+        category: String(habitData.category || 'General'),
+      });
       // Get fresh state and find the habit by id
       return useHabitStore.getState().habits.find(h => h.id === id) || null;
     },
@@ -118,19 +135,31 @@ const storeAccessors: Record<StoreName, {
     getById: (id) => useJournalStore.getState().entries.find(e => e.id === id || e.date === id) || null,
     create: (data) => {
       const store = useJournalStore.getState();
-      const entry = data as { date: string; content?: string; mood?: number; energy?: number };
-      store.updateEntry(entry.date, entry);
-      return store.entries.find(e => e.date === entry.date);
+      const journalData = data as Record<string, unknown>;
+      const date = String(journalData.date || new Date().toISOString().split('T')[0]);
+      const mood = journalData.mood as 1 | 2 | 3 | 4 | 5 | undefined;
+      const energy = journalData.energy as 1 | 2 | 3 | 4 | 5 | undefined;
+      store.updateEntry(date, {
+        content: journalData.content ? String(journalData.content) : undefined,
+        mood,
+        energy,
+      });
+      return store.entries.find(e => e.date === date);
     },
     update: (id, data) => {
       const store = useJournalStore.getState();
       const entry = store.entries.find(e => e.id === id || e.date === id);
       if (entry) {
-        store.updateEntry(entry.date, data as Partial<{ content: string; mood: number; energy: number }>);
+        const updateData = data as Record<string, unknown>;
+        store.updateEntry(entry.date, {
+          content: updateData.content ? String(updateData.content) : undefined,
+          mood: updateData.mood as 1 | 2 | 3 | 4 | 5 | undefined,
+          energy: updateData.energy as 1 | 2 | 3 | 4 | 5 | undefined,
+        });
       }
       return store.entries.find(e => e.id === id || e.date === id);
     },
-    delete: (id) => {
+    delete: () => {
       // Journal entries are typically not deleted
       return false;
     },
@@ -142,7 +171,14 @@ const storeAccessors: Record<StoreName, {
     getById: (id) => useBookmarkStore.getState().bookmarks.find(b => b.id === id) || null,
     create: (data) => {
       // addBookmark returns the new bookmark's id
-      const id = useBookmarkStore.getState().addBookmark(data as { url: string; title: string; tags?: string[] });
+      const bookmarkData = data as Record<string, unknown>;
+      const id = useBookmarkStore.getState().addBookmark({
+        url: String(bookmarkData.url || ''),
+        title: String(bookmarkData.title || ''),
+        description: bookmarkData.description ? String(bookmarkData.description) : undefined,
+        tags: Array.isArray(bookmarkData.tags) ? bookmarkData.tags : [],
+        collection: bookmarkData.collection ? String(bookmarkData.collection) : undefined,
+      });
       // Get fresh state and find the bookmark by id
       return useBookmarkStore.getState().bookmarks.find(b => b.id === id) || null;
     },
@@ -171,7 +207,15 @@ const storeAccessors: Record<StoreName, {
     getById: (id) => useIdeaStore.getState().ideas.find(i => i.id === id) || null,
     create: (data) => {
       // addIdea returns the new idea's id
-      const id = useIdeaStore.getState().addIdea(data as { title: string; content?: string; color?: string });
+      const ideaData = data as Record<string, unknown>;
+      const validColors = ['yellow', 'green', 'blue', 'purple', 'orange', 'red', 'cyan'];
+      const color = validColors.includes(String(ideaData.color))
+        ? (ideaData.color as 'yellow' | 'green' | 'blue' | 'purple' | 'orange' | 'red' | 'cyan')
+        : undefined;
+      const id = useIdeaStore.getState().addIdea({
+        content: String(ideaData.content || ideaData.title || ''),
+        color,
+      });
       // Get fresh state and find the idea by id
       return useIdeaStore.getState().ideas.find(i => i.id === id) || null;
     },
@@ -189,14 +233,14 @@ const storeAccessors: Record<StoreName, {
   dailyNotes: {
     getAll: () => useDailyNotesStore.getState().dailyNotes,
     getById: (id) => useDailyNotesStore.getState().dailyNotes.find(d => d.id === id || d.date === id) || null,
-    create: (data) => {
+    create: (_data) => {
       // Daily notes are created per-date with cards
       return null;
     },
-    update: (id, data) => {
+    update: (_id, _data) => {
       return null;
     },
-    delete: (id) => {
+    delete: (_id) => {
       return false;
     },
     getState: () => useDailyNotesStore.getState(),
@@ -205,62 +249,56 @@ const storeAccessors: Record<StoreName, {
   focus: {
     getAll: () => useFocusStore.getState().sessions,
     getById: (id) => useFocusStore.getState().sessions.find(s => s.id === id) || null,
-    create: (data) => null, // Sessions are created via focus mode
-    update: (id, data) => null,
-    delete: (id) => false,
+    create: (_data) => null, // Sessions are created via focus mode
+    update: (_id, _data) => null,
+    delete: (_id) => false,
     getState: () => useFocusStore.getState(),
   },
 
   gamification: {
     getAll: () => [useGamificationStore.getState()],
-    getById: () => useGamificationStore.getState(),
-    create: () => null,
-    update: () => null,
-    delete: () => false,
+    getById: (_id) => useGamificationStore.getState(),
+    create: (_data) => null,
+    update: (_id, _data) => null,
+    delete: (_id) => false,
     getState: () => useGamificationStore.getState(),
   },
 
   settings: {
     getAll: () => [useSettingsStore.getState()],
-    getById: () => useSettingsStore.getState(),
-    create: () => null,
-    update: (_, data) => {
-      const store = useSettingsStore.getState();
-      Object.entries(data as Record<string, unknown>).forEach(([key, value]) => {
-        if (key in store && typeof (store as Record<string, unknown>)[`set${key.charAt(0).toUpperCase() + key.slice(1)}`] === 'function') {
-          // Try to call setter
-        }
-      });
-      return store;
+    getById: (_id) => useSettingsStore.getState(),
+    create: (_data) => null,
+    update: (_id, _data) => {
+      // Settings are updated via specific setters, not generic update
+      return useSettingsStore.getState();
     },
-    delete: () => false,
+    delete: (_id) => false,
     getState: () => useSettingsStore.getState(),
   },
 };
 
 // Action executors for specific store actions
-const actionExecutors: Record<string, Record<string, (...args: unknown[]) => unknown>> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const actionExecutors: Record<string, Record<string, (...args: any[]) => unknown>> = {
   tasks: {
-    toggleComplete: (id: string) => useTaskStore.getState().toggleComplete(id),
+    toggleTask: (id: string) => useTaskStore.getState().toggleTask(id),
     addSubtask: (taskId: string, title: string) => useTaskStore.getState().addSubtask(taskId, title),
     toggleSubtask: (taskId: string, subtaskId: string) => useTaskStore.getState().toggleSubtask(taskId, subtaskId),
     archiveTask: (id: string) => useTaskStore.getState().archiveTask(id),
   },
   habits: {
-    toggleCompletion: (id: string, date?: string) => useHabitStore.getState().toggleCompletion(id, date),
+    toggleCompletion: (id: string, date?: string) => useHabitStore.getState().toggleCompletion(id, date || new Date().toISOString().split('T')[0]),
   },
   focus: {
-    startSession: (taskId?: string) => useFocusStore.getState().startSession(taskId),
-    pauseSession: () => useFocusStore.getState().pauseSession(),
-    resumeSession: () => useFocusStore.getState().resumeSession(),
-    endSession: () => useFocusStore.getState().endSession(),
+    startSession: (taskId: string, taskTitle: string, targetDuration: number) =>
+      useFocusStore.getState().startSession(taskId, taskTitle, targetDuration),
+    endSession: (completed: boolean) => useFocusStore.getState().endSession(completed),
   },
   gamification: {
     addXP: (amount: number, reason: string) => useGamificationStore.getState().addXP(amount, reason),
   },
   ideas: {
     convertToNote: (id: string) => useIdeaStore.getState().convertToNote(id),
-    convertToTask: (id: string) => useIdeaStore.getState().convertToTask(id),
     archiveIdea: (id: string) => useIdeaStore.getState().archiveIdea(id),
   },
 };

@@ -432,5 +432,11 @@
         "generatedAt": "Generated",
         "reportsTotal": "reports",
         "noHistory": "No reports generated yet"
+    },
+    "update": {
+        "newVersionAvailable": "New version available",
+        "currentVersion": "Current",
+        "viewRelease": "View Release",
+        "later": "Later"
     }
 }

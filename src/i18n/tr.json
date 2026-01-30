@@ -432,5 +432,11 @@
         "generatedAt": "Oluşturulma",
         "reportsTotal": "rapor",
         "noHistory": "Henüz rapor oluşturulmadı"
+    },
+    "update": {
+        "newVersionAvailable": "Yeni sürüm mevcut",
+        "currentVersion": "Mevcut",
+        "viewRelease": "Sürümü Gör",
+        "later": "Sonra"
     }
 }
