@@ -289,7 +289,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
                 {/* Footer */}
                 <div className="px-4 py-2 border-t border-np-border text-xs text-np-text-secondary flex justify-between shrink-0">
-                    <span>bytepad v0.24.0</span>
+                    <span>bytepad v0.24.1</span>
                     <span>Ctrl+, to open settings</span>
                 </div>
             </div>

@@ -86,7 +86,7 @@ async function startServer(): Promise<void> {
       success: true,
       status: 'healthy',
       service: 'bytepad-mcp-docker',
-      version: process.env.npm_package_version || '0.24.0',
+      version: process.env.npm_package_version || '0.24.1',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
     });

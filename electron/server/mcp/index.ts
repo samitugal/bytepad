@@ -20,7 +20,7 @@ export function createMCPServer(): Server {
   const server = new Server(
     {
       name: 'bytepad',
-      version: '0.24.0',
+      version: '0.24.1',
     },
     {
       capabilities: {

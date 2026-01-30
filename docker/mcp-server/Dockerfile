@@ -2,7 +2,7 @@
 FROM node:20-alpine
 
 LABEL maintainer="Sami Tugal <tugalsami@gmail.com>"
-LABEL version="0.24.0"
+LABEL version="0.24.1"
 LABEL description="bytepad MCP Server for AI tool integration"
 
 WORKDIR /app

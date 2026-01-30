@@ -14,7 +14,7 @@ const store = new Store();
 
 const CONTAINER_NAME = 'bytepad-mcp';
 const IMAGE_NAME = 'bytepad/mcp-server';
-const IMAGE_TAG = '0.24.0';
+const IMAGE_TAG = '0.24.1';
 const DEFAULT_PORT = 3847;
 
 export interface DockerStatus {
