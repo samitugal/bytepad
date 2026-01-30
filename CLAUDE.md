@@ -1,9 +1,11 @@
 # bytepad - productivity app
 
 ## Aktif Sprint
-- [ ] Sprint 34: Refactor & Open Source Preparation 📋 (PLANNED)
+- [ ] Sprint 39: Technical Debt Cleanup 📋 (PLANNED)
 
 ## Son Tamamlanan Sprint'ler
+- [x] Sprint 38: GitHub Releases Update Checker ✓
+- [x] Sprint 37: MCP Server Integration + Docker Support ✓
 - [x] Sprint 33: Sync & UX (Task tags, entity linking, graph connections) ✓
 - [x] Sprint 32: UX Enhancements & Sync Improvements ✓
 - [x] Sprint 30: Performance Optimization ✓
