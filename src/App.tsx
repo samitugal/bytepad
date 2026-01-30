@@ -12,6 +12,7 @@ const AchievementToast = lazy(() => import('./components/gamification/Achievemen
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { initializeNotifications } from './services/notificationService'
 import { initializeSync, pushOnClose } from './services/gistSyncService'
+import { initializeIpcStoreService } from './services/ipcStoreService'
 import { useSettingsStore, FONT_SIZES, FONT_FAMILIES } from './stores/settingsStore'
 import { useUIStore } from './stores/uiStore'
 import { useAuthStore } from './stores/authStore'
@@ -50,6 +51,11 @@ function App() {
   // Initialize notifications on mount
   useEffect(() => {
     initializeNotifications()
+  }, [])
+
+  // Initialize IPC store bridge for MCP server
+  useEffect(() => {
+    initializeIpcStoreService()
   }, [])
 
   // Initialize auth and cloud sync

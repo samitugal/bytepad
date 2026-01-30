@@ -1,6 +1,18 @@
 import { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, shell, nativeImage, Notification } from 'electron'
 import path from 'path'
 import Store from 'electron-store'
+import { startMCPServer, stopMCPServer, getServerInfo, getOrCreateApiKey, regenerateApiKey } from './server'
+import { setupStoreBridge, setMainWindow } from './server/bridges/storeBridge'
+
+// Handle EPIPE errors globally (broken pipe when console is disconnected)
+process.on('uncaughtException', (error: NodeJS.ErrnoException) => {
+  if (error.code === 'EPIPE') {
+    // Ignore EPIPE errors - they happen when stdout/stderr pipe is broken
+    return
+  }
+  // For other uncaught exceptions, log and continue (or crash in production)
+  console.error('Uncaught exception:', error)
+})
 
 // Initialize electron-store
 const store = new Store()
@@ -51,6 +63,10 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()
   })
+
+  // Setup store bridge for MCP server
+  setMainWindow(mainWindow)
+  setupStoreBridge(mainWindow)
 
   // Load the app
   if (isDev) {
@@ -230,6 +246,63 @@ function setupIPC() {
       openAsHidden: true
     })
   })
+
+  // MCP Server IPC handlers
+  ipcMain.handle('mcp:getServerInfo', () => {
+    return getServerInfo()
+  })
+
+  ipcMain.handle('mcp:start', async () => {
+    try {
+      await startMCPServer()
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('mcp:stop', async () => {
+    try {
+      await stopMCPServer()
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('mcp:getApiKey', () => {
+    return getOrCreateApiKey()
+  })
+
+  ipcMain.handle('mcp:regenerateApiKey', () => {
+    return regenerateApiKey()
+  })
+
+  ipcMain.handle('mcp:setEnabled', async (_, enabled: boolean) => {
+    store.set('mcp.enabled', enabled)
+    if (enabled) {
+      try {
+        await startMCPServer()
+        return { success: true }
+      } catch (err) {
+        return { success: false, error: (err as Error).message }
+      }
+    } else {
+      await stopMCPServer()
+      return { success: true }
+    }
+  })
+
+  ipcMain.handle('mcp:setPort', async (_, port: number) => {
+    store.set('mcp.port', port)
+    // Restart server if running
+    const info = getServerInfo()
+    if (info.isRunning) {
+      await stopMCPServer()
+      await startMCPServer()
+    }
+    return { success: true }
+  })
 }
 
 // Extend app type for isQuitting property
@@ -253,11 +326,22 @@ if (!gotTheLock) {
     }
   })
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     createWindow()
     createTray()
     registerGlobalShortcuts()
     setupIPC()
+
+    // Start MCP Server if enabled
+    const mcpEnabled = store.get('mcp.enabled') as boolean ?? false
+    if (mcpEnabled) {
+      try {
+        await startMCPServer()
+        console.log('[Main] MCP Server started')
+      } catch (err) {
+        console.error('[Main] Failed to start MCP Server:', err)
+      }
+    }
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
@@ -273,8 +357,14 @@ app.on('window-all-closed', () => {
   }
 })
 
-app.on('will-quit', () => {
+app.on('will-quit', async () => {
   globalShortcut.unregisterAll()
+  // Stop MCP Server
+  try {
+    await stopMCPServer()
+  } catch (err) {
+    console.error('[Main] Error stopping MCP Server:', err)
+  }
 })
 
 app.on('before-quit', (event) => {

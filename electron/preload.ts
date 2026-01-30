@@ -32,6 +32,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     set: (enabled: boolean) => ipcRenderer.invoke('autostart:set', enabled),
   },
 
+  // MCP Server
+  mcp: {
+    getServerInfo: () => ipcRenderer.invoke('mcp:getServerInfo'),
+    start: () => ipcRenderer.invoke('mcp:start'),
+    stop: () => ipcRenderer.invoke('mcp:stop'),
+    getApiKey: () => ipcRenderer.invoke('mcp:getApiKey'),
+    regenerateApiKey: () => ipcRenderer.invoke('mcp:regenerateApiKey'),
+    setEnabled: (enabled: boolean) => ipcRenderer.invoke('mcp:setEnabled', enabled),
+    setPort: (port: number) => ipcRenderer.invoke('mcp:setPort', port),
+  },
+
   // Listen for shortcuts from main process
   onShortcut: (callback: (action: string) => void) => {
     ipcRenderer.on('shortcut:quickAddTask', () => callback('quickAddTask'))
@@ -57,4 +68,25 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Check if running in Electron
   isElectron: true,
+
+  // Store bridge for MCP server
+  storeBridge: {
+    // Register handler for store requests from main process
+    onStoreRequest: (handler: (channel: string, requestId: string, ...args: unknown[]) => void) => {
+      const channels = ['store:getAll', 'store:getById', 'store:create', 'store:update', 'store:delete', 'store:search', 'store:action', 'store:getState']
+      channels.forEach(channel => {
+        ipcRenderer.on(channel, (_event: unknown, requestId: string, ...args: unknown[]) => {
+          handler(channel, requestId, ...args)
+        })
+      })
+    },
+    // Send response back to main process
+    sendResponse: (requestId: string, data: unknown, error?: string) => {
+      ipcRenderer.send('store:response', requestId, data, error)
+    },
+    // Notify about store changes
+    notifyChange: (storeName: string, action: string, data: unknown) => {
+      ipcRenderer.send('store:changed', storeName, action, data)
+    },
+  },
 })

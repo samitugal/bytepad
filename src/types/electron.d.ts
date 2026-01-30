@@ -1,4 +1,14 @@
 // Type definitions for Electron API exposed via preload
+
+export interface MCPServerInfo {
+  isRunning: boolean
+  port: number
+  host: string
+  apiKey: string
+  connectedClients: number
+  startedAt: string | null
+}
+
 export interface ElectronAPI {
   // Window controls
   minimize: () => void
@@ -29,6 +39,17 @@ export interface ElectronAPI {
     set: (enabled: boolean) => Promise<void>
   }
 
+  // MCP Server
+  mcp: {
+    getServerInfo: () => Promise<MCPServerInfo>
+    start: () => Promise<{ success: boolean; error?: string }>
+    stop: () => Promise<{ success: boolean; error?: string }>
+    getApiKey: () => Promise<string>
+    regenerateApiKey: () => Promise<string>
+    setEnabled: (enabled: boolean) => Promise<{ success: boolean; error?: string }>
+    setPort: (port: number) => Promise<{ success: boolean; error?: string }>
+  }
+
   // Shortcut listeners
   onShortcut: (callback: (action: string) => void) => void
   removeShortcutListeners: () => void
@@ -39,6 +60,13 @@ export interface ElectronAPI {
 
   // Check if running in Electron
   isElectron: boolean
+
+  // Store bridge for MCP server
+  storeBridge?: {
+    onStoreRequest: (handler: (channel: string, requestId: string, ...args: unknown[]) => void) => void
+    sendResponse: (requestId: string, data: unknown, error?: string) => void
+    notifyChange: (storeName: string, action: string, data: unknown) => void
+  }
 }
 
 declare global {
