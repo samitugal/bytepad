@@ -9,6 +9,21 @@ export interface MCPServerInfo {
   startedAt: string | null
 }
 
+export interface DockerStatus {
+  installed: boolean
+  running: boolean
+  containerId: string | null
+  containerStatus: string | null
+  port: number
+  error: string | null
+}
+
+export interface DockerResult {
+  success: boolean
+  error?: string
+  errorCode?: 'DOCKER_NOT_INSTALLED' | 'DOCKER_NOT_RUNNING' | 'IMAGE_NOT_FOUND' | string
+}
+
 export interface ElectronAPI {
   // Window controls
   minimize: () => void
@@ -48,6 +63,19 @@ export interface ElectronAPI {
     regenerateApiKey: () => Promise<string>
     setEnabled: (enabled: boolean) => Promise<{ success: boolean; error?: string }>
     setPort: (port: number) => Promise<{ success: boolean; error?: string }>
+    setDockerEnabled: (enabled: boolean) => Promise<DockerResult>
+  }
+
+  // Docker
+  docker: {
+    isInstalled: () => Promise<boolean>
+    isRunning: () => Promise<boolean>
+    getStatus: () => Promise<DockerStatus>
+    start: () => Promise<DockerResult>
+    stop: () => Promise<DockerResult>
+    remove: () => Promise<DockerResult>
+    getLogs: (lines?: number) => Promise<string>
+    imageExists: () => Promise<boolean>
   }
 
   // Shortcut listeners

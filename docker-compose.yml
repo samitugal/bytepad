@@ -1,0 +1,36 @@
+# bytepad MCP Server Docker Compose
+# Usage: docker-compose up -d
+
+version: '3.8'
+
+services:
+  mcp-server:
+    build:
+      context: ./docker/mcp-server
+      dockerfile: Dockerfile
+    image: bytepad/mcp-server:0.24.0
+    container_name: bytepad-mcp
+    ports:
+      - "3847:3847"
+    environment:
+      - MCP_PORT=3847
+      - MCP_HOST=0.0.0.0
+      - BYTEPAD_API_KEY=${BYTEPAD_API_KEY:-}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DATA_DIR=/app/data
+    volumes:
+      # Mount data directory for persistence
+      - bytepad-data:/app/data
+      # Or mount from host (uncomment to use):
+      # - ~/.bytepad/data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3847/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  bytepad-data:
+    name: bytepad-mcp-data

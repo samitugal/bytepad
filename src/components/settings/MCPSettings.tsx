@@ -1,32 +1,45 @@
 import { useState, useEffect } from 'react';
-import type { MCPServerInfo } from '../../types/electron';
+import type { MCPServerInfo, DockerStatus } from '../../types/electron';
+
+type MCPMode = 'embedded' | 'docker';
 
 export function MCPSettings() {
   const [serverInfo, setServerInfo] = useState<MCPServerInfo | null>(null);
+  const [dockerStatus, setDockerStatus] = useState<DockerStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
   const [copied, setCopied] = useState(false);
   const [portInput, setPortInput] = useState('3847');
+  const [mcpMode, setMcpMode] = useState<MCPMode>('embedded');
 
   const isElectron = !!window.electronAPI?.isElectron;
 
-  // Load server info on mount
+  // Load server info and Docker status on mount
   useEffect(() => {
     if (!isElectron) {
       setIsLoading(false);
       return;
     }
 
-    loadServerInfo();
+    loadStatus();
   }, [isElectron]);
 
-  const loadServerInfo = async () => {
+  const loadStatus = async () => {
     try {
-      const info = await window.electronAPI?.mcp.getServerInfo();
+      const [info, docker] = await Promise.all([
+        window.electronAPI?.mcp.getServerInfo(),
+        window.electronAPI?.docker?.getStatus(),
+      ]);
+
       if (info) {
         setServerInfo(info);
         setPortInput(info.port.toString());
+      }
+
+      if (docker) {
+        setDockerStatus(docker);
       }
     } catch (err) {
       setError((err as Error).message);
@@ -35,16 +48,62 @@ export function MCPSettings() {
     }
   };
 
-  const handleToggleServer = async () => {
+  const handleToggleEmbeddedServer = async () => {
     if (!serverInfo) return;
 
     setError(null);
+    setInfoMessage(null);
+
     try {
       const result = await window.electronAPI?.mcp.setEnabled(!serverInfo.isRunning);
       if (!result?.success) {
         setError(result?.error || 'Failed to toggle server');
       }
-      await loadServerInfo();
+      await loadStatus();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  const handleToggleDockerServer = async () => {
+    if (!dockerStatus) return;
+
+    setError(null);
+    setInfoMessage(null);
+
+    const isCurrentlyRunning = dockerStatus.running;
+
+    try {
+      if (isCurrentlyRunning) {
+        // Stop Docker container
+        const result = await window.electronAPI?.docker.stop();
+        if (!result?.success) {
+          setError(result?.error || 'Failed to stop Docker container');
+        }
+      } else {
+        // Start Docker container - with pre-checks
+        const result = await window.electronAPI?.mcp.setDockerEnabled(true);
+
+        if (!result?.success) {
+          // Show appropriate error message based on error code
+          if (result?.errorCode === 'DOCKER_NOT_INSTALLED') {
+            setInfoMessage('Docker is not installed on your system. Please install Docker Desktop first.');
+            setError(null);
+          } else if (result?.errorCode === 'DOCKER_NOT_RUNNING') {
+            setInfoMessage('Docker Desktop is installed but not running. Please start Docker Desktop.');
+            setError(null);
+          } else if (result?.errorCode === 'IMAGE_NOT_FOUND') {
+            setInfoMessage('Docker image not found. Please build it first:\n\ncd docker/mcp-server && docker-compose build');
+            setError(null);
+          } else {
+            setError(result?.error || 'Failed to start Docker container');
+          }
+          await loadStatus();
+          return;
+        }
+      }
+
+      await loadStatus();
     } catch (err) {
       setError((err as Error).message);
     }
@@ -57,7 +116,7 @@ export function MCPSettings() {
 
     try {
       await window.electronAPI?.mcp.regenerateApiKey();
-      await loadServerInfo();
+      await loadStatus();
     } catch (err) {
       setError((err as Error).message);
     }
@@ -80,7 +139,7 @@ export function MCPSettings() {
 
     try {
       await window.electronAPI?.mcp.setPort(port);
-      await loadServerInfo();
+      await loadStatus();
     } catch (err) {
       setError((err as Error).message);
     }
@@ -107,35 +166,153 @@ export function MCPSettings() {
     );
   }
 
+  const isEmbeddedRunning = serverInfo?.isRunning || false;
+  const isDockerRunning = dockerStatus?.running || false;
+  const isAnyRunning = isEmbeddedRunning || isDockerRunning;
+
   return (
     <div className="space-y-4">
       <h3 className="text-sm text-np-green mb-3">// MCP Server</h3>
 
-      {/* Server Status */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div
-            className={`w-2 h-2 rounded-full ${
-              serverInfo?.isRunning ? 'bg-np-green' : 'bg-np-text-secondary'
+      {/* Mode Selection */}
+      <div className="space-y-2">
+        <label className="block text-xs text-np-text-secondary">Mode</label>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setMcpMode('embedded')}
+            className={`np-btn text-xs ${
+              mcpMode === 'embedded' ? 'text-np-green border-np-green' : 'text-np-text-secondary'
             }`}
-          />
-          <span className="text-sm text-np-text-secondary">
-            {serverInfo?.isRunning ? 'Running' : 'Stopped'}
-          </span>
-          {serverInfo?.isRunning && (
-            <span className="text-xs text-np-text-secondary">
-              on port {serverInfo.port}
-            </span>
-          )}
+          >
+            Embedded
+          </button>
+          <button
+            onClick={() => setMcpMode('docker')}
+            className={`np-btn text-xs ${
+              mcpMode === 'docker' ? 'text-np-blue border-np-blue' : 'text-np-text-secondary'
+            }`}
+          >
+            Docker
+          </button>
         </div>
-        <button
-          onClick={handleToggleServer}
-          className={`np-btn text-xs ${serverInfo?.isRunning ? 'text-np-error' : 'text-np-green'}`}
-        >
-          {serverInfo?.isRunning ? 'Stop' : 'Start'}
-        </button>
+        <p className="text-xs text-np-text-secondary mt-1">
+          {mcpMode === 'embedded'
+            ? 'Runs inside Electron process (requires app to be open)'
+            : 'Runs in Docker container (can run independently)'}
+        </p>
       </div>
 
+      {/* Embedded Mode */}
+      {mcpMode === 'embedded' && (
+        <>
+          {/* Server Status */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  isEmbeddedRunning ? 'bg-np-green' : 'bg-np-text-secondary'
+                }`}
+              />
+              <span className="text-sm text-np-text-secondary">
+                {isEmbeddedRunning ? 'Running' : 'Stopped'}
+              </span>
+              {isEmbeddedRunning && (
+                <span className="text-xs text-np-text-secondary">
+                  on port {serverInfo?.port}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleToggleEmbeddedServer}
+              disabled={isDockerRunning}
+              className={`np-btn text-xs ${
+                isDockerRunning
+                  ? 'text-np-text-secondary cursor-not-allowed'
+                  : isEmbeddedRunning
+                  ? 'text-np-error'
+                  : 'text-np-green'
+              }`}
+            >
+              {isEmbeddedRunning ? 'Stop' : 'Start'}
+            </button>
+          </div>
+
+          {isDockerRunning && (
+            <div className="text-xs text-np-orange bg-np-orange/10 p-2 border border-np-orange">
+              Docker mode is active. Stop Docker container to use embedded mode.
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Docker Mode */}
+      {mcpMode === 'docker' && (
+        <>
+          {/* Docker Status */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  isDockerRunning ? 'bg-np-blue' : 'bg-np-text-secondary'
+                }`}
+              />
+              <span className="text-sm text-np-text-secondary">
+                {isDockerRunning ? 'Container Running' : 'Container Stopped'}
+              </span>
+              {isDockerRunning && dockerStatus?.containerStatus && (
+                <span className="text-xs text-np-text-secondary">
+                  ({dockerStatus.containerStatus})
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleToggleDockerServer}
+              disabled={isEmbeddedRunning}
+              className={`np-btn text-xs ${
+                isEmbeddedRunning
+                  ? 'text-np-text-secondary cursor-not-allowed'
+                  : isDockerRunning
+                  ? 'text-np-error'
+                  : 'text-np-blue'
+              }`}
+            >
+              {isDockerRunning ? 'Stop' : 'Start'}
+            </button>
+          </div>
+
+          {isEmbeddedRunning && (
+            <div className="text-xs text-np-orange bg-np-orange/10 p-2 border border-np-orange">
+              Embedded mode is active. Stop embedded server to use Docker mode.
+            </div>
+          )}
+
+          {/* Docker Status Info */}
+          {!dockerStatus?.installed && !infoMessage && (
+            <div className="text-xs text-np-cyan bg-np-cyan/10 p-2 border border-np-cyan">
+              <p className="font-semibold">Docker Required</p>
+              <p className="mt-1">Install Docker Desktop to use Docker mode:</p>
+              <a
+                href="https://www.docker.com/products/docker-desktop"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-np-blue underline mt-1 block"
+                onClick={() => window.electronAPI?.openExternal('https://www.docker.com/products/docker-desktop')}
+              >
+                Download Docker Desktop
+              </a>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Info Message */}
+      {infoMessage && (
+        <div className="text-xs text-np-cyan bg-np-cyan/10 p-3 border border-np-cyan whitespace-pre-wrap">
+          {infoMessage}
+        </div>
+      )}
+
+      {/* Error Message */}
       {error && (
         <div className="text-xs text-np-error bg-np-error/10 p-2 border border-np-error">
           {error}
@@ -195,13 +372,20 @@ export function MCPSettings() {
       </div>
 
       {/* Connected Clients */}
-      {serverInfo?.isRunning && (
+      {isAnyRunning && (
         <div className="text-xs text-np-text-secondary">
-          Connected clients: {serverInfo.connectedClients}
-          {serverInfo.startedAt && (
-            <span className="ml-2">
-              (started {new Date(serverInfo.startedAt).toLocaleTimeString()})
-            </span>
+          {mcpMode === 'embedded' && serverInfo?.isRunning && (
+            <>
+              Connected clients: {serverInfo.connectedClients}
+              {serverInfo.startedAt && (
+                <span className="ml-2">
+                  (started {new Date(serverInfo.startedAt).toLocaleTimeString()})
+                </span>
+              )}
+            </>
+          )}
+          {mcpMode === 'docker' && dockerStatus?.running && (
+            <>Container ID: {dockerStatus.containerId?.slice(0, 12)}</>
           )}
         </div>
       )}

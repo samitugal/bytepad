@@ -41,6 +41,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
     regenerateApiKey: () => ipcRenderer.invoke('mcp:regenerateApiKey'),
     setEnabled: (enabled: boolean) => ipcRenderer.invoke('mcp:setEnabled', enabled),
     setPort: (port: number) => ipcRenderer.invoke('mcp:setPort', port),
+    setDockerEnabled: (enabled: boolean) => ipcRenderer.invoke('mcp:setDockerEnabled', enabled),
+  },
+
+  // Docker
+  docker: {
+    isInstalled: () => ipcRenderer.invoke('docker:isInstalled'),
+    isRunning: () => ipcRenderer.invoke('docker:isRunning'),
+    getStatus: () => ipcRenderer.invoke('docker:getStatus'),
+    start: () => ipcRenderer.invoke('docker:start'),
+    stop: () => ipcRenderer.invoke('docker:stop'),
+    remove: () => ipcRenderer.invoke('docker:remove'),
+    getLogs: (lines?: number) => ipcRenderer.invoke('docker:logs', lines),
+    imageExists: () => ipcRenderer.invoke('docker:imageExists'),
   },
 
   // Listen for shortcuts from main process

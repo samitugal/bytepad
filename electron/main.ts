@@ -3,6 +3,16 @@ import path from 'path'
 import Store from 'electron-store'
 import { startMCPServer, stopMCPServer, getServerInfo, getOrCreateApiKey, regenerateApiKey } from './server'
 import { setupStoreBridge, setMainWindow } from './server/bridges/storeBridge'
+import {
+  isDockerInstalled,
+  isDockerRunning,
+  getDockerStatus,
+  startDockerContainer,
+  stopDockerContainer,
+  removeDockerContainer,
+  getContainerLogs,
+  imageExists,
+} from './services/dockerService'
 
 // Handle EPIPE errors globally (broken pipe when console is disconnected)
 process.on('uncaughtException', (error: NodeJS.ErrnoException) => {
@@ -302,6 +312,114 @@ function setupIPC() {
       await startMCPServer()
     }
     return { success: true }
+  })
+
+  // Docker IPC handlers
+  ipcMain.handle('docker:isInstalled', async () => {
+    return await isDockerInstalled()
+  })
+
+  ipcMain.handle('docker:isRunning', async () => {
+    return await isDockerRunning()
+  })
+
+  ipcMain.handle('docker:getStatus', async () => {
+    return await getDockerStatus()
+  })
+
+  ipcMain.handle('docker:start', async () => {
+    // Check if Docker is installed first
+    const installed = await isDockerInstalled()
+    if (!installed) {
+      return {
+        success: false,
+        error: 'Docker is not installed. Please install Docker Desktop first.',
+        errorCode: 'DOCKER_NOT_INSTALLED'
+      }
+    }
+
+    // Check if Docker daemon is running
+    const running = await isDockerRunning()
+    if (!running) {
+      return {
+        success: false,
+        error: 'Docker daemon is not running. Please start Docker Desktop.',
+        errorCode: 'DOCKER_NOT_RUNNING'
+      }
+    }
+
+    // Check if image exists
+    const hasImage = await imageExists()
+    if (!hasImage) {
+      return {
+        success: false,
+        error: 'Docker image not found. Please run: docker-compose build',
+        errorCode: 'IMAGE_NOT_FOUND'
+      }
+    }
+
+    return await startDockerContainer()
+  })
+
+  ipcMain.handle('docker:stop', async () => {
+    return await stopDockerContainer()
+  })
+
+  ipcMain.handle('docker:remove', async () => {
+    return await removeDockerContainer()
+  })
+
+  ipcMain.handle('docker:logs', async (_, lines?: number) => {
+    return await getContainerLogs(lines)
+  })
+
+  ipcMain.handle('docker:imageExists', async () => {
+    return await imageExists()
+  })
+
+  // Combined MCP Docker enable handler
+  ipcMain.handle('mcp:setDockerEnabled', async (_, enabled: boolean) => {
+    if (enabled) {
+      // Check Docker availability
+      const installed = await isDockerInstalled()
+      if (!installed) {
+        return {
+          success: false,
+          error: 'Docker is not installed. Please install Docker Desktop to use MCP Docker mode.',
+          errorCode: 'DOCKER_NOT_INSTALLED'
+        }
+      }
+
+      const running = await isDockerRunning()
+      if (!running) {
+        return {
+          success: false,
+          error: 'Docker is not running. Please start Docker Desktop.',
+          errorCode: 'DOCKER_NOT_RUNNING'
+        }
+      }
+
+      const hasImage = await imageExists()
+      if (!hasImage) {
+        return {
+          success: false,
+          error: 'Docker image not built. Run: cd docker/mcp-server && docker-compose build',
+          errorCode: 'IMAGE_NOT_FOUND'
+        }
+      }
+
+      const result = await startDockerContainer()
+      if (result.success) {
+        store.set('mcp.docker.enabled', true)
+      }
+      return result
+    } else {
+      const result = await stopDockerContainer()
+      if (result.success) {
+        store.set('mcp.docker.enabled', false)
+      }
+      return result
+    }
   })
 }
 
