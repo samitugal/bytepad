@@ -1,4 +1,4 @@
-import express, { Express } from 'express';
+import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { Server as HttpServer, createServer } from 'http';
@@ -12,6 +12,10 @@ import { getOrCreateApiKey } from './utils/apiKey';
 import { logger, setLogLevel } from './utils/logger';
 import apiRoutes from './routes';
 import { onStoreChange } from './bridges/storeBridge';
+import { createMCPServer } from './mcp';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 
 const store = new Store();
 
@@ -19,6 +23,10 @@ let app: Express | null = null;
 let httpServer: HttpServer | null = null;
 let wss: WebSocketServer | null = null;
 let isRunning = false;
+
+// Store MCP transports by session ID
+const mcpTransports: Map<string, SSEServerTransport> = new Map();
+const mcpStreamableTransports: Map<string, StreamableHTTPServerTransport> = new Map();
 
 export interface MCPServerInfo {
   isRunning: boolean;
@@ -102,6 +110,148 @@ export async function startMCPServer(config?: Partial<ServerConfig>): Promise<vo
   // Root health check redirect
   app.get('/health', (req, res) => {
     res.redirect('/api/health');
+  });
+
+  // MCP SSE endpoint - establishes SSE stream (GET /mcp)
+  app.get('/mcp', async (req: Request, res: Response) => {
+    logger.info('MCP SSE: New connection request');
+
+    try {
+      // Create SSE transport - messages endpoint is /messages
+      const transport = new SSEServerTransport('/messages', res);
+      const sessionId = transport.sessionId;
+
+      // Store transport by session ID
+      mcpTransports.set(sessionId, transport);
+
+      // Set up cleanup handler
+      transport.onclose = () => {
+        logger.info(`MCP SSE: Session ${sessionId} closed`);
+        mcpTransports.delete(sessionId);
+      };
+
+      // Create and connect MCP server
+      const mcpServer = createMCPServer();
+      await mcpServer.connect(transport);
+
+      logger.info(`MCP SSE: Session established - ${sessionId}`);
+    } catch (error) {
+      logger.error(`MCP SSE: Error establishing stream - ${(error as Error).message}`);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to establish SSE stream' });
+      }
+    }
+  });
+
+  // MCP Streamable HTTP endpoint (POST /mcp) - newer protocol
+  app.post('/mcp', async (req: Request, res: Response) => {
+    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+    logger.info(`MCP Streamable HTTP: ${sessionId ? 'Existing session ' + sessionId : 'New request'}`);
+
+    try {
+      let transport: StreamableHTTPServerTransport;
+
+      // Check for existing session
+      if (sessionId && mcpStreamableTransports.has(sessionId)) {
+        transport = mcpStreamableTransports.get(sessionId)!;
+      } else if (!sessionId && isInitializeRequest(req.body)) {
+        // New session - create transport
+        transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: () => crypto.randomUUID(),
+          onsessioninitialized: (newSessionId) => {
+            mcpStreamableTransports.set(newSessionId, transport);
+            logger.info(`MCP Streamable HTTP: Session initialized - ${newSessionId}`);
+          },
+        });
+
+        transport.onclose = () => {
+          const sid = transport.sessionId;
+          if (sid) {
+            mcpStreamableTransports.delete(sid);
+            logger.info(`MCP Streamable HTTP: Session ${sid} closed`);
+          }
+        };
+
+        // Connect MCP server to transport
+        const mcpServer = createMCPServer();
+        await mcpServer.connect(transport);
+      } else if (!sessionId) {
+        // Non-init request without session
+        res.status(400).json({
+          jsonrpc: '2.0',
+          error: { code: -32000, message: 'Bad Request: Missing mcp-session-id header' },
+          id: null,
+        });
+        return;
+      } else {
+        // Unknown session
+        res.status(404).json({
+          jsonrpc: '2.0',
+          error: { code: -32001, message: 'Session not found' },
+          id: null,
+        });
+        return;
+      }
+
+      // Handle the request
+      await transport.handleRequest(req, res, req.body);
+    } catch (error) {
+      logger.error(`MCP Streamable HTTP: Error - ${(error as Error).message}`);
+      if (!res.headersSent) {
+        res.status(500).json({
+          jsonrpc: '2.0',
+          error: { code: -32603, message: (error as Error).message },
+          id: null,
+        });
+      }
+    }
+  });
+
+  // MCP DELETE endpoint - close session (Streamable HTTP)
+  app.delete('/mcp', async (req: Request, res: Response) => {
+    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+
+    if (!sessionId) {
+      res.status(400).json({ error: 'Missing mcp-session-id header' });
+      return;
+    }
+
+    const transport = mcpStreamableTransports.get(sessionId);
+    if (transport) {
+      await transport.close();
+      mcpStreamableTransports.delete(sessionId);
+      res.status(200).json({ success: true, message: 'Session closed' });
+    } else {
+      res.status(404).json({ error: 'Session not found' });
+    }
+  });
+
+  // MCP messages endpoint - receives client JSON-RPC requests
+  app.post('/messages', async (req: Request, res: Response) => {
+    const sessionId = req.query.sessionId as string;
+
+    if (!sessionId) {
+      logger.warn('MCP messages: Missing sessionId parameter');
+      res.status(400).json({ error: 'Missing sessionId parameter' });
+      return;
+    }
+
+    const transport = mcpTransports.get(sessionId);
+    if (!transport) {
+      logger.warn(`MCP messages: Unknown session ${sessionId}`);
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    try {
+      // Handle the message using the transport
+      await transport.handlePostMessage(req, res, req.body);
+    } catch (error) {
+      logger.error(`MCP messages: Error handling message - ${(error as Error).message}`);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to process message' });
+      }
+    }
   });
 
   // Error handlers

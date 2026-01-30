@@ -86,7 +86,7 @@ gh release create vX.X.X --title "bytepad vX.X.X" --draft --generate-release-not
 Tüm versiyon referanslarını bulmak için:
 
 ```bash
-# Mevcut versiyonu ara (örn: 0.24.1)
+# Mevcut versiyonu ara (örn: 0.24.2)
 grep -r "0\.24\.1" --include="*.ts" --include="*.tsx" --include="*.json" --include="*.yml" --include="*.md" . | grep -v node_modules | grep -v dist
 ```
 
@@ -100,4 +100,4 @@ grep -r "0\.24\.1" --include="*.ts" --include="*.tsx" --include="*.json" --inclu
 
 ---
 
-*Son güncelleme: v0.24.1*
+*Son güncelleme: v0.24.2*

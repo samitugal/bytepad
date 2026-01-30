@@ -1,7 +1,8 @@
 {
   "name": "bytepad-mcp-server",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "description": "Standalone MCP Server for bytepad",
+  "type": "module",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
@@ -9,6 +10,7 @@
     "dev": "ts-node src/server.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "helmet": "^8.0.0",

@@ -8,7 +8,7 @@ services:
     build:
       context: ./docker/mcp-server
       dockerfile: Dockerfile
-    image: bytepad/mcp-server:0.24.1
+    image: bytepad/mcp-server:0.24.2
     container_name: bytepad-mcp
     ports:
       - "3847:3847"

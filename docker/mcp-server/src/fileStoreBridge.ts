@@ -5,7 +5,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { logger } from './logger';
+import { logger } from './logger.js';
 
 type StoreChangeCallback = (storeName: string, action: string, data: unknown) => void;
 

@@ -3,14 +3,22 @@
  * Runs independently without Electron
  */
 
-import express, { Express } from 'express';
+import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { createServer, Server as HttpServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { fileStoreBridge, initializeStore, onStoreChange } from './fileStoreBridge';
-import { createRoutes } from './routes';
-import { logger } from './logger';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import {
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
+  ListToolsRequestSchema,
+  CallToolRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
+import { fileStoreBridge, initializeStore, onStoreChange } from './fileStoreBridge.js';
+import { createRoutes } from './routes.js';
+import { logger } from './logger.js';
 
 const PORT = parseInt(process.env.MCP_PORT || '3847', 10);
 const HOST = process.env.MCP_HOST || '0.0.0.0';
@@ -21,6 +29,157 @@ const DATA_DIR = process.env.DATA_DIR || '/app/data';
 let app: Express | null = null;
 let httpServer: HttpServer | null = null;
 let wss: WebSocketServer | null = null;
+
+// Store MCP SSE transports by session ID
+const mcpTransports: Map<string, SSEServerTransport> = new Map();
+
+// Create MCP server with tools and resources
+function createMCPServer(): Server {
+  const server = new Server(
+    { name: 'bytepad', version: '0.24.2' },
+    { capabilities: { resources: {}, tools: {} } }
+  );
+
+  // List resources
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    resources: [
+      { uri: 'bytepad://notes', name: 'All Notes', description: 'List of all notes', mimeType: 'application/json' },
+      { uri: 'bytepad://tasks', name: 'All Tasks', description: 'List of all tasks', mimeType: 'application/json' },
+      { uri: 'bytepad://tasks/pending', name: 'Pending Tasks', description: 'Incomplete tasks', mimeType: 'application/json' },
+      { uri: 'bytepad://habits', name: 'All Habits', description: 'List of all habits', mimeType: 'application/json' },
+      { uri: 'bytepad://journal', name: 'Journal Entries', description: 'All journal entries', mimeType: 'application/json' },
+      { uri: 'bytepad://bookmarks', name: 'All Bookmarks', description: 'List of all bookmarks', mimeType: 'application/json' },
+      { uri: 'bytepad://ideas', name: 'All Ideas', description: 'List of all ideas', mimeType: 'application/json' },
+      { uri: 'bytepad://today', name: 'Today Summary', description: "Today's summary", mimeType: 'application/json' },
+    ],
+  }));
+
+  // Read resource
+  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+    const uri = request.params.uri;
+    const match = uri.match(/^bytepad:\/\/(\w+)(?:\/(.+))?$/);
+    if (!match) throw new Error(`Invalid URI: ${uri}`);
+
+    const [, type, id] = match;
+    let data: unknown;
+
+    switch (type) {
+      case 'notes':
+        data = id ? await fileStoreBridge.getById('notes', id) : await fileStoreBridge.getAll('notes');
+        break;
+      case 'tasks':
+        if (id === 'pending') {
+          const all = await fileStoreBridge.getAll('tasks');
+          data = all.filter((t: { completed?: boolean; archivedAt?: string }) => !t.completed && !t.archivedAt);
+        } else {
+          data = id ? await fileStoreBridge.getById('tasks', id) : await fileStoreBridge.getAll('tasks');
+        }
+        break;
+      case 'habits':
+        data = id ? await fileStoreBridge.getById('habits', id) : await fileStoreBridge.getAll('habits');
+        break;
+      case 'journal':
+        data = id ? await fileStoreBridge.getById('journal', id) : await fileStoreBridge.getAll('journal');
+        break;
+      case 'bookmarks':
+        data = id ? await fileStoreBridge.getById('bookmarks', id) : await fileStoreBridge.getAll('bookmarks');
+        break;
+      case 'ideas':
+        data = id ? await fileStoreBridge.getById('ideas', id) : await fileStoreBridge.getAll('ideas');
+        break;
+      case 'today': {
+        const today = new Date().toISOString().split('T')[0];
+        const tasks = await fileStoreBridge.getAll('tasks');
+        const habits = await fileStoreBridge.getAll('habits');
+        const activeTasks = tasks.filter((t: { archivedAt?: string }) => !t.archivedAt);
+        data = {
+          date: today,
+          tasks: { total: activeTasks.length, pending: activeTasks.filter((t: { completed?: boolean }) => !t.completed).length },
+          habits: { total: habits.length },
+        };
+        break;
+      }
+      default:
+        throw new Error(`Unknown resource: ${type}`);
+    }
+
+    return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(data, null, 2) }] };
+  });
+
+  // List tools
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: [
+      { name: 'create_note', description: 'Create a new note', inputSchema: { type: 'object', properties: { title: { type: 'string' }, content: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } } }, required: ['title'] } },
+      { name: 'create_task', description: 'Create a new task', inputSchema: { type: 'object', properties: { title: { type: 'string' }, description: { type: 'string' }, priority: { type: 'string', enum: ['P1', 'P2', 'P3', 'P4'] }, deadline: { type: 'string' } }, required: ['title'] } },
+      { name: 'complete_task', description: 'Complete a task', inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } },
+      { name: 'toggle_habit', description: 'Toggle habit completion', inputSchema: { type: 'object', properties: { id: { type: 'string' }, date: { type: 'string' } }, required: ['id'] } },
+      { name: 'write_journal', description: 'Write journal entry', inputSchema: { type: 'object', properties: { date: { type: 'string' }, content: { type: 'string' }, mood: { type: 'number' }, energy: { type: 'number' } }, required: [] } },
+      { name: 'create_idea', description: 'Create a quick idea', inputSchema: { type: 'object', properties: { title: { type: 'string' }, content: { type: 'string' }, color: { type: 'string' } }, required: ['title'] } },
+      { name: 'search', description: 'Search across all entities', inputSchema: { type: 'object', properties: { query: { type: 'string' }, type: { type: 'string', enum: ['all', 'notes', 'tasks', 'bookmarks'] } }, required: ['query'] } },
+    ],
+  }));
+
+  // Execute tool
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+    let result: unknown;
+
+    switch (name) {
+      case 'create_note':
+        result = await fileStoreBridge.create('notes', { title: args?.title, content: args?.content || '', tags: args?.tags || [] });
+        break;
+      case 'create_task':
+        result = await fileStoreBridge.create('tasks', { title: args?.title, description: args?.description, priority: args?.priority || 'P3', deadline: args?.deadline });
+        break;
+      case 'complete_task': {
+        const task = await fileStoreBridge.getById('tasks', args?.id as string);
+        if (task) {
+          result = await fileStoreBridge.update('tasks', args?.id as string, { completed: !(task as { completed?: boolean }).completed, completedAt: new Date().toISOString() });
+        }
+        break;
+      }
+      case 'toggle_habit': {
+        const date = (args?.date as string) || new Date().toISOString().split('T')[0];
+        const habit = await fileStoreBridge.getById('habits', args?.id as string);
+        if (habit) {
+          const completions = { ...(habit as { completions: Record<string, boolean> }).completions };
+          completions[date] = !completions[date];
+          result = await fileStoreBridge.update('habits', args?.id as string, { completions });
+        }
+        break;
+      }
+      case 'write_journal': {
+        const date = (args?.date as string) || new Date().toISOString().split('T')[0];
+        result = await fileStoreBridge.create('journal', { id: date, date, content: args?.content || '', mood: args?.mood || 3, energy: args?.energy || 3 });
+        break;
+      }
+      case 'create_idea':
+        result = await fileStoreBridge.create('ideas', { title: args?.title, content: args?.content || '', color: args?.color || 'yellow', status: 'active' });
+        break;
+      case 'search': {
+        const query = (args?.query as string).toLowerCase();
+        const type = (args?.type as string) || 'all';
+        const results: Record<string, unknown[]> = {};
+        if (type === 'all' || type === 'notes') {
+          const notes = await fileStoreBridge.getAll('notes');
+          results.notes = notes.filter((n: { title: string; content?: string }) => n.title.toLowerCase().includes(query) || n.content?.toLowerCase().includes(query));
+        }
+        if (type === 'all' || type === 'tasks') {
+          const tasks = await fileStoreBridge.getAll('tasks');
+          results.tasks = tasks.filter((t: { title: string; description?: string }) => t.title.toLowerCase().includes(query) || t.description?.toLowerCase().includes(query));
+        }
+        result = results;
+        break;
+      }
+      default:
+        throw new Error(`Unknown tool: ${name}`);
+    }
+
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+  });
+
+  return server;
+}
 
 // Auth middleware
 function authMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -86,10 +245,66 @@ async function startServer(): Promise<void> {
       success: true,
       status: 'healthy',
       service: 'bytepad-mcp-docker',
-      version: process.env.npm_package_version || '0.24.1',
+      version: process.env.npm_package_version || '0.24.2',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
     });
+  });
+
+  // MCP SSE endpoint - establishes SSE stream
+  app.get('/mcp', async (req: Request, res: Response) => {
+    logger.info('MCP SSE: New connection request');
+
+    try {
+      // Create SSE transport - messages endpoint is /messages
+      const transport = new SSEServerTransport('/messages', res);
+      const sessionId = transport.sessionId;
+
+      // Store transport by session ID
+      mcpTransports.set(sessionId, transport);
+
+      // Set up cleanup handler
+      transport.onclose = () => {
+        logger.info(`MCP SSE: Session ${sessionId} closed`);
+        mcpTransports.delete(sessionId);
+      };
+
+      // Create and connect MCP server
+      const mcpServer = createMCPServer();
+      await mcpServer.connect(transport);
+
+      logger.info(`MCP SSE: Session established - ${sessionId}`);
+    } catch (error) {
+      logger.error(`MCP SSE: Error - ${(error as Error).message}`);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to establish SSE stream' });
+      }
+    }
+  });
+
+  // MCP messages endpoint - receives client JSON-RPC requests
+  app.post('/messages', async (req: Request, res: Response) => {
+    const sessionId = req.query.sessionId as string;
+
+    if (!sessionId) {
+      res.status(400).json({ error: 'Missing sessionId parameter' });
+      return;
+    }
+
+    const transport = mcpTransports.get(sessionId);
+    if (!transport) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    try {
+      await transport.handlePostMessage(req, res, req.body);
+    } catch (error) {
+      logger.error(`MCP messages: Error - ${(error as Error).message}`);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to process message' });
+      }
+    }
   });
 
   // 404 handler

@@ -14,8 +14,16 @@ const store = new Store();
 
 const CONTAINER_NAME = 'bytepad-mcp';
 const IMAGE_NAME = 'bytepad/mcp-server';
-const IMAGE_TAG = '0.24.1';
+const IMAGE_TAG = '0.24.2';
 const DEFAULT_PORT = 3847;
+
+// Docker CLI paths to check on different platforms
+const DOCKER_PATHS = [
+  'docker', // Default PATH
+  '/usr/local/bin/docker', // macOS Intel / Homebrew
+  '/opt/homebrew/bin/docker', // macOS Apple Silicon
+  '/Applications/Docker.app/Contents/Resources/bin/docker', // Docker Desktop direct
+];
 
 export interface DockerStatus {
   installed: boolean;
@@ -26,16 +34,46 @@ export interface DockerStatus {
   error: string | null;
 }
 
+// Cache the resolved docker path
+let resolvedDockerPath: string | null = null;
+
+/**
+ * Find the Docker CLI path
+ */
+async function findDockerPath(): Promise<string | null> {
+  if (resolvedDockerPath) {
+    return resolvedDockerPath;
+  }
+
+  for (const dockerPath of DOCKER_PATHS) {
+    try {
+      await execAsync(`"${dockerPath}" --version`);
+      resolvedDockerPath = dockerPath;
+      return dockerPath;
+    } catch {
+      // Try next path
+    }
+  }
+  return null;
+}
+
+/**
+ * Get docker command with resolved path
+ */
+async function getDockerCommand(args: string): Promise<string> {
+  const dockerPath = await findDockerPath();
+  if (!dockerPath) {
+    throw new Error('Docker CLI not found');
+  }
+  return `"${dockerPath}" ${args}`;
+}
+
 /**
  * Check if Docker is installed and running
  */
 export async function isDockerInstalled(): Promise<boolean> {
-  try {
-    await execAsync('docker --version');
-    return true;
-  } catch {
-    return false;
-  }
+  const dockerPath = await findDockerPath();
+  return dockerPath !== null;
 }
 
 /**
@@ -43,7 +81,8 @@ export async function isDockerInstalled(): Promise<boolean> {
  */
 export async function isDockerRunning(): Promise<boolean> {
   try {
-    await execAsync('docker info');
+    const cmd = await getDockerCommand('info');
+    await execAsync(cmd);
     return true;
   } catch {
     return false;
@@ -77,9 +116,8 @@ export async function getDockerStatus(): Promise<DockerStatus> {
     }
 
     // Check if container exists
-    const { stdout } = await execAsync(
-      `docker ps -a --filter "name=${CONTAINER_NAME}" --format "{{.ID}}|{{.Status}}"`
-    );
+    const cmd = await getDockerCommand(`ps -a --filter "name=${CONTAINER_NAME}" --format "{{.ID}}|{{.Status}}"`);
+    const { stdout } = await execAsync(cmd);
 
     if (stdout.trim()) {
       const [containerId, containerStatus] = stdout.trim().split('|');
@@ -102,9 +140,15 @@ export async function buildDockerImage(
   onProgress?: (message: string) => void
 ): Promise<boolean> {
   const dockerfilePath = path.join(app.getAppPath(), 'docker', 'mcp-server');
+  const dockerPath = await findDockerPath();
+
+  if (!dockerPath) {
+    onProgress?.('Docker CLI not found');
+    return false;
+  }
 
   return new Promise((resolve) => {
-    const buildProcess = spawn('docker', [
+    const buildProcess = spawn(dockerPath, [
       'build',
       '-t',
       `${IMAGE_NAME}:${IMAGE_TAG}`,
@@ -150,7 +194,8 @@ export async function startDockerContainer(): Promise<{ success: boolean; error?
 
     // If container exists but stopped, start it
     if (status.containerId && !status.running) {
-      await execAsync(`docker start ${CONTAINER_NAME}`);
+      const startCmd = await getDockerCommand(`start ${CONTAINER_NAME}`);
+      await execAsync(startCmd);
       store.set('mcp.docker.enabled', true);
       return { success: true };
     }
@@ -165,8 +210,8 @@ export async function startDockerContainer(): Promise<{ success: boolean; error?
       ? `-v "${dataDir}:/app/data"`
       : '-v bytepad-mcp-data:/app/data';
 
-    const cmd = [
-      'docker run -d',
+    const runCmd = await getDockerCommand([
+      'run -d',
       `--name ${CONTAINER_NAME}`,
       `-p ${port}:3847`,
       `-e MCP_PORT=3847`,
@@ -176,9 +221,9 @@ export async function startDockerContainer(): Promise<{ success: boolean; error?
       volumeMount,
       '--restart unless-stopped',
       `${IMAGE_NAME}:${IMAGE_TAG}`,
-    ].join(' ');
+    ].join(' '));
 
-    await execAsync(cmd);
+    await execAsync(runCmd);
     store.set('mcp.docker.enabled', true);
     return { success: true };
   } catch (err) {
@@ -216,7 +261,8 @@ export async function stopDockerContainer(): Promise<{ success: boolean; error?:
       return { success: true };
     }
 
-    await execAsync(`docker stop ${CONTAINER_NAME}`);
+    const cmd = await getDockerCommand(`stop ${CONTAINER_NAME}`);
+    await execAsync(cmd);
     store.set('mcp.docker.enabled', false);
     return { success: true };
   } catch (err) {
@@ -230,7 +276,8 @@ export async function stopDockerContainer(): Promise<{ success: boolean; error?:
 export async function removeDockerContainer(): Promise<{ success: boolean; error?: string }> {
   try {
     await stopDockerContainer();
-    await execAsync(`docker rm ${CONTAINER_NAME}`);
+    const cmd = await getDockerCommand(`rm ${CONTAINER_NAME}`);
+    await execAsync(cmd);
     return { success: true };
   } catch (err) {
     // Ignore error if container doesn't exist
@@ -246,7 +293,8 @@ export async function removeDockerContainer(): Promise<{ success: boolean; error
  */
 export async function getContainerLogs(lines: number = 100): Promise<string> {
   try {
-    const { stdout } = await execAsync(`docker logs --tail ${lines} ${CONTAINER_NAME}`);
+    const cmd = await getDockerCommand(`logs --tail ${lines} ${CONTAINER_NAME}`);
+    const { stdout } = await execAsync(cmd);
     return stdout;
   } catch {
     return '';
@@ -258,7 +306,8 @@ export async function getContainerLogs(lines: number = 100): Promise<string> {
  */
 export async function pullDockerImage(): Promise<{ success: boolean; error?: string }> {
   try {
-    await execAsync(`docker pull ${IMAGE_NAME}:${IMAGE_TAG}`);
+    const cmd = await getDockerCommand(`pull ${IMAGE_NAME}:${IMAGE_TAG}`);
+    await execAsync(cmd);
     return { success: true };
   } catch (err) {
     return { success: false, error: (err as Error).message };
@@ -270,7 +319,8 @@ export async function pullDockerImage(): Promise<{ success: boolean; error?: str
  */
 export async function imageExists(): Promise<boolean> {
   try {
-    const { stdout } = await execAsync(`docker images -q ${IMAGE_NAME}:${IMAGE_TAG}`);
+    const cmd = await getDockerCommand(`images -q ${IMAGE_NAME}:${IMAGE_TAG}`);
+    const { stdout } = await execAsync(cmd);
     return stdout.trim().length > 0;
   } catch {
     return false;
