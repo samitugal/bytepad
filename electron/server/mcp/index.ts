@@ -16,6 +16,31 @@ import { logger } from '../utils/logger';
 
 let mcpServer: Server | null = null;
 
+// Idempotency cache for tool calls - prevents duplicate execution
+// Key: hash of (toolName + arguments), Value: { result, timestamp }
+const toolCallCache = new Map<string, { result: unknown; timestamp: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
+
+// Generate cache key from tool name and arguments
+function generateCacheKey(toolName: string, args: Record<string, unknown>): string {
+  // Sort keys for consistent hashing
+  const sortedArgs = JSON.stringify(args, Object.keys(args).sort());
+  return `${toolName}:${sortedArgs}`;
+}
+
+// Clean up expired cache entries
+function cleanupCache(): void {
+  const now = Date.now();
+  for (const [key, value] of toolCallCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL_MS) {
+      toolCallCache.delete(key);
+    }
+  }
+}
+
+// Run cleanup every minute
+setInterval(cleanupCache, 60 * 1000);
+
 export function createMCPServer(): Server {
   const server = new Server(
     {
@@ -62,13 +87,37 @@ export function createMCPServer(): Server {
     };
   });
 
-  // Call tool
+  // Call tool with idempotency for create operations
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    logger.debug(`MCP: Calling tool ${request.params.name}`);
-    return executeTool(
-      request.params.name,
-      (request.params.arguments || {}) as Record<string, unknown>
-    );
+    const toolName = request.params.name;
+    const args = (request.params.arguments || {}) as Record<string, unknown>;
+
+    // Only apply idempotency to create operations (to prevent duplicates)
+    const isCreateOperation = toolName.startsWith('create_') || toolName === 'write_journal';
+
+    if (isCreateOperation) {
+      const cacheKey = generateCacheKey(toolName, args);
+      const cached = toolCallCache.get(cacheKey);
+
+      // Check if we have a recent cached result (within TTL)
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+        logger.info(`MCP: Returning cached result for ${toolName} (idempotency)`);
+        return cached.result as { content: { type: 'text'; text: string }[] };
+      }
+
+      // Execute tool and cache result
+      logger.debug(`MCP: Calling tool ${toolName}`);
+      const result = await executeTool(toolName, args);
+
+      // Cache the result
+      toolCallCache.set(cacheKey, { result, timestamp: Date.now() });
+
+      return result;
+    }
+
+    // Non-create operations execute normally without caching
+    logger.debug(`MCP: Calling tool ${toolName}`);
+    return executeTool(toolName, args);
   });
 
   // List prompts

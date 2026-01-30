@@ -33,6 +33,25 @@ let wss: WebSocketServer | null = null;
 // Store MCP SSE transports by session ID
 const mcpTransports: Map<string, SSEServerTransport> = new Map();
 
+// Idempotency cache for tool calls - prevents duplicate execution
+const toolCallCache = new Map<string, { result: unknown; timestamp: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function generateCacheKey(toolName: string, args: Record<string, unknown>): string {
+  const sortedArgs = JSON.stringify(args, Object.keys(args || {}).sort());
+  return `${toolName}:${sortedArgs}`;
+}
+
+// Cleanup expired cache entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of toolCallCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL_MS) {
+      toolCallCache.delete(key);
+    }
+  }
+}, 60 * 1000);
+
 // Create MCP server with tools and resources
 function createMCPServer(): Server {
   const server = new Server(
@@ -119,9 +138,22 @@ function createMCPServer(): Server {
     ],
   }));
 
-  // Execute tool
+  // Execute tool with idempotency for create operations
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+    const argsObj = (args || {}) as Record<string, unknown>;
+
+    // Check idempotency cache for create operations
+    const isCreateOperation = name.startsWith('create_') || name === 'write_journal';
+    if (isCreateOperation) {
+      const cacheKey = generateCacheKey(name, argsObj);
+      const cached = toolCallCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+        logger.info(`MCP: Returning cached result for ${name} (idempotency)`);
+        return cached.result as { content: { type: 'text'; text: string }[] };
+      }
+    }
+
     let result: unknown;
 
     switch (name) {
@@ -175,7 +207,16 @@ function createMCPServer(): Server {
         throw new Error(`Unknown tool: ${name}`);
     }
 
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    const response = { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+
+    // Cache result for create operations (idempotency)
+    if (isCreateOperation) {
+      const cacheKey = generateCacheKey(name, argsObj);
+      toolCallCache.set(cacheKey, { result: response, timestamp: Date.now() });
+      logger.debug(`MCP: Cached result for ${name}`);
+    }
+
+    return response;
   });
 
   return server;
