@@ -79,6 +79,7 @@ Over time, these links form a personal knowledge graph that reflects how you act
 - **Gamification** - XP, levels, and achievements to stay motivated
 - **Localization** - English and Turkish language support
 - **GitHub Gist Sync** - Optional cloud backup to private Gist
+- **MCP Server** - Model Context Protocol integration for AI assistants (Claude Desktop, Cursor, etc.)
 
 ---
 
@@ -104,6 +105,84 @@ Built-in AI assistant for productivity coaching and insights.
 ---
 
 <img width="437" height="510" alt="image" src="https://github.com/user-attachments/assets/7fe46ae8-ee96-456b-8ec1-641879c7ac30" />
+
+---
+
+## MCP Server Integration
+
+bytepad includes a built-in [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that allows AI assistants to interact with your data.
+
+### What is MCP?
+
+MCP is an open protocol that enables AI tools to securely access local data sources. With bytepad's MCP server, you can use AI assistants like **Claude Desktop**, **Cursor**, or any MCP-compatible client to:
+
+- Query and search your notes, tasks, habits, and journal entries
+- Create new items through natural language
+- Get context-aware assistance based on your actual data
+
+### Connecting AI Clients
+
+#### Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "bytepad": {
+      "command": "curl",
+      "args": ["-N", "http://localhost:3847/mcp"]
+    }
+  }
+}
+```
+
+#### Cursor / VS Code
+
+Add to MCP settings:
+
+```json
+{
+  "bytepad": {
+    "url": "http://localhost:3847/mcp"
+  }
+}
+```
+
+### Docker Support
+
+Run the MCP server standalone with Docker:
+
+```bash
+docker run -d -p 3847:3847 -v bytepad-data:/app/data bytepad/mcp-server:latest
+```
+
+Or use docker-compose:
+
+```yaml
+services:
+  bytepad-mcp:
+    image: bytepad/mcp-server:0.24.3
+    ports:
+      - "3847:3847"
+    volumes:
+      - bytepad-data:/app/data
+```
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_notes` | Get all notes with optional search |
+| `create_note` | Create a new note |
+| `list_tasks` | Get tasks (filter by status) |
+| `create_task` | Create a new task |
+| `list_habits` | Get all habits with streaks |
+| `complete_habit` | Mark habit as done for today |
+| `get_journal` | Get journal entry for a date |
+| `create_journal` | Create/update journal entry |
+| `search` | Full-text search across all data |
+| `get_today_summary` | Get today's productivity summary |
 
 ---
 
@@ -150,6 +229,7 @@ bytepad is designed for keyboard-first navigation. Press `Ctrl+?` anytime to see
 - No external servers (except optional Gist sync)
 - AI features only send necessary context to your chosen provider
 - API keys stored locally, never transmitted
+- MCP server runs locally - your data never leaves your machine
 
 ---
 

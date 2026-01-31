@@ -2,6 +2,8 @@
 
 ## Aktif Sprint
 - [ ] Sprint 39: Technical Debt Cleanup 📋 (PLANNED)
+- [ ] Sprint 40: Auto-Update Feature 📋 (PLANNED)
+- [ ] Sprint 41: Code Signing (Windows & macOS) 📋 (PLANNED)
 
 ## Son Tamamlanan Sprint'ler
 - [x] Sprint 38: GitHub Releases Update Checker ✓
@@ -107,7 +109,9 @@ docs/
 │   └── ROADMAP.md
 └── sprints/                     # Current location (will move to internal/)
     ├── SPRINT_33_SYNC_AND_UX.md ✅
-    └── SPRINT_34_REFACTOR_AND_OPENSOURCE.md 📋 PLANNED
+    ├── SPRINT_34_REFACTOR_AND_OPENSOURCE.md 📋 PLANNED
+    ├── SPRINT_40_AUTO_UPDATE.md 📋 PLANNED
+    └── SPRINT_41_CODE_SIGNING.md 📋 PLANNED
 ```
 
 ## i18n (Localization)
