@@ -49,6 +49,60 @@ export const zustandStorage = {
   },
 }
 
+// Secrets storage — separate from the general zustand-persisted settings blob.
+//
+// Electron: routed through the IPC `store` bridge above, which persists to
+// electron-store's JSON file in the OS user-data directory instead of the
+// renderer's localStorage. NOTE: this is not yet OS-keychain encrypted at
+// rest (that requires a main-process `safeStorage` channel — electron/main.ts
+// is out of scope for this change, see settingsStore.ts for details); moving
+// secrets off localStorage and out of the general settings blob is the
+// improvement made here.
+//
+// Web/PWA: there is no OS-backed secure storage available in the browser
+// sandbox, so secrets are held in sessionStorage only. sessionStorage is
+// cleared when the tab/browser session ends, so keys never sit at rest in
+// persistent plaintext storage the way they did in localStorage — the
+// trade-off is that users must re-enter keys in a new browser session.
+const SECRETS_KEY = 'bytepad-secrets'
+
+export interface StoredSecrets {
+  apiKeys?: Record<string, string>
+  githubToken?: string
+  emailjsPublicKey?: string
+}
+
+export const secretsStorage = {
+  async load(): Promise<StoredSecrets | null> {
+    try {
+      if (isElectron()) {
+        const raw = await storage.getItem(SECRETS_KEY)
+        return raw ? (JSON.parse(raw) as StoredSecrets) : null
+      }
+      const raw = sessionStorage.getItem(SECRETS_KEY)
+      return raw ? (JSON.parse(raw) as StoredSecrets) : null
+    } catch {
+      return null
+    }
+  },
+
+  async save(secrets: StoredSecrets): Promise<void> {
+    if (isElectron()) {
+      await storage.setItem(SECRETS_KEY, JSON.stringify(secrets))
+      return
+    }
+    sessionStorage.setItem(SECRETS_KEY, JSON.stringify(secrets))
+  },
+
+  async clear(): Promise<void> {
+    if (isElectron()) {
+      await storage.removeItem(SECRETS_KEY)
+      return
+    }
+    sessionStorage.removeItem(SECRETS_KEY)
+  },
+}
+
 // Parse tags from input string - supports multiple formats:
 // - Comma separated: "tag1, tag2, tag3"
 // - Space separated: "tag1 tag2 tag3"
@@ -56,9 +110,9 @@ export const zustandStorage = {
 // - Mixed: "#tag1, tag2 #tag3"
 export function parseTags(input: string): string[] {
   if (!input || !input.trim()) return []
-  
+
   // First, normalize the input: replace commas with spaces
-  let normalized = input.replace(/,/g, ' ')
+  const normalized = input.replace(/,/g, ' ')
   
   // Split by whitespace
   const parts = normalized.split(/\s+/).filter(Boolean)
