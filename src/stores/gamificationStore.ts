@@ -189,6 +189,7 @@ interface GamificationState extends UserStats {
   getXPProgress: () => number // 0-100 percentage
   getStreakMultiplier: () => number
   getLevelTitle: () => string
+  isMaxLevel: () => boolean
 }
 
 const getDateString = (date: Date = new Date()) => {
@@ -203,6 +204,19 @@ const calculateLevel = (totalXP: number): number => {
   }
   return 1
 }
+
+// Single source of truth for what `level`/`currentXP` mean given `totalXP`. `totalXP` is the
+// only gamification value multiple independent writers (localStorage hydration, Gist sync)
+// are allowed to trust verbatim; `level` and `currentXP` must always be re-derived from it
+// through this function rather than accepted as-is from a persisted or remote payload, so a
+// stale/foreign `level` can never be written back into the store.
+export const deriveLevelAndXP = (totalXP: number): Pick<UserStats, 'level' | 'currentXP'> => {
+  const level = calculateLevel(totalXP)
+  const levelInfo = LEVELS.find(l => l.level === level) ?? LEVELS[0]
+  return { level, currentXP: totalXP - levelInfo.xp }
+}
+
+const MAX_LEVEL = LEVELS[LEVELS.length - 1].level
 
 const getStreakMultiplier = (streakDays: number): number => {
   for (const { minDays, multiplier } of STREAK_MULTIPLIERS) {
@@ -387,6 +401,10 @@ export const useGamificationStore = create<GamificationState>()(
       getLevelTitle: () => {
         return get().getLevel().title
       },
+
+      isMaxLevel: () => {
+        return get().level >= MAX_LEVEL
+      },
     }),
     {
       name: 'bytepad-gamification',
@@ -399,8 +417,7 @@ export const useGamificationStore = create<GamificationState>()(
       migrate: (persistedState) => {
         const persisted = (persistedState ?? {}) as Partial<UserStats>
         const totalXP = typeof persisted.totalXP === 'number' ? persisted.totalXP : 0
-        const level = calculateLevel(totalXP)
-        const levelInfo = LEVELS.find(l => l.level === level) ?? LEVELS[0]
+        const { level, currentXP } = deriveLevelAndXP(totalXP)
 
         return {
           tasksCompleted: 0,
@@ -418,18 +435,20 @@ export const useGamificationStore = create<GamificationState>()(
           ...persisted,
           totalXP,
           level,
-          currentXP: totalXP - levelInfo.xp,
+          currentXP,
         }
       },
       // `migrate` above is gated by zustand on `typeof persistedVersion === 'number'`. Every
       // install that persisted state before this `version` field existed has no version key
       // at all (`undefined`), so that gate is false and `migrate` never runs for them — the
       // exact installs this fix exists for. `merge` runs on every hydration regardless of
-      // version, so recompute `level`/`currentXP` from `totalXP` here too. This is a pure
-      // function of `totalXP`, so it's a no-op when the persisted values are already correct,
-      // and it only touches level fields — every other persisted stat/achievement/streak
-      // passes through via the spread untouched. Not invoked at all when there is no
-      // persisted state (brand-new user), so defaults are left alone.
+      // version — including with `persistedState === undefined` for a brand-new install that
+      // has nothing in localStorage yet — so recompute `level`/`currentXP` from `totalXP` here
+      // too. The `if (!persisted)` branch below handles that undefined case explicitly by
+      // returning the untouched defaults. For real persisted state this is a pure function of
+      // `totalXP`, so it's a no-op when the persisted values are already correct, and it only
+      // touches level fields — every other persisted stat/achievement/streak passes through
+      // via the spread untouched.
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<UserStats> | null | undefined
         const merged = { ...currentState, ...persisted }
@@ -438,15 +457,18 @@ export const useGamificationStore = create<GamificationState>()(
           return merged
         }
 
-        const totalXP = typeof persisted.totalXP === 'number' ? persisted.totalXP : merged.totalXP
-        const level = calculateLevel(totalXP)
-        const levelInfo = LEVELS.find(l => l.level === level) ?? LEVELS[0]
+        // Fall back to the live store's totalXP, not `merged.totalXP` — `merged` already
+        // spread `persisted` over the defaults, so if `persisted.totalXP` were a non-number
+        // (e.g. `null`, which JSON permits), `merged.totalXP` would still be that same bad
+        // value and this guard would be a no-op.
+        const totalXP = typeof persisted.totalXP === 'number' ? persisted.totalXP : currentState.totalXP
+        const { level, currentXP } = deriveLevelAndXP(totalXP)
 
         return {
           ...merged,
           totalXP,
           level,
-          currentXP: totalXP - levelInfo.xp,
+          currentXP,
         }
       },
       partialize: (state) => ({
