@@ -11,11 +11,19 @@ services:
     image: bytepad/mcp-server:0.24.3
     container_name: bytepad-mcp
     ports:
-      - "3847:3847"
+      # Bound to localhost only by default - the container is not reachable
+      # from other machines on the network out of the box. To expose it
+      # more broadly (e.g. to your LAN), deliberately override this, for
+      # example: "0.0.0.0:3847:3847" or a specific host interface IP.
+      - "127.0.0.1:3847:3847"
     environment:
       - MCP_PORT=3847
       - MCP_HOST=0.0.0.0
+      # Required - the server refuses to start if this is unset/blank.
       - BYTEPAD_API_KEY=${BYTEPAD_API_KEY:-}
+      # Comma-separated list of allowed CORS origins for browser-based
+      # clients. Empty by default (no cross-origin browser access).
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - DATA_DIR=/app/data
     volumes:
