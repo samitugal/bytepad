@@ -297,6 +297,13 @@ export function MCPSettings() {
             </div>
           )}
 
+          {isDockerRunning && dockerStatus?.host && !LOOPBACK_HOSTS.has(dockerStatus.host) && (
+            <div className="text-xs text-np-error bg-np-error/10 p-2 border border-np-error">
+              <p className="font-semibold">{t('settings.mcp.nonLoopbackWarningTitle')}</p>
+              <p className="mt-1">{t('settings.mcp.nonLoopbackWarning', { host: dockerStatus.host })}</p>
+            </div>
+          )}
+
           {/* Docker Status Info */}
           {!dockerStatus?.installed && !infoMessage && (
             <div className="text-xs text-np-cyan bg-np-cyan/10 p-2 border border-np-cyan">

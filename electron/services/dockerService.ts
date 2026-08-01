@@ -11,6 +11,7 @@ import crypto from 'crypto';
 import Store from 'electron-store';
 import path from 'path';
 import { app } from 'electron';
+import { getOrCreateApiKey } from '../server/utils/apiKey';
 
 const execFileAsync = promisify(execFile);
 const store = new Store();
@@ -19,6 +20,9 @@ const CONTAINER_NAME = 'bytepad-mcp';
 const IMAGE_NAME = 'bytepad/mcp-server';
 const IMAGE_TAG = '0.24.3';
 const DEFAULT_PORT = 3847;
+// Loopback only by default; set mcp.docker.host to opt in to wider exposure.
+// Mirrors the embedded server's mcp.host default in electron/server/config.ts.
+const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_LOG_LINES = 100;
 const MIN_PORT = 1;
 const MAX_PORT = 65535;
@@ -39,6 +43,7 @@ export interface DockerStatus {
   containerId: string | null;
   containerStatus: string | null;
   port: number;
+  host: string;
   error: string | null;
 }
 
@@ -88,6 +93,17 @@ function sanitizeDataDir(value: unknown): string {
   const trimmed = value.trim();
   if (!trimmed || !path.isAbsolute(trimmed)) return '';
   return trimmed;
+}
+
+/**
+ * Clamp/validate the host/interface the container's port is published on.
+ * Falls back to loopback-only for anything that isn't a non-empty string,
+ * so a bad or missing setting can never accidentally widen exposure.
+ */
+function sanitizeHost(value: unknown): string {
+  if (typeof value !== 'string') return DEFAULT_HOST;
+  const trimmed = value.trim();
+  return trimmed || DEFAULT_HOST;
 }
 
 /**
@@ -152,6 +168,7 @@ export async function getDockerStatus(): Promise<DockerStatus> {
     containerId: null,
     containerStatus: null,
     port: sanitizePort(store.get('mcp.docker.port', DEFAULT_PORT)),
+    host: sanitizeHost(store.get('mcp.docker.host', DEFAULT_HOST)),
     error: null,
   };
 
@@ -263,7 +280,15 @@ export async function startDockerContainer(): Promise<{ success: boolean; error?
     }
 
     const port = sanitizePort(store.get('mcp.docker.port', DEFAULT_PORT));
-    const apiKey = store.get('mcp.apiKey', '') as string;
+    const host = sanitizeHost(store.get('mcp.docker.host', DEFAULT_HOST));
+    // Read via the canonical getter (not a raw store.get) so a key always
+    // exists here even if this is the very first thing that touches MCP
+    // settings. The containerized server now hard-refuses to start
+    // (process.exit(1)) on a blank BYTEPAD_API_KEY, and a bare store.get
+    // with a '' fallback would silently produce a container that starts
+    // via `docker run` and then dies immediately, which the caller can't
+    // tell apart from success.
+    const apiKey = getOrCreateApiKey();
     const dataDir = sanitizeDataDir(store.get('mcp.docker.dataDir', ''));
 
     // If container exists but stopped, start it
@@ -291,7 +316,7 @@ export async function startDockerContainer(): Promise<{ success: boolean; error?
       '--name',
       CONTAINER_NAME,
       '-p',
-      `${port}:3847`,
+      `${host}:${port}:3847`,
       '-e',
       'MCP_PORT=3847',
       '-e',
@@ -314,9 +339,14 @@ export async function startDockerContainer(): Promise<{ success: boolean; error?
 
     // Check if image doesn't exist
     if (errorMessage.includes('Unable to find image') || errorMessage.includes('No such image')) {
+      // Packaged builds don't ship docker-compose.yml (electron-builder only
+      // bundles `out/**/*`), so pointing users at `docker-compose build` is
+      // misleading outside a source checkout. Point at the plain `docker
+      // build` invocation instead, which matches this file's own
+      // (currently unwired) buildDockerImage() and works from source.
       return {
         success: false,
-        error: `Docker image not found. Please build it first with: docker-compose build`,
+        error: `Docker image not found. Build it from the bytepad source with: docker build -t ${IMAGE_NAME}:${IMAGE_TAG} docker/mcp-server`,
       };
     }
 
