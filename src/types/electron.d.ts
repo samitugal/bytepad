@@ -15,6 +15,7 @@ export interface DockerStatus {
   containerId: string | null
   containerStatus: string | null
   port: number
+  host: string
   error: string | null
 }
 
