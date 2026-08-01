@@ -15,11 +15,13 @@ export function XPProgressBar({ compact = false }: XPProgressBarProps) {
     getXPProgress,
     getLevelTitle,
     getStreakMultiplier,
+    isMaxLevel,
   } = useGamificationStore()
 
   const xpNeeded = getXPForNextLevel()
   const progress = getXPProgress()
   const multiplier = getStreakMultiplier()
+  const maxLevel = isMaxLevel()
 
   if (compact) {
     return (
@@ -74,7 +76,11 @@ export function XPProgressBar({ compact = false }: XPProgressBarProps) {
       {/* XP text */}
       <div className="flex justify-between text-xs text-np-text-secondary font-mono">
         <span>{formatXP(currentXP)} XP</span>
-        <span>{formatXP(xpNeeded)} {t('gamification.toNextLevel')}</span>
+        {maxLevel ? (
+          <span>{t('gamification.maxLevelReached')}</span>
+        ) : (
+          <span>{formatXP(xpNeeded)} {t('gamification.toNextLevel')}</span>
+        )}
       </div>
     </div>
   )
