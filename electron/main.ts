@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, shell, nativeImage, Notification } from 'electron'
+import { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, shell, nativeImage, Notification, session } from 'electron'
 import path from 'path'
 import Store from 'electron-store'
 import { startMCPServer, stopMCPServer, getServerInfo, getOrCreateApiKey, regenerateApiKey } from './server'
@@ -41,6 +41,88 @@ function getIconPath(): string {
   return path.join(process.resourcesPath, 'icon.png')
 }
 
+// Origins the renderer legitimately talks to: AI providers, Firebase Auth/Firestore,
+// GitHub (Gist sync + update checker) and Tavily search. Keep this list in sync with
+// any new outbound API the renderer starts calling.
+const DEV_SERVER_ORIGIN = 'http://localhost:5173'
+const ALLOWED_CONNECT_ORIGINS = [
+  "'self'",
+  'https://api.anthropic.com',
+  'https://api.openai.com',
+  'https://generativelanguage.googleapis.com',
+  'https://api.groq.com',
+  'https://api.tavily.com',
+  'https://api.github.com',
+  'https://firestore.googleapis.com',
+  'https://identitytoolkit.googleapis.com',
+  'https://securetoken.googleapis.com',
+]
+
+function buildContentSecurityPolicy(): string {
+  const connectSrc = [...ALLOWED_CONNECT_ORIGINS]
+  if (isDev) {
+    // Vite dev server + its HMR websocket
+    connectSrc.push(DEV_SERVER_ORIGIN, 'ws://localhost:5173')
+  }
+
+  const directives = [
+    "default-src 'self'",
+    // Vite's dev client + React Fast Refresh inject inline/eval'd code; production
+    // build is plain 'self' module scripts only.
+    `script-src 'self'${isDev ? " 'unsafe-inline' 'unsafe-eval'" : ''}`,
+    // React inline style props + Tailwind require 'unsafe-inline'; Google Fonts stylesheet.
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    // Bookmark favicons and Google account avatars are arbitrary https hosts.
+    "img-src 'self' data: https:",
+    `connect-src ${connectSrc.join(' ')}`,
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-src 'none'",
+    "worker-src 'self'",
+  ]
+
+  return directives.join('; ')
+}
+
+// Applies the CSP as a response header on the top-level document only, so it works
+// identically whether the renderer is served from the Vite dev server (http://) or
+// loaded from the packaged app (file://) in production.
+function setupContentSecurityPolicy(): void {
+  const csp = buildContentSecurityPolicy()
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    if (details.resourceType !== 'mainFrame') {
+      callback({ responseHeaders: details.responseHeaders })
+      return
+    }
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [csp],
+      },
+    })
+  })
+}
+
+// Only http(s) links and mailto: should ever leave the app via the OS shell.
+// Anything else (file:, smb:, custom schemes, ...) is dropped silently.
+const ALLOWED_EXTERNAL_PROTOCOLS = new Set(['https:', 'mailto:'])
+
+function openExternalSafely(targetUrl: string): void {
+  try {
+    const parsed = new URL(targetUrl)
+    if (ALLOWED_EXTERNAL_PROTOCOLS.has(parsed.protocol)) {
+      shell.openExternal(targetUrl)
+    } else {
+      console.warn('[Main] Blocked shell.openExternal for disallowed protocol:', parsed.protocol)
+    }
+  } catch {
+    console.warn('[Main] Blocked shell.openExternal for unparsable URL:', targetUrl)
+  }
+}
+
 function createWindow() {
   const preloadPath = path.join(__dirname, '../preload/index.cjs')
   console.log('[Main] Preload path:', preloadPath)
@@ -63,7 +145,7 @@ function createWindow() {
       preload: preloadPath,
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      sandbox: true,
     },
     backgroundColor: '#1E1E1E',
     show: false, // Show when ready
@@ -72,6 +154,26 @@ function createWindow() {
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()
+  })
+
+  // Deny opening new BrowserWindows/popups by default; route legitimate http(s)/mailto
+  // links to the OS's default handler instead of letting the renderer spawn windows.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    openExternalSafely(url)
+    return { action: 'deny' }
+  })
+
+  // Block the renderer from navigating the main frame away from the app itself
+  // (dev server origin in development, the packaged app's own files in production).
+  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+    const isAllowedNavigation = isDev
+      ? navigationUrl.startsWith(DEV_SERVER_ORIGIN)
+      : navigationUrl.startsWith('file://')
+
+    if (isAllowedNavigation) return
+
+    event.preventDefault()
+    openExternalSafely(navigationUrl)
   })
 
   // Setup store bridge for MCP server
@@ -225,7 +327,7 @@ function setupIPC() {
 
   // Shell operations
   ipcMain.on('shell:openExternal', (_, url: string) => {
-    shell.openExternal(url)
+    openExternalSafely(url)
   })
 
   // Notifications
@@ -445,6 +547,7 @@ if (!gotTheLock) {
   })
 
   app.whenReady().then(async () => {
+    setupContentSecurityPolicy()
     createWindow()
     createTray()
     registerGlobalShortcuts()
