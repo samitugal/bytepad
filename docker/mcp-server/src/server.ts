@@ -6,7 +6,7 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { createServer, Server as HttpServer } from 'http';
+import { createServer, Server as HttpServer, IncomingMessage } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
@@ -19,12 +19,19 @@ import {
 import { fileStoreBridge, initializeStore, onStoreChange } from './fileStoreBridge.js';
 import { createRoutes } from './routes.js';
 import { logger } from './logger.js';
+import { hasApiKey, validateApiKey } from './apiKey.js';
 
 const PORT = parseInt(process.env.MCP_PORT || '3847', 10);
 const HOST = process.env.MCP_HOST || '0.0.0.0';
-const API_KEY = process.env.BYTEPAD_API_KEY || '';
-const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 const DATA_DIR = process.env.DATA_DIR || '/app/data';
+// Note: LOG_LEVEL is read directly by logger.ts, not needed here.
+
+// Explicit CORS allowlist, configurable via env (comma-separated origins).
+// Empty by default - no cross-origin browser access unless deliberately opted in.
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 let app: Express | null = null;
 let httpServer: HttpServer | null = null;
@@ -285,7 +292,7 @@ function authMiddleware(req: express.Request, res: express.Response, next: expre
   }
 
   const token = authHeader.slice(7);
-  if (token !== API_KEY) {
+  if (!validateApiKey(token)) {
     return res.status(401).json({ success: false, error: 'Invalid API key' });
   }
 
@@ -293,6 +300,13 @@ function authMiddleware(req: express.Request, res: express.Response, next: expre
 }
 
 async function startServer(): Promise<void> {
+  // Refuse to start without a real API key. An unset/blank BYTEPAD_API_KEY
+  // must never be treated as "no auth required" - see apiKey.ts.
+  if (!hasApiKey()) {
+    logger.error('BYTEPAD_API_KEY is not set. Refusing to start without an API key configured.');
+    process.exit(1);
+  }
+
   // Initialize file-based store
   await initializeStore(DATA_DIR);
   logger.info(`Data directory: ${DATA_DIR}`);
@@ -303,9 +317,10 @@ async function startServer(): Promise<void> {
   // Security
   app.use(helmet({ contentSecurityPolicy: false }));
 
-  // CORS
+  // CORS - explicit allowlist only; '*' is never honored so a wildcard
+  // origin can't be paired with credentialed requests.
   app.use(cors({
-    origin: '*',
+    origin: CORS_ORIGINS,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -406,8 +421,39 @@ async function startServer(): Promise<void> {
   // Create HTTP server
   httpServer = createServer(app);
 
-  // WebSocket server
-  wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // WebSocket server - upgrade requires the same bearer key as the REST API,
+  // supplied either via Authorization header or a ?token= query param.
+  wss = new WebSocketServer({
+    server: httpServer,
+    path: '/ws',
+    verifyClient: (
+      info: { origin: string; secure: boolean; req: IncomingMessage },
+      callback: (res: boolean, code?: number, message?: string) => void
+    ) => {
+      try {
+        const requestUrl = new URL(info.req.url || '', 'http://localhost');
+        const tokenFromQuery = requestUrl.searchParams.get('token');
+
+        const authHeader = info.req.headers.authorization;
+        const tokenFromHeader = authHeader?.startsWith('Bearer ')
+          ? authHeader.slice(7)
+          : authHeader;
+
+        const token = tokenFromQuery || tokenFromHeader;
+
+        if (!token || !validateApiKey(token)) {
+          logger.warn(`WebSocket connection rejected from ${info.req.socket.remoteAddress} - missing or invalid token`);
+          callback(false, 401, 'Unauthorized');
+          return;
+        }
+
+        callback(true);
+      } catch (err) {
+        logger.error(`WebSocket verifyClient error: ${(err as Error).message}`);
+        callback(false, 500, 'Internal Error');
+      }
+    },
+  });
   const clientSubscriptions = new Map<WebSocket, Set<string>>();
 
   wss.on('connection', (ws, req) => {
@@ -461,9 +507,6 @@ async function startServer(): Promise<void> {
   httpServer.listen(PORT, HOST, () => {
     logger.info(`MCP Server started on http://${HOST}:${PORT}`);
     logger.info(`WebSocket available at ws://${HOST}:${PORT}/ws`);
-    if (!API_KEY) {
-      logger.warn('No API key configured! Set BYTEPAD_API_KEY environment variable.');
-    }
   });
 
   // Graceful shutdown
