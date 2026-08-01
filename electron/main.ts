@@ -58,6 +58,16 @@ const ALLOWED_CONNECT_ORIGINS = [
   'https://securetoken.googleapis.com',
 ]
 
+// Firebase's Google sign-in (src/services/firebase.ts calls signInWithPopup) is not just
+// a plain popup: the JS SDK also loads Google's gapi client script and embeds a hidden
+// 1x1 iframe at `${authDomain}/__/auth/iframe` in the MAIN document to relay the auth
+// result back from the popup. Both are required for the flow to complete, not optional.
+// authDomain comes straight from the same env var firebase.ts reads (VITE_FIREBASE_AUTH_DOMAIN,
+// see .env.example) so this can never drift from what's actually configured.
+const FIREBASE_AUTH_DOMAIN = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined
+const GAPI_SCRIPT_ORIGIN = 'https://apis.google.com'
+const GOOGLE_ACCOUNTS_ORIGIN = 'https://accounts.google.com'
+
 function buildContentSecurityPolicy(): string {
   const connectSrc = [...ALLOWED_CONNECT_ORIGINS]
   if (isDev) {
@@ -65,11 +75,22 @@ function buildContentSecurityPolicy(): string {
     connectSrc.push(DEV_SERVER_ORIGIN, 'ws://localhost:5173')
   }
 
+  const scriptSrc = ["'self'", GAPI_SCRIPT_ORIGIN]
+  if (isDev) {
+    // Vite's dev client + React Fast Refresh inject inline/eval'd code; production
+    // build is plain 'self' + gapi module scripts only.
+    scriptSrc.push("'unsafe-inline'", "'unsafe-eval'")
+  }
+
+  const frameSrc = ["'none'"]
+  if (FIREBASE_AUTH_DOMAIN) {
+    // Only when Firebase is actually configured - see firebase.ts isConfigured().
+    frameSrc[0] = `https://${FIREBASE_AUTH_DOMAIN}`
+  }
+
   const directives = [
     "default-src 'self'",
-    // Vite's dev client + React Fast Refresh inject inline/eval'd code; production
-    // build is plain 'self' module scripts only.
-    `script-src 'self'${isDev ? " 'unsafe-inline' 'unsafe-eval'" : ''}`,
+    `script-src ${scriptSrc.join(' ')}`,
     // React inline style props + Tailwind require 'unsafe-inline'; Google Fonts stylesheet.
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
@@ -78,8 +99,12 @@ function buildContentSecurityPolicy(): string {
     `connect-src ${connectSrc.join(' ')}`,
     "object-src 'none'",
     "base-uri 'self'",
+    // No <form> is used anywhere in the app (React-controlled inputs only); Google's
+    // OAuth redirect flow happens via popup navigation, not a form POST from our
+    // document, so this does not need to be loosened for sign-in to work.
     "form-action 'self'",
-    "frame-src 'none'",
+    // Hidden gapi relay iframe for Firebase auth events; 'none' when Firebase isn't configured.
+    `frame-src ${frameSrc.join(' ')}`,
     "worker-src 'self'",
   ]
 
@@ -158,13 +183,47 @@ function createWindow() {
 
   // Deny opening new BrowserWindows/popups by default; route legitimate http(s)/mailto
   // links to the OS's default handler instead of letting the renderer spawn windows.
+  // Exception: Firebase's signInWithPopup (src/services/firebase.ts) needs a real child
+  // window it can complete a postMessage handshake with - routing that to the system
+  // browser breaks Google sign-in outright. Only the Firebase auth handler origin
+  // (window.open target) and Google's own sign-in origin are allowed through; the child
+  // window still gets the same locked-down webPreferences as the main window, no preload.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    let origin: string
+    try {
+      origin = new URL(url).origin
+    } catch {
+      return { action: 'deny' }
+    }
+
+    const isAuthPopup =
+      (FIREBASE_AUTH_DOMAIN && origin === `https://${FIREBASE_AUTH_DOMAIN}`) ||
+      origin === GOOGLE_ACCOUNTS_ORIGIN
+
+    if (isAuthPopup) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true,
+          },
+        },
+      }
+    }
+
     openExternalSafely(url)
     return { action: 'deny' }
   })
 
   // Block the renderer from navigating the main frame away from the app itself
   // (dev server origin in development, the packaged app's own files in production).
+  // Electron scopes 'will-navigate' to the top-level main frame of this webContents only
+  // (see Electron docs), so this cannot fire for: (a) the Firebase auth popup, which is a
+  // separate webContents handled by setWindowOpenHandler above, or (b) the hidden gapi
+  // relay <iframe> Firebase injects into this document, which is a subframe navigation,
+  // not a main-frame one. Neither leg of the OAuth handshake is affected by this guard.
   mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
     const isAllowedNavigation = isDev
       ? navigationUrl.startsWith(DEV_SERVER_ORIGIN)
