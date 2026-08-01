@@ -273,17 +273,55 @@ const storeAccessors: Record<StoreName, {
   },
 
   settings: {
-    getAll: () => [useSettingsStore.getState()],
-    getById: (_id) => useSettingsStore.getState(),
+    getAll: () => [sanitizeSettingsForBridge(useSettingsStore.getState())],
+    getById: (_id) => sanitizeSettingsForBridge(useSettingsStore.getState()),
     create: (_data) => null,
     update: (_id, _data) => {
       // Settings are updated via specific setters, not generic update
-      return useSettingsStore.getState();
+      return sanitizeSettingsForBridge(useSettingsStore.getState());
     },
     delete: (_id) => false,
-    getState: () => useSettingsStore.getState(),
+    getState: () => sanitizeSettingsForBridge(useSettingsStore.getState()),
   },
 };
+
+// The settings store carries secrets (LLM API keys, GitHub sync token,
+// EmailJS public key) alongside its regular preferences. Nothing on the
+// bridge/MCP-server side legitimately needs the raw secret values (gist sync,
+// for instance, only reads `gistSync.enabled`/`gistId` via this bridge — the
+// actual sync call is made from the renderer, which already has the real
+// token in memory). Redact secrets before handing the settings snapshot out
+// over IPC so a compromised MCP client/consumer can't read them wholesale.
+const REDACTED = '[redacted]';
+
+function sanitizeSettingsForBridge(state: ReturnType<typeof useSettingsStore.getState>) {
+  return {
+    llmProvider: state.llmProvider,
+    llmModel: state.llmModel,
+    apiKeys: Object.fromEntries(
+      Object.entries(state.apiKeys).map(([provider, key]) => [provider, key ? REDACTED : ''])
+    ),
+    ollamaBaseUrl: state.ollamaBaseUrl,
+    fontSize: state.fontSize,
+    fontFamily: state.fontFamily,
+    noteMarkdownPreview: state.noteMarkdownPreview,
+    noteFontSize: state.noteFontSize,
+    emailPreferences: {
+      ...state.emailPreferences,
+      emailjsPublicKey: state.emailPreferences.emailjsPublicKey ? REDACTED : '',
+    },
+    gistSync: {
+      ...state.gistSync,
+      githubToken: state.gistSync.githubToken ? REDACTED : '',
+    },
+    focusPreferences: state.focusPreferences,
+    gamificationEnabled: state.gamificationEnabled,
+    onboardingCompleted: state.onboardingCompleted,
+    timezone: state.timezone,
+    localNotesEnabled: state.localNotesEnabled,
+    localNotesPath: state.localNotesPath,
+  };
+}
 
 // Action executors for specific store actions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

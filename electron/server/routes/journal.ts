@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { storeBridge } from '../bridges/storeBridge';
 import { logger } from '../utils/logger';
 
@@ -14,20 +15,23 @@ interface JournalEntry {
   tags: string[];
 }
 
-interface CreateJournalRequest {
-  date?: string;
-  content?: string;
-  mood?: number;
-  energy?: number;
-  tags?: string[];
-}
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Use YYYY-MM-DD');
+const moodEnergySchema = z.number().min(1, 'Must be between 1 and 5').max(5, 'Must be between 1 and 5');
 
-interface UpdateJournalRequest {
-  content?: string;
-  mood?: number;
-  energy?: number;
-  tags?: string[];
-}
+const createJournalSchema = z.object({
+  date: dateSchema.optional(),
+  content: z.string().optional(),
+  mood: moodEnergySchema.optional(),
+  energy: moodEnergySchema.optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+const updateJournalSchema = z.object({
+  content: z.string().optional(),
+  mood: moodEnergySchema.optional(),
+  energy: moodEnergySchema.optional(),
+  tags: z.array(z.string()).optional(),
+});
 
 // Helper to get today's date
 function getToday(): string {
@@ -173,31 +177,15 @@ router.get('/:date', async (req: Request, res: Response) => {
 // POST /api/journal - Create or update entry
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const body = req.body as CreateJournalRequest;
+    const parsed = createJournalSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: parsed.error.issues.map(i => i.message).join('; '),
+      });
+    }
+    const body = parsed.data;
     const date = body.date || getToday();
-
-    // Validate date format
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid date format. Use YYYY-MM-DD',
-      });
-    }
-
-    // Validate mood and energy (1-5)
-    if (body.mood !== undefined && (body.mood < 1 || body.mood > 5)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Mood must be between 1 and 5',
-      });
-    }
-
-    if (body.energy !== undefined && (body.energy < 1 || body.energy > 5)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Energy must be between 1 and 5',
-      });
-    }
 
     const entry = await storeBridge.create<JournalEntry>('journal', {
       date,
@@ -226,7 +214,6 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:date', async (req: Request, res: Response) => {
   try {
     const { date } = req.params;
-    const body = req.body as UpdateJournalRequest;
 
     // Validate date format
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -236,20 +223,14 @@ router.put('/:date', async (req: Request, res: Response) => {
       });
     }
 
-    // Validate mood and energy (1-5)
-    if (body.mood !== undefined && (body.mood < 1 || body.mood > 5)) {
+    const parsed = updateJournalSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'Mood must be between 1 and 5',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
-
-    if (body.energy !== undefined && (body.energy < 1 || body.energy > 5)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Energy must be between 1 and 5',
-      });
-    }
+    const body = parsed.data;
 
     const entry = await storeBridge.update<JournalEntry>('journal', date, body);
 

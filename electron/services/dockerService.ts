@@ -3,19 +3,27 @@
  * Manages Docker container lifecycle from Electron
  */
 
-import { exec, spawn, ChildProcess } from 'child_process';
+import { execFile, spawn } from 'child_process';
 import { promisify } from 'util';
+import fs from 'fs';
+import os from 'os';
+import crypto from 'crypto';
 import Store from 'electron-store';
 import path from 'path';
 import { app } from 'electron';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 const store = new Store();
 
 const CONTAINER_NAME = 'bytepad-mcp';
 const IMAGE_NAME = 'bytepad/mcp-server';
 const IMAGE_TAG = '0.24.3';
 const DEFAULT_PORT = 3847;
+const DEFAULT_LOG_LINES = 100;
+const MIN_PORT = 1;
+const MAX_PORT = 65535;
+const MIN_LOG_LINES = 1;
+const MAX_LOG_LINES = 100000;
 
 // Docker CLI paths to check on different platforms
 const DOCKER_PATHS = [
@@ -38,6 +46,51 @@ export interface DockerStatus {
 let resolvedDockerPath: string | null = null;
 
 /**
+ * Extract a readable error message, including stderr when available, from a
+ * failed child_process invocation.
+ */
+function extractErrorMessage(err: unknown): string {
+  const e = err as (Error & { stderr?: string }) | undefined;
+  if (!e) return 'Unknown error';
+  return [e.message, e.stderr].filter(Boolean).join('\n');
+}
+
+/**
+ * Clamp/validate a port value coming from persisted settings. Falls back to
+ * the default port for anything that isn't a valid TCP port number.
+ */
+function sanitizePort(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < MIN_PORT || n > MAX_PORT) {
+    return DEFAULT_PORT;
+  }
+  return n;
+}
+
+/**
+ * Clamp/validate the number of log lines requested. Falls back to the
+ * default line count for anything that isn't a sane positive integer.
+ */
+function sanitizeLogLines(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < MIN_LOG_LINES || n > MAX_LOG_LINES) {
+    return DEFAULT_LOG_LINES;
+  }
+  return n;
+}
+
+/**
+ * Validate a data directory path coming from persisted settings. Only
+ * accepts non-empty absolute paths; anything else is treated as "not set".
+ */
+function sanitizeDataDir(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed || !path.isAbsolute(trimmed)) return '';
+  return trimmed;
+}
+
+/**
  * Find the Docker CLI path
  */
 async function findDockerPath(): Promise<string | null> {
@@ -47,7 +100,7 @@ async function findDockerPath(): Promise<string | null> {
 
   for (const dockerPath of DOCKER_PATHS) {
     try {
-      await execAsync(`"${dockerPath}" --version`);
+      await execFileAsync(dockerPath, ['--version']);
       resolvedDockerPath = dockerPath;
       return dockerPath;
     } catch {
@@ -58,14 +111,15 @@ async function findDockerPath(): Promise<string | null> {
 }
 
 /**
- * Get docker command with resolved path
+ * Run a docker CLI command with an argv array (no shell involved), so
+ * arguments are never subject to shell interpretation/injection.
  */
-async function getDockerCommand(args: string): Promise<string> {
+async function runDocker(args: string[]): Promise<{ stdout: string; stderr: string }> {
   const dockerPath = await findDockerPath();
   if (!dockerPath) {
     throw new Error('Docker CLI not found');
   }
-  return `"${dockerPath}" ${args}`;
+  return execFileAsync(dockerPath, args);
 }
 
 /**
@@ -81,8 +135,7 @@ export async function isDockerInstalled(): Promise<boolean> {
  */
 export async function isDockerRunning(): Promise<boolean> {
   try {
-    const cmd = await getDockerCommand('info');
-    await execAsync(cmd);
+    await runDocker(['info']);
     return true;
   } catch {
     return false;
@@ -98,7 +151,7 @@ export async function getDockerStatus(): Promise<DockerStatus> {
     running: false,
     containerId: null,
     containerStatus: null,
-    port: store.get('mcp.docker.port', DEFAULT_PORT) as number,
+    port: sanitizePort(store.get('mcp.docker.port', DEFAULT_PORT)),
     error: null,
   };
 
@@ -116,8 +169,14 @@ export async function getDockerStatus(): Promise<DockerStatus> {
     }
 
     // Check if container exists
-    const cmd = await getDockerCommand(`ps -a --filter "name=${CONTAINER_NAME}" --format "{{.ID}}|{{.Status}}"`);
-    const { stdout } = await execAsync(cmd);
+    const { stdout } = await runDocker([
+      'ps',
+      '-a',
+      '--filter',
+      `name=${CONTAINER_NAME}`,
+      '--format',
+      '{{.ID}}|{{.Status}}',
+    ]);
 
     if (stdout.trim()) {
       const [containerId, containerStatus] = stdout.trim().split('|');
@@ -128,7 +187,7 @@ export async function getDockerStatus(): Promise<DockerStatus> {
 
     return status;
   } catch (err) {
-    status.error = (err as Error).message;
+    status.error = extractErrorMessage(err);
     return status;
   }
 }
@@ -174,9 +233,24 @@ export async function buildDockerImage(
 }
 
 /**
+ * Write the MCP API key to a private (0600) temp file so it can be passed to
+ * `docker run` via --env-file instead of as a CLI argument, which would
+ * otherwise be visible to any local user via `ps aux`.
+ */
+async function writeApiKeyEnvFile(apiKey: string): Promise<string> {
+  const filePath = path.join(
+    os.tmpdir(),
+    `bytepad-mcp-env-${crypto.randomBytes(16).toString('hex')}`
+  );
+  await fs.promises.writeFile(filePath, `BYTEPAD_API_KEY=${apiKey}\n`, { mode: 0o600 });
+  return filePath;
+}
+
+/**
  * Start MCP Docker container
  */
 export async function startDockerContainer(): Promise<{ success: boolean; error?: string }> {
+  let envFilePath: string | null = null;
   try {
     const status = await getDockerStatus();
 
@@ -188,14 +262,13 @@ export async function startDockerContainer(): Promise<{ success: boolean; error?
       return { success: false, error: 'Docker daemon is not running. Please start Docker Desktop.' };
     }
 
-    const port = store.get('mcp.docker.port', DEFAULT_PORT) as number;
+    const port = sanitizePort(store.get('mcp.docker.port', DEFAULT_PORT));
     const apiKey = store.get('mcp.apiKey', '') as string;
-    const dataDir = store.get('mcp.docker.dataDir', '') as string;
+    const dataDir = sanitizeDataDir(store.get('mcp.docker.dataDir', ''));
 
     // If container exists but stopped, start it
     if (status.containerId && !status.running) {
-      const startCmd = await getDockerCommand(`start ${CONTAINER_NAME}`);
-      await execAsync(startCmd);
+      await runDocker(['start', CONTAINER_NAME]);
       store.set('mcp.docker.enabled', true);
       return { success: true };
     }
@@ -206,28 +279,38 @@ export async function startDockerContainer(): Promise<{ success: boolean; error?
     }
 
     // Create and start new container
-    const volumeMount = dataDir
-      ? `-v "${dataDir}:/app/data"`
-      : '-v bytepad-mcp-data:/app/data';
+    const volumeArgs = dataDir
+      ? ['-v', `${dataDir}:/app/data`]
+      : ['-v', 'bytepad-mcp-data:/app/data'];
 
-    const runCmd = await getDockerCommand([
-      'run -d',
-      `--name ${CONTAINER_NAME}`,
-      `-p ${port}:3847`,
-      `-e MCP_PORT=3847`,
-      `-e MCP_HOST=0.0.0.0`,
-      `-e BYTEPAD_API_KEY=${apiKey}`,
-      `-e LOG_LEVEL=info`,
-      volumeMount,
-      '--restart unless-stopped',
+    envFilePath = await writeApiKeyEnvFile(apiKey);
+
+    const runArgs = [
+      'run',
+      '-d',
+      '--name',
+      CONTAINER_NAME,
+      '-p',
+      `${port}:3847`,
+      '-e',
+      'MCP_PORT=3847',
+      '-e',
+      'MCP_HOST=0.0.0.0',
+      '--env-file',
+      envFilePath,
+      '-e',
+      'LOG_LEVEL=info',
+      ...volumeArgs,
+      '--restart',
+      'unless-stopped',
       `${IMAGE_NAME}:${IMAGE_TAG}`,
-    ].join(' '));
+    ];
 
-    await execAsync(runCmd);
+    await runDocker(runArgs);
     store.set('mcp.docker.enabled', true);
     return { success: true };
   } catch (err) {
-    const errorMessage = (err as Error).message;
+    const errorMessage = extractErrorMessage(err);
 
     // Check if image doesn't exist
     if (errorMessage.includes('Unable to find image') || errorMessage.includes('No such image')) {
@@ -241,11 +324,15 @@ export async function startDockerContainer(): Promise<{ success: boolean; error?
     if (errorMessage.includes('port is already allocated')) {
       return {
         success: false,
-        error: `Port ${store.get('mcp.docker.port', DEFAULT_PORT)} is already in use`,
+        error: `Port ${sanitizePort(store.get('mcp.docker.port', DEFAULT_PORT))} is already in use`,
       };
     }
 
     return { success: false, error: errorMessage };
+  } finally {
+    if (envFilePath) {
+      await fs.promises.unlink(envFilePath).catch(() => {});
+    }
   }
 }
 
@@ -261,12 +348,11 @@ export async function stopDockerContainer(): Promise<{ success: boolean; error?:
       return { success: true };
     }
 
-    const cmd = await getDockerCommand(`stop ${CONTAINER_NAME}`);
-    await execAsync(cmd);
+    await runDocker(['stop', CONTAINER_NAME]);
     store.set('mcp.docker.enabled', false);
     return { success: true };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    return { success: false, error: extractErrorMessage(err) };
   }
 }
 
@@ -276,25 +362,25 @@ export async function stopDockerContainer(): Promise<{ success: boolean; error?:
 export async function removeDockerContainer(): Promise<{ success: boolean; error?: string }> {
   try {
     await stopDockerContainer();
-    const cmd = await getDockerCommand(`rm ${CONTAINER_NAME}`);
-    await execAsync(cmd);
+    await runDocker(['rm', CONTAINER_NAME]);
     return { success: true };
   } catch (err) {
+    const errorMessage = extractErrorMessage(err);
     // Ignore error if container doesn't exist
-    if ((err as Error).message.includes('No such container')) {
+    if (errorMessage.includes('No such container')) {
       return { success: true };
     }
-    return { success: false, error: (err as Error).message };
+    return { success: false, error: errorMessage };
   }
 }
 
 /**
  * Get container logs
  */
-export async function getContainerLogs(lines: number = 100): Promise<string> {
+export async function getContainerLogs(lines: number = DEFAULT_LOG_LINES): Promise<string> {
   try {
-    const cmd = await getDockerCommand(`logs --tail ${lines} ${CONTAINER_NAME}`);
-    const { stdout } = await execAsync(cmd);
+    const safeLines = sanitizeLogLines(lines);
+    const { stdout } = await runDocker(['logs', '--tail', String(safeLines), CONTAINER_NAME]);
     return stdout;
   } catch {
     return '';
@@ -306,11 +392,10 @@ export async function getContainerLogs(lines: number = 100): Promise<string> {
  */
 export async function pullDockerImage(): Promise<{ success: boolean; error?: string }> {
   try {
-    const cmd = await getDockerCommand(`pull ${IMAGE_NAME}:${IMAGE_TAG}`);
-    await execAsync(cmd);
+    await runDocker(['pull', `${IMAGE_NAME}:${IMAGE_TAG}`]);
     return { success: true };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    return { success: false, error: extractErrorMessage(err) };
   }
 }
 
@@ -319,8 +404,7 @@ export async function pullDockerImage(): Promise<{ success: boolean; error?: str
  */
 export async function imageExists(): Promise<boolean> {
   try {
-    const cmd = await getDockerCommand(`images -q ${IMAGE_NAME}:${IMAGE_TAG}`);
-    const { stdout } = await execAsync(cmd);
+    const { stdout } = await runDocker(['images', '-q', `${IMAGE_NAME}:${IMAGE_TAG}`]);
     return stdout.trim().length > 0;
   } catch {
     return false;

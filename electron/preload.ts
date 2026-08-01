@@ -15,6 +15,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     has: (key: string) => ipcRenderer.invoke('store:has', key),
   },
 
+  // Secrets operations — same shape as `store` above, but persisted
+  // through main-process safeStorage encryption instead of plaintext.
+  secrets: {
+    get: (key: string) => ipcRenderer.invoke('secrets:get', key),
+    set: (key: string, value: unknown) => ipcRenderer.invoke('secrets:set', key, value),
+    delete: (key: string) => ipcRenderer.invoke('secrets:delete', key),
+    isAvailable: () => ipcRenderer.invoke('secrets:isAvailable'),
+  },
+
   // App info
   getVersion: () => ipcRenderer.invoke('app:version'),
   isPackaged: () => ipcRenderer.invoke('app:isPackaged'),

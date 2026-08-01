@@ -127,7 +127,14 @@
             "importBackup": "Yedekten İçe Aktar",
             "dangerZone": "Tehlikeli Bölge",
             "deleteAll": "Tüm Verileri Sil",
-            "deleteWarning": "Bu işlem tüm notlarınızı, görevlerinizi, alışkanlıklarınızı ve günlük girişlerinizi kalıcı olarak silecektir."
+            "deleteWarning": "Bu i\u015flem t\u00fcm notlar\u0131n\u0131z\u0131, g\u00f6revlerinizi, al\u0131\u015fkanl\u0131klar\u0131n\u0131z\u0131 ve g\u00fcnl\u00fck giri\u015flerinizi kal\u0131c\u0131 olarak silecektir.",
+            "credentialStorageTitle": "Kimlik Bilgisi Depolama",
+            "rememberSecrets": "API anahtarlar\u0131n\u0131 ve token'lar\u0131 bu cihazda hat\u0131rla",
+            "rememberSecretsWarning": "Etkinle\u015ftirildi\u011finde API anahtarlar\u0131n\u0131z ve token'lar\u0131n\u0131z bu taray\u0131c\u0131n\u0131n yerel depolamas\u0131nda saklan\u0131r ve yeniden ba\u015flatmalarda kal\u0131c\u0131 olur. D\u00fcz metin olarak depolan\u0131rlar \u2014 bu cihaza veya taray\u0131c\u0131 profiline eri\u015febilen herkes bunlar\u0131 okuyabilir. Payla\u015f\u0131lan veya herkese a\u00e7\u0131k bilgisayarlarda bunu kapal\u0131 tutun."
+        },
+        "mcp": {
+            "nonLoopbackWarningTitle": "Sunucu bu cihaz\u0131n d\u0131\u015f\u0131na a\u00e7\u0131k",
+            "nonLoopbackWarning": "MCP sunucusu {host} adresine ba\u011fl\u0131; bu, yaln\u0131zca bu bilgisayar yerine a\u011f\u0131n\u0131zdaki di\u011fer cihazlardan da ba\u011flant\u0131 kabul edildi\u011fi anlam\u0131na gelir. Yaln\u0131zca riski anl\u0131yorsan\u0131z kullan\u0131n."
         }
     },
     "chat": {

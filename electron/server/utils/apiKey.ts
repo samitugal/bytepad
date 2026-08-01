@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { randomBytes, timingSafeEqual } from 'crypto';
 import Store from 'electron-store';
 
 const store = new Store();
@@ -15,7 +15,23 @@ export function getOrCreateApiKey(): string {
 
 export function validateApiKey(key: string): boolean {
   const storedKey = store.get('mcp.apiKey') as string | undefined;
-  return key === storedKey;
+
+  if (!key || !storedKey) {
+    return false;
+  }
+
+  const keyBuffer = Buffer.from(key);
+  const storedBuffer = Buffer.from(storedKey);
+
+  // timingSafeEqual throws on length mismatch, so compare the key against
+  // itself in that case to avoid a length-based timing side channel while
+  // still returning false.
+  if (keyBuffer.length !== storedBuffer.length) {
+    timingSafeEqual(keyBuffer, keyBuffer);
+    return false;
+  }
+
+  return timingSafeEqual(keyBuffer, storedBuffer);
 }
 
 export function regenerateApiKey(): string {
