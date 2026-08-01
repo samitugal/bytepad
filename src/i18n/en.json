@@ -353,6 +353,8 @@
         "stats": "Your Stats",
         "totalXP": "Total XP",
         "toNextLevel": "to next level",
+        "maxLevel": "MAX",
+        "maxLevelReached": "Max level reached",
         "streak": "Streak (current/best)",
         "activity": "Activity",
         "tasksCompleted": "Tasks Completed",
