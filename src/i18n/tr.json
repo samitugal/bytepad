@@ -127,7 +127,10 @@
             "importBackup": "Yedekten İçe Aktar",
             "dangerZone": "Tehlikeli Bölge",
             "deleteAll": "Tüm Verileri Sil",
-            "deleteWarning": "Bu işlem tüm notlarınızı, görevlerinizi, alışkanlıklarınızı ve günlük girişlerinizi kalıcı olarak silecektir."
+            "deleteWarning": "Bu işlem tüm notlarınızı, görevlerinizi, alışkanlıklarınızı ve günlük girişlerinizi kalıcı olarak silecektir.",
+            "credentialStorageTitle": "Kimlik Bilgisi Depolama",
+            "rememberSecrets": "API anahtarlarını ve token'ları bu cihazda hatırla",
+            "rememberSecretsWarning": "Etkinleştirildiğinde API anahtarlarınız ve token'larınız bu tarayıcının yerel depolamasında saklanır ve yeniden başlatmalarda kalıcı olur. Düz metin olarak depolanırlar — bu cihaza veya tarayıcı profiline erişebilen herkes bunları okuyabilir. Paylaşılan veya herkese açık bilgisayarlarda bunu kapalı tutun."
         }
     },
     "chat": {

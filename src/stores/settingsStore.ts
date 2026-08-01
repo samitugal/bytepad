@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { secretsStorage, type StoredSecrets } from '../utils/storage'
+import { secretsStorage, isRememberOnDeviceEnabled, type StoredSecrets } from '../utils/storage'
 
 export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'groq' | 'ollama'
 export type ApiKeyType = LLMProvider | 'tavily'
@@ -208,6 +208,12 @@ interface SettingsState {
   // GitHub Gist Sync
   gistSync: GistSyncPreferences
 
+  // Web-only opt-in: persist secrets (apiKeys, gistSync.githubToken,
+  // emailPreferences.emailjsPublicKey) to localStorage instead of the
+  // sessionStorage-only default. Always false in Electron, where
+  // safeStorage-backed encryption covers this instead (see storage.ts).
+  rememberSecretsOnDevice: boolean
+
   // Focus Mode Settings
   focusPreferences: FocusPreferences
 
@@ -236,6 +242,7 @@ interface SettingsState {
   setNoteFontSize: (size: FontSize) => void
   setEmailPreferences: (prefs: Partial<EmailPreferences>) => void
   setGistSync: (prefs: Partial<GistSyncPreferences>) => void
+  setRememberSecretsOnDevice: (enabled: boolean) => void
   setFocusPreferences: (prefs: Partial<FocusPreferences>) => void
   setGamificationEnabled: (enabled: boolean) => void
   setTimezone: (timezone: string) => void
@@ -253,10 +260,12 @@ interface SettingsState {
 // apiKeys, gistSync.githubToken and emailPreferences.emailjsPublicKey are
 // intentionally excluded from the zustand `persist` blob below (see
 // `partialize`) and are instead mirrored to `secretsStorage` (Electron:
-// electron-store via IPC, Web: sessionStorage — see src/utils/storage.ts).
-// This keeps the runtime store shape and every existing call site
-// (`state.apiKeys[...]`, `getCurrentApiKey()`, etc.) unchanged; only where
-// these three fields end up at rest on disk changes.
+// electron-store via a safeStorage-encrypted IPC channel, Web:
+// sessionStorage by default, or localStorage if the user opts in via
+// `setRememberSecretsOnDevice` — see src/utils/storage.ts). This keeps the
+// runtime store shape and every existing call site (`state.apiKeys[...]`,
+// `getCurrentApiKey()`, etc.) unchanged; only where these three fields end
+// up at rest on disk changes.
 function buildSecretsPayload(state: Pick<SettingsState, 'apiKeys' | 'gistSync' | 'emailPreferences'>): StoredSecrets {
   return {
     apiKeys: state.apiKeys,
@@ -354,6 +363,10 @@ export const useSettingsStore = create<SettingsState>()(
         lastSyncStatus: null,
         lastSyncError: null,
       },
+      // Not persisted via `partialize` — source of truth is the localStorage
+      // marker read by isRememberOnDeviceEnabled() (see storage.ts), which
+      // is also always false in Electron.
+      rememberSecretsOnDevice: isRememberOnDeviceEnabled(),
       focusPreferences: {
         defaultDuration: 25,
         shortBreakDuration: 5,
@@ -416,6 +429,18 @@ export const useSettingsStore = create<SettingsState>()(
         if ('githubToken' in prefs) {
           void secretsStorage.save(buildSecretsPayload(get()))
         }
+      },
+
+      setRememberSecretsOnDevice: (enabled) => {
+        set({ rememberSecretsOnDevice: enabled })
+        void (async () => {
+          await secretsStorage.setRememberOnDevice(enabled)
+          if (enabled) {
+            // Persist whatever is currently in memory immediately, rather
+            // than waiting for the next setApiKey/setGistSync/etc. call.
+            await secretsStorage.save(buildSecretsPayload(get()))
+          }
+        })()
       },
 
       setFocusPreferences: (prefs) => set((state) => ({

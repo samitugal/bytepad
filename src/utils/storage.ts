@@ -51,20 +51,26 @@ export const zustandStorage = {
 
 // Secrets storage — separate from the general zustand-persisted settings blob.
 //
-// Electron: routed through the IPC `store` bridge above, which persists to
-// electron-store's JSON file in the OS user-data directory instead of the
-// renderer's localStorage. NOTE: this is not yet OS-keychain encrypted at
-// rest (that requires a main-process `safeStorage` channel — electron/main.ts
-// is out of scope for this change, see settingsStore.ts for details); moving
-// secrets off localStorage and out of the general settings blob is the
-// improvement made here.
+// Electron: routed through the dedicated IPC `secrets` bridge (NOT the
+// generic `store` bridge above), which encrypts with the main process's
+// safeStorage before persisting to electron-store's JSON file in the OS
+// user-data directory. See electron/main.ts for the encrypt/decrypt
+// envelope and the one-time migration of pre-safeStorage plaintext values.
+// If safeStorage.isEncryptionAvailable() is false on the current system
+// (some Linux setups without a reachable keyring), the main process still
+// stores the value but flags it as unencrypted rather than silently
+// writing plaintext under an "encrypted" label — see isEncryptionAvailable
+// below for how the renderer can surface that.
 //
 // Web/PWA: there is no OS-backed secure storage available in the browser
-// sandbox, so secrets are held in sessionStorage only. sessionStorage is
+// sandbox. By default secrets are held in sessionStorage only, which is
 // cleared when the tab/browser session ends, so keys never sit at rest in
-// persistent plaintext storage the way they did in localStorage — the
-// trade-off is that users must re-enter keys in a new browser session.
+// persistent plaintext storage the way they did in localStorage. Users can
+// opt in (see setRememberOnDevice) to also persist to localStorage, which
+// trades that protection for not having to re-enter keys every session —
+// the UI is responsible for warning that this is unencrypted at rest.
 const SECRETS_KEY = 'bytepad-secrets'
+const REMEMBER_ON_DEVICE_KEY = 'bytepad-secrets-remember'
 
 export interface StoredSecrets {
   apiKeys?: Record<string, string>
@@ -72,12 +78,27 @@ export interface StoredSecrets {
   emailjsPublicKey?: string
 }
 
+// Web-only: whether the user opted in to persisting secrets to localStorage.
+// Always false in Electron, where safeStorage covers persistence instead.
+export function isRememberOnDeviceEnabled(): boolean {
+  if (isElectron()) return false
+  try {
+    return localStorage.getItem(REMEMBER_ON_DEVICE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
 export const secretsStorage = {
   async load(): Promise<StoredSecrets | null> {
     try {
       if (isElectron()) {
-        const raw = await storage.getItem(SECRETS_KEY)
-        return raw ? (JSON.parse(raw) as StoredSecrets) : null
+        const value = await window.electronAPI!.secrets.get(SECRETS_KEY)
+        return (value as StoredSecrets | undefined) ?? null
+      }
+      if (isRememberOnDeviceEnabled()) {
+        const remembered = localStorage.getItem(SECRETS_KEY)
+        if (remembered) return JSON.parse(remembered) as StoredSecrets
       }
       const raw = sessionStorage.getItem(SECRETS_KEY)
       return raw ? (JSON.parse(raw) as StoredSecrets) : null
@@ -88,18 +109,50 @@ export const secretsStorage = {
 
   async save(secrets: StoredSecrets): Promise<void> {
     if (isElectron()) {
-      await storage.setItem(SECRETS_KEY, JSON.stringify(secrets))
+      await window.electronAPI!.secrets.set(SECRETS_KEY, secrets)
       return
     }
     sessionStorage.setItem(SECRETS_KEY, JSON.stringify(secrets))
+    if (isRememberOnDeviceEnabled()) {
+      localStorage.setItem(SECRETS_KEY, JSON.stringify(secrets))
+    }
   },
 
   async clear(): Promise<void> {
     if (isElectron()) {
-      await storage.removeItem(SECRETS_KEY)
+      await window.electronAPI!.secrets.delete(SECRETS_KEY)
       return
     }
     sessionStorage.removeItem(SECRETS_KEY)
+    localStorage.removeItem(SECRETS_KEY)
+  },
+
+  // Electron only: resolves false on web (no equivalent concept there) and
+  // false if the main process reports safeStorage.isEncryptionAvailable()
+  // as false. Callers can use this to warn the user that credentials are
+  // not encrypted at rest on this system.
+  async isEncryptionAvailable(): Promise<boolean> {
+    if (!isElectron()) return false
+    return window.electronAPI!.secrets.isAvailable()
+  },
+
+  // Web only: toggles whether secrets are also persisted to localStorage.
+  // No-ops in Electron. Turning this OFF actively clears the localStorage
+  // copy rather than just stopping future writes to it.
+  async setRememberOnDevice(enabled: boolean): Promise<void> {
+    if (isElectron()) return
+    try {
+      if (enabled) {
+        localStorage.setItem(REMEMBER_ON_DEVICE_KEY, 'true')
+        const current = sessionStorage.getItem(SECRETS_KEY)
+        if (current) localStorage.setItem(SECRETS_KEY, current)
+      } else {
+        localStorage.removeItem(REMEMBER_ON_DEVICE_KEY)
+        localStorage.removeItem(SECRETS_KEY)
+      }
+    } catch {
+      // Ignore storage errors (e.g. localStorage disabled in private browsing).
+    }
   },
 }
 
