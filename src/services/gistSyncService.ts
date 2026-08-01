@@ -9,7 +9,7 @@ import { useJournalStore } from '../stores/journalStore'
 import { useBookmarkStore } from '../stores/bookmarkStore'
 import { useDailyNotesStore } from '../stores/dailyNotesStore'
 import { useFocusStore } from '../stores/focusStore'
-import { useGamificationStore } from '../stores/gamificationStore'
+import { useGamificationStore, deriveLevelAndXP } from '../stores/gamificationStore'
 import { useIdeaStore } from '../stores/ideaStore'
 
 const GIST_FILENAME = 'bytepad-data.json'
@@ -196,16 +196,23 @@ function applyData(syncData: SyncData, forceOverwrite: boolean = false): void {
     }
     if (data.gamification) {
         const currentGamification = useGamificationStore.getState()
-        // Check if gamification data changed
-        const gamificationChanged =
-            currentGamification.level !== data.gamification.level ||
-            currentGamification.currentXP !== data.gamification.currentXP ||
-            currentGamification.totalXP !== data.gamification.totalXP
+        // `level`/`currentXP` are derived values (see deriveLevelAndXP), not independent
+        // source-of-truth fields — comparing them here would make this dirty-check fire
+        // against a peer device that hasn't picked up a level-table change yet (its stored
+        // `level` differs from ours even though the underlying `totalXP` doesn't), causing
+        // the two devices to flap the remote blob back and forth on every sync. `totalXP` is
+        // the only value we trust verbatim, so that's the only one worth comparing.
+        const gamificationChanged = currentGamification.totalXP !== data.gamification.totalXP
 
         if (gamificationChanged) {
+            // Never trust a remote `level`/`currentXP` verbatim — always re-derive them from
+            // `totalXP` through the same helper the persist `merge` uses, so a stale blob
+            // (e.g. from a device that hasn't picked up a level-table change) can't push a
+            // wrong level back into this store.
+            const { level, currentXP } = deriveLevelAndXP(data.gamification.totalXP)
             updates.push(() => useGamificationStore.setState({
-                level: data.gamification!.level,
-                currentXP: data.gamification!.currentXP,
+                level,
+                currentXP,
                 totalXP: data.gamification!.totalXP,
                 tasksCompleted: data.gamification!.tasksCompleted,
                 tasksCompletedToday: data.gamification!.tasksCompletedToday,
