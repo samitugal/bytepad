@@ -1,6 +1,7 @@
 // GitHub Gist Sync Service
 // Syncs all app data to a GitHub Gist for cross-device synchronization
 
+import { z } from 'zod'
 import { useSettingsStore } from '../stores/settingsStore'
 import { useNoteStore } from '../stores/noteStore'
 import { useTaskStore } from '../stores/taskStore'
@@ -18,35 +19,44 @@ interface SyncData {
     version: number
     lastModified: string
     data: {
-        notes: unknown[]
-        tasks: unknown[]
-        habits: unknown[]
-        journal: unknown[]
-        bookmarks: unknown[]
-        dailyNotes: unknown[]
-        ideas: unknown[]
-        focusSessions: unknown[]
+        // Each collection is optional at this type level (not just in practice) because
+        // parseSyncData() below parses collections independently and drops any single
+        // corrupt one to `undefined` rather than rejecting the whole payload - see the
+        // per-collection parsing rationale there.
+        notes: unknown[] | undefined
+        tasks: unknown[] | undefined
+        habits: unknown[] | undefined
+        journal: unknown[] | undefined
+        bookmarks: unknown[] | undefined
+        dailyNotes: unknown[] | undefined
+        ideas: unknown[] | undefined
+        focusSessions: unknown[] | undefined
         gamification: {
-            level: number
-            currentXP: number
+            // Only `totalXP` is required - see gamificationSchema below for why. Every
+            // other field is optional so a remote blob from an older/newer app version
+            // that's missing one of these counters still validates; applyData falls back
+            // to the current local value for whichever of these come back undefined
+            // instead of overwriting a real counter with `undefined` or a made-up 0.
+            level?: number
+            currentXP?: number
             totalXP: number
-            tasksCompleted: number
-            tasksCompletedToday: number
-            habitsCompleted: number
-            habitsCompletedToday: number
-            pomodorosCompleted: number
-            notesCreated: number
-            journalEntries: number
-            perfectDays: number
-            currentStreak: number
-            bestStreak: number
-            lastActiveDate: string | null
-            achievements: string[]
+            tasksCompleted?: number
+            tasksCompletedToday?: number
+            habitsCompleted?: number
+            habitsCompletedToday?: number
+            pomodorosCompleted?: number
+            notesCreated?: number
+            journalEntries?: number
+            perfectDays?: number
+            currentStreak?: number
+            bestStreak?: number
+            lastActiveDate?: string | null
+            achievements?: string[]
         } | null
         focusStats: {
-            consecutiveSessions: number
-            focusStreak: number
-            lastFocusDate: string | null
+            consecutiveSessions?: number
+            focusStreak?: number
+            lastFocusDate?: string | null
         } | null
     }
 }
@@ -184,17 +194,32 @@ function applyData(syncData: SyncData, forceOverwrite: boolean = false): void {
     }
     if (data.focusStats) {
         const currentFocus = useFocusStore.getState()
-        if (currentFocus.consecutiveSessions !== data.focusStats.consecutiveSessions ||
-            currentFocus.focusStreak !== data.focusStats.focusStreak ||
-            currentFocus.lastFocusDate !== data.focusStats.lastFocusDate) {
+        // Every focusStats field is optional (see SyncData) so a blob missing one still
+        // validates - fall back to the current local value for whichever field is
+        // undefined instead of writing `undefined` into a store field typed as `number`.
+        const consecutiveSessions = data.focusStats.consecutiveSessions ?? currentFocus.consecutiveSessions
+        const focusStreak = data.focusStats.focusStreak ?? currentFocus.focusStreak
+        const lastFocusDate = data.focusStats.lastFocusDate ?? currentFocus.lastFocusDate
+        if (currentFocus.consecutiveSessions !== consecutiveSessions ||
+            currentFocus.focusStreak !== focusStreak ||
+            currentFocus.lastFocusDate !== lastFocusDate) {
             updates.push(() => useFocusStore.setState({
-                consecutiveSessions: data.focusStats!.consecutiveSessions,
-                focusStreak: data.focusStats!.focusStreak,
-                lastFocusDate: data.focusStats!.lastFocusDate,
+                consecutiveSessions,
+                focusStreak,
+                lastFocusDate,
             }))
         }
     }
-    if (data.gamification) {
+    // parseSyncData() already guarantees a non-null `data.gamification` has a finite
+    // numeric `totalXP` - it drops the whole gamification block to `null` otherwise (see
+    // gamificationSchema) - so this `typeof`/`isFinite` check should never actually fail
+    // here. It's kept as a second, cheap guard directly at the deriveLevelAndXP call site
+    // anyway: applyData is the one place that ever calls deriveLevelAndXP with data that
+    // came off the network, and a defense-in-depth check here means a future caller of
+    // applyData that skips parseSyncData (or a bug in it) still can't turn a bad `totalXP`
+    // into a persisted NaN - mirroring the identical guard gamificationStore's own persist
+    // `merge` already applies (`typeof persisted.totalXP === 'number' ? ... : ...`).
+    if (data.gamification && typeof data.gamification.totalXP === 'number' && Number.isFinite(data.gamification.totalXP)) {
         const currentGamification = useGamificationStore.getState()
         // `level`/`currentXP` are derived values (see deriveLevelAndXP), not independent
         // source-of-truth fields — comparing them here would make this dirty-check fire
@@ -210,22 +235,29 @@ function applyData(syncData: SyncData, forceOverwrite: boolean = false): void {
             // (e.g. from a device that hasn't picked up a level-table change) can't push a
             // wrong level back into this store.
             const { level, currentXP } = deriveLevelAndXP(data.gamification.totalXP)
+            const remoteGamification = data.gamification
+            // Every field below `totalXP` is optional (see SyncData/gamificationSchema) so
+            // a remote blob from an older app version that never had, say, `perfectDays`
+            // still validates and applies. Fall back to the current local value for
+            // whichever counter is missing instead of overwriting a real value with
+            // `undefined` (which would just relocate the NaN-on-persist hazard this whole
+            // schema exists to close) or a made-up 0 (silent, wrong-looking data loss).
             updates.push(() => useGamificationStore.setState({
                 level,
                 currentXP,
-                totalXP: data.gamification!.totalXP,
-                tasksCompleted: data.gamification!.tasksCompleted,
-                tasksCompletedToday: data.gamification!.tasksCompletedToday,
-                habitsCompleted: data.gamification!.habitsCompleted,
-                habitsCompletedToday: data.gamification!.habitsCompletedToday,
-                pomodorosCompleted: data.gamification!.pomodorosCompleted,
-                notesCreated: data.gamification!.notesCreated,
-                journalEntries: data.gamification!.journalEntries,
-                perfectDays: data.gamification!.perfectDays,
-                currentStreak: data.gamification!.currentStreak,
-                bestStreak: data.gamification!.bestStreak,
-                lastActiveDate: data.gamification!.lastActiveDate,
-                achievements: data.gamification!.achievements,
+                totalXP: remoteGamification.totalXP,
+                tasksCompleted: remoteGamification.tasksCompleted ?? currentGamification.tasksCompleted,
+                tasksCompletedToday: remoteGamification.tasksCompletedToday ?? currentGamification.tasksCompletedToday,
+                habitsCompleted: remoteGamification.habitsCompleted ?? currentGamification.habitsCompleted,
+                habitsCompletedToday: remoteGamification.habitsCompletedToday ?? currentGamification.habitsCompletedToday,
+                pomodorosCompleted: remoteGamification.pomodorosCompleted ?? currentGamification.pomodorosCompleted,
+                notesCreated: remoteGamification.notesCreated ?? currentGamification.notesCreated,
+                journalEntries: remoteGamification.journalEntries ?? currentGamification.journalEntries,
+                perfectDays: remoteGamification.perfectDays ?? currentGamification.perfectDays,
+                currentStreak: remoteGamification.currentStreak ?? currentGamification.currentStreak,
+                bestStreak: remoteGamification.bestStreak ?? currentGamification.bestStreak,
+                lastActiveDate: remoteGamification.lastActiveDate ?? currentGamification.lastActiveDate,
+                achievements: remoteGamification.achievements ?? currentGamification.achievements,
             }))
         }
     }
@@ -256,6 +288,153 @@ function applyData(syncData: SyncData, forceOverwrite: boolean = false): void {
             }
         })
     })
+}
+
+// ---------------------------------------------------------------------------
+// Inbound validation
+//
+// The Gist is the user's own document - they can hand-edit it, it can be left
+// over from an older app version, or it can be truncated by an interrupted
+// push. `readFromGist` used to do `JSON.parse(...) as SyncData`, a
+// compile-time-only assertion that checks nothing at runtime, and whatever
+// came back was written into the stores and then persisted, silently
+// replacing good local data. The schemas below follow the same pattern
+// already used for untrusted JSON at `electron/server/routes/bulk.ts`
+// (`noteImportSchema`, `taskImportSchema`, etc.): validate the envelope
+// loosely, validate/strip each item individually, and never let one bad
+// field reject data that was otherwise fine.
+// ---------------------------------------------------------------------------
+
+// A collection item (a note, task, habit, journal entry, bookmark, daily
+// note, idea or focus session) is treated as an opaque object here. This
+// service is a sync transport, not the source of truth for any entity's
+// shape - that lives in each entity store and in the bulk-import schemas
+// (electron/server/routes/bulk.ts) that already validate field-by-field when
+// data is actually imported. Re-declaring per-entity schemas here would mean
+// this file silently drops any field a newer app version added to an entity
+// (or any field an older version never had), which is exactly the
+// "rejects real users' existing gists" failure mode we've been told to
+// avoid. All we need at this boundary is protection against a collection
+// slot containing something that could never be an entity at all (a string,
+// a number, `null`, ...), so a truncated or hand-edited array can't reach a
+// store's `setState`.
+const syncItemSchema = z.record(z.string(), z.unknown())
+const syncCollectionSchema = z.array(syncItemSchema)
+
+// Gamification is validated as its own object (not folded into the generic
+// item schema) because `totalXP` is the one field this file actively
+// computes with: `deriveLevelAndXP(data.gamification.totalXP)` at the
+// applyData call site. Every other field is optional so an older or newer
+// gamification shape still passes - `totalXP` is the sole exception: it is
+// the only value `applyData` re-derives `level`/`currentXP` from (mirroring
+// gamificationStore's own persist `merge`, which applies the identical
+// `typeof persisted.totalXP === 'number'` guard), so a gamification block
+// without a valid `totalXP` cannot be safely applied at all. `.finite()`
+// additionally rejects the one way a valid JSON document can still produce a
+// non-finite number (e.g. `1e1000` parses to `Infinity`).
+const gamificationSchema = z.object({
+    level: z.number().optional(),
+    currentXP: z.number().optional(),
+    totalXP: z.number().finite(),
+    tasksCompleted: z.number().optional(),
+    tasksCompletedToday: z.number().optional(),
+    habitsCompleted: z.number().optional(),
+    habitsCompletedToday: z.number().optional(),
+    pomodorosCompleted: z.number().optional(),
+    notesCreated: z.number().optional(),
+    journalEntries: z.number().optional(),
+    perfectDays: z.number().optional(),
+    currentStreak: z.number().optional(),
+    bestStreak: z.number().optional(),
+    lastActiveDate: z.string().nullable().optional(),
+    achievements: z.array(z.string()).optional(),
+})
+
+const focusStatsSchema = z.object({
+    consecutiveSessions: z.number().optional(),
+    focusStreak: z.number().optional(),
+    lastFocusDate: z.string().nullable().optional(),
+})
+
+// Envelope only. `data` itself is intentionally left as a loose record here -
+// each of its collections is parsed independently in parseSyncData() so a
+// single corrupt collection (e.g. `tasks` truncated into a bare string)
+// doesn't fail this top-level parse and take every other, valid collection
+// down with it. `version` and `lastModified` have been present on every
+// SyncData this app has ever written (schema version has never left `1`),
+// so unlike the `data.*` fields, their absence indicates real corruption
+// rather than an older/newer legitimate shape, and refusing the pull here is
+// the correct response.
+const syncEnvelopeSchema = z.object({
+    version: z.number(),
+    lastModified: z.string(),
+    data: z.record(z.string(), z.unknown()),
+})
+
+// Parses one already-JSON.parsed Gist payload into a SyncData, or throws.
+// Granularity: the envelope (version/lastModified/data-is-an-object) is
+// validated as a single unit and refuses the whole pull on failure - a blob
+// that fails at this level is too structurally broken to partially trust.
+// Below that, each collection and the gamification/focusStats blocks are
+// parsed independently: a single corrupt collection is dropped (becomes
+// `undefined`, i.e. treated the same as "remote didn't send this
+// collection", which applyData already knows to leave local data alone for)
+// instead of discarding the other, valid collections in the same payload.
+function parseSyncData(raw: unknown): SyncData {
+    const envelope = syncEnvelopeSchema.safeParse(raw)
+    if (!envelope.success) {
+        throw new Error('Invalid data format in Gist')
+    }
+
+    const rawData = envelope.data.data
+
+    const parseCollection = (key: string): unknown[] | undefined => {
+        const value = rawData[key]
+        if (value === undefined || value === null) return undefined
+        const parsed = syncCollectionSchema.safeParse(value)
+        if (!parsed.success) {
+            console.warn(`[GistSync] Dropping corrupt "${key}" collection from remote data:`, parsed.error.issues)
+            return undefined
+        }
+        return parsed.data
+    }
+
+    let gamification: SyncData['data']['gamification'] = null
+    if (rawData.gamification !== undefined && rawData.gamification !== null) {
+        const parsedGamification = gamificationSchema.safeParse(rawData.gamification)
+        if (parsedGamification.success) {
+            gamification = parsedGamification.data
+        } else {
+            console.warn('[GistSync] Dropping corrupt gamification data from remote (missing/invalid totalXP):', parsedGamification.error.issues)
+        }
+    }
+
+    let focusStats: SyncData['data']['focusStats'] = null
+    if (rawData.focusStats !== undefined && rawData.focusStats !== null) {
+        const parsedFocusStats = focusStatsSchema.safeParse(rawData.focusStats)
+        if (parsedFocusStats.success) {
+            focusStats = parsedFocusStats.data
+        } else {
+            console.warn('[GistSync] Dropping corrupt focusStats data from remote:', parsedFocusStats.error.issues)
+        }
+    }
+
+    return {
+        version: envelope.data.version,
+        lastModified: envelope.data.lastModified,
+        data: {
+            notes: parseCollection('notes'),
+            tasks: parseCollection('tasks'),
+            habits: parseCollection('habits'),
+            journal: parseCollection('journal'),
+            bookmarks: parseCollection('bookmarks'),
+            dailyNotes: parseCollection('dailyNotes'),
+            ideas: parseCollection('ideas'),
+            focusSessions: parseCollection('focusSessions'),
+            gamification,
+            focusStats,
+        },
+    }
 }
 
 // Create a new Gist
@@ -313,11 +492,18 @@ export async function readFromGist(token: string, gistId: string): Promise<SyncD
         return null
     }
 
+    let parsedJson: unknown
     try {
-        return JSON.parse(file.content) as SyncData
+        parsedJson = JSON.parse(file.content)
     } catch {
         throw new Error('Invalid data format in Gist')
     }
+
+    // parseSyncData throws 'Invalid data format in Gist' itself when the
+    // envelope doesn't validate - let that propagate as-is rather than
+    // wrapping it, so callers (syncWithGist, forcePullFromGist,
+    // pullOnStartup) keep seeing the same error shape they already handle.
+    return parseSyncData(parsedJson)
 }
 
 // Validate data before pushing - prevent accidental data loss
