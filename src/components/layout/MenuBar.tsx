@@ -230,7 +230,7 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
                 {/* Level Progress */}
                 <div className="p-2 border-t border-np-border bg-np-bg-tertiary">
                   <div className="flex justify-between text-xs">
-                    {LEVELS.slice(0, 5).map(l => (
+                    {LEVELS.map(l => (
                       <div
                         key={l.level}
                         className={`text-center ${level >= l.level ? 'text-np-purple' : 'text-np-text-secondary/40'}`}
