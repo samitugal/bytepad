@@ -68,3 +68,6 @@ coverage/
 .cursorrules.json5
 .cursorrules.jsonp
 .cursorrules.jsonp5
+# Local tooling & internal planning (not part of the public project)
+CLAUDE.md
+docs/internal/
