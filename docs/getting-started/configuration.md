@@ -33,6 +33,19 @@ BytePad can sync your data to a GitHub Gist for backup and cross-device sync.
 | Sync Interval | Time between syncs (minutes) |
 | Gist ID | Your data storage Gist ID |
 
+## Firebase Cloud Sync (optional)
+
+BytePad can optionally sync data to Firestore for signed-in users, in addition to Gist Sync.
+
+### Setup
+
+1. Copy `.env.example` to `.env` and follow the "Firebase Setup Steps" in that file
+2. Before storing any real data, deploy the access rules from `firestore.rules` (repo root) to your Firebase project:
+   ```bash
+   firebase deploy --only firestore:rules
+   ```
+   These rules restrict every document to the signed-in user's own `uid` and deny anything not explicitly listed.
+
 ## AI Configuration
 
 FlowBot requires an AI API key to function.

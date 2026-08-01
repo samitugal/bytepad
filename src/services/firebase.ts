@@ -1,5 +1,5 @@
-import { initializeApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth'
+import { initializeApp, FirebaseApp } from 'firebase/app'
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, Auth } from 'firebase/auth'
 
 // Firebase configuration - User needs to add their own config
 const firebaseConfig = {
@@ -11,9 +11,11 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
 }
 
-// Initialize Firebase only if config is provided
-let app: ReturnType<typeof initializeApp> | null = null
-let auth: ReturnType<typeof getAuth> | null = null
+// This module owns the single Firebase app/auth initialization for the
+// whole client. Other services (e.g. src/services/firestore.ts) must
+// import `app` / `auth` from here instead of calling initializeApp again.
+let app: FirebaseApp | null = null
+let auth: Auth | null = null
 
 const isConfigured = () => {
   return firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId
@@ -23,6 +25,8 @@ if (isConfigured()) {
   app = initializeApp(firebaseConfig)
   auth = getAuth(app)
 }
+
+export { app, auth }
 
 const googleProvider = new GoogleAuthProvider()
 
