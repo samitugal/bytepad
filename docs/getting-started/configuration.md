@@ -40,11 +40,14 @@ BytePad can optionally sync data to Firestore for signed-in users, in addition t
 ### Setup
 
 1. Copy `.env.example` to `.env` and follow the "Firebase Setup Steps" in that file
-2. Before storing any real data, deploy the access rules from `firestore.rules` (repo root) to your Firebase project:
+2. When creating the Firestore database in the Firebase Console, choose **production mode** (locked) as the starting mode, not test mode.
+3. Before storing any real data, deploy the access rules from `firestore.rules` (repo root) to your Firebase project:
    ```bash
-   firebase deploy --only firestore:rules
+   firebase deploy --only firestore:rules --project <your-project-id>
    ```
-   These rules restrict every document to the signed-in user's own `uid` and deny anything not explicitly listed.
+   `<your-project-id>` is the `VITE_FIREBASE_PROJECT_ID` value from your `.env`. The `--project` flag is required because this repo does not commit a `.firebaserc` (doing so in a public repo would hardcode a specific project's ID); alternatively run `firebase use <your-project-id>` once to select it for subsequent commands.
+
+   These rules restrict every document to the signed-in user's own `uid`, to a fixed collection allowlist, and to the literal `data` document id, and deny anything not explicitly listed.
 
 ## AI Configuration
 
