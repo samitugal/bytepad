@@ -2,10 +2,13 @@ rules_version = '2';
 
 // BytePad Firestore access rules.
 //
-// The client (src/services/firestore.ts) only ever reads/writes documents at:
+// The client (src/services/firestore.ts) only ever reads/writes the single,
+// literal document:
 //   users/{uid}/{collection}/data
 // where {collection} is one of the fixed sync collection names used by
 // src/services/cloudSync.ts: notes, tasks, habits, journal, bookmarks.
+// The document id is matched literally (not a wildcard) since the client
+// never writes any other document id under a user's tree.
 //
 // Every path is scoped to the authenticated user's own uid, and any path
 // not explicitly matched below is denied by default.
@@ -14,7 +17,7 @@ rules_version = '2';
 // name to the list below.
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{uid}/{collection}/{docId} {
+    match /users/{uid}/{collection}/data {
       allow read, write: if request.auth != null
         && request.auth.uid == uid
         && collection in ['notes', 'tasks', 'habits', 'journal', 'bookmarks'];
