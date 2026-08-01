@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+# Cancel superseded runs on the same ref (branch or PR) so that a burst of
+# pushes/dependabot PRs doesn't queue up redundant work.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Pinned to match .github/workflows/release.yml (no `engines` field
+          # in package.json, so this is the only place the version is fixed).
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Report-only for now: there is a pre-existing backlog of 28 errors /
+      # 10 warnings on main (tracked by issue #13/#14). This step is
+      # intentionally non-blocking (continue-on-error) until that backlog is
+      # cleared; output is still printed so regressions are visible in the
+      # log. Once #13/#14 land, remove continue-on-error to make this
+      # blocking.
+      #
+      # Runs BEFORE the build steps below on purpose: `eslint .` also lints
+      # generated output. The eslint config only ignores `dist`, not `out`
+      # (electron build output), so if this step ran after
+      # `build:electron`, minified bundle files in `out/` get linted too and
+      # bury the real 28/10 baseline under ~80 bogus rule-not-found errors.
+      - name: Lint (non-blocking)
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build (web)
+        run: npm run build
+
+      - name: Build (electron)
+        run: npm run build:electron
