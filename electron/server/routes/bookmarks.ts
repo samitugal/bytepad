@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { storeBridge } from '../bridges/storeBridge';
 import { logger } from '../utils/logger';
 
@@ -21,21 +22,21 @@ interface Bookmark {
   linkedNoteId?: string;
 }
 
-interface CreateBookmarkRequest {
-  url: string;
-  title: string;
-  description?: string;
-  tags?: string[];
-  collection?: string;
-}
+const createBookmarkSchema = z.object({
+  url: z.string().min(1, 'URL is required').url('Invalid URL format'),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  collection: z.string().optional(),
+});
 
-interface UpdateBookmarkRequest {
-  title?: string;
-  description?: string;
-  tags?: string[];
-  collection?: string;
-  isRead?: boolean;
-}
+const updateBookmarkSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  collection: z.string().optional(),
+  isRead: z.boolean().optional(),
+});
 
 // Helper to extract domain from URL
 function extractDomain(url: string): string {
@@ -157,31 +158,14 @@ router.get('/:id', async (req: Request, res: Response) => {
 // POST /api/bookmarks - Create bookmark
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const body = req.body as CreateBookmarkRequest;
-
-    if (!body.url) {
+    const parsed = createBookmarkSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'URL is required',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
-
-    if (!body.title) {
-      return res.status(400).json({
-        success: false,
-        error: 'Title is required',
-      });
-    }
-
-    // Validate URL
-    try {
-      new URL(body.url);
-    } catch {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid URL format',
-      });
-    }
+    const body = parsed.data;
 
     const bookmark = await storeBridge.create<Bookmark>('bookmarks', {
       url: body.url,
@@ -211,7 +195,6 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const body = req.body as UpdateBookmarkRequest;
 
     const existing = await storeBridge.getById<Bookmark>('bookmarks', id);
     if (!existing) {
@@ -220,6 +203,15 @@ router.put('/:id', async (req: Request, res: Response) => {
         error: 'Bookmark not found',
       });
     }
+
+    const parsed = updateBookmarkSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: parsed.error.issues.map(i => i.message).join('; '),
+      });
+    }
+    const body = parsed.data;
 
     const bookmark = await storeBridge.update<Bookmark>('bookmarks', id, body);
 

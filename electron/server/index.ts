@@ -7,6 +7,7 @@ import Store from 'electron-store';
 
 import { ServerConfig, getConfig, defaultConfig } from './config';
 import { authMiddleware } from './middleware/auth';
+import { rateLimit } from './middleware/rateLimit';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { getOrCreateApiKey, validateApiKey } from './utils/apiKey';
 import { logger, setLogLevel } from './utils/logger';
@@ -102,6 +103,9 @@ export async function startMCPServer(config?: Partial<ServerConfig>): Promise<vo
     });
     next();
   });
+
+  // Rate limiting
+  app.use(rateLimit());
 
   // Auth middleware (skip for health check)
   app.use(authMiddleware);
