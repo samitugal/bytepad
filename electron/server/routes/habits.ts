@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { storeBridge } from '../bridges/storeBridge';
 import { logger } from '../utils/logger';
 
@@ -18,23 +19,25 @@ interface Habit {
   reminderTime?: string;
 }
 
-interface CreateHabitRequest {
-  name: string;
-  frequency?: 'daily' | 'weekly';
-  category?: string;
-  tags?: string[];
-  reminderEnabled?: boolean;
-  reminderTime?: string;
-}
+const frequencyEnum = z.enum(['daily', 'weekly']);
 
-interface UpdateHabitRequest {
-  name?: string;
-  frequency?: 'daily' | 'weekly';
-  category?: string;
-  tags?: string[];
-  reminderEnabled?: boolean;
-  reminderTime?: string;
-}
+const createHabitSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  frequency: frequencyEnum.optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  reminderEnabled: z.boolean().optional(),
+  reminderTime: z.string().optional(),
+});
+
+const updateHabitSchema = z.object({
+  name: z.string().min(1).optional(),
+  frequency: frequencyEnum.optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  reminderEnabled: z.boolean().optional(),
+  reminderTime: z.string().optional(),
+});
 
 // Helper to get today's date
 function getToday(): string {
@@ -168,14 +171,14 @@ router.get('/:id/stats', async (req: Request, res: Response) => {
 // POST /api/habits - Create habit
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const body = req.body as CreateHabitRequest;
-
-    if (!body.name) {
+    const parsed = createHabitSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'Name is required',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
+    const body = parsed.data;
 
     const habit = await storeBridge.create<Habit>('habits', {
       name: body.name,
@@ -205,7 +208,14 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const body = req.body as UpdateHabitRequest;
+    const parsed = updateHabitSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: parsed.error.issues.map(i => i.message).join('; '),
+      });
+    }
+    const body = parsed.data;
 
     const existing = await storeBridge.getById<Habit>('habits', id);
     if (!existing) {

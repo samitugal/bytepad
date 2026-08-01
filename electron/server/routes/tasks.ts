@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { storeBridge } from '../bridges/storeBridge';
 import { logger } from '../utils/logger';
 
@@ -29,27 +30,33 @@ interface Task {
   updatedAt?: string;
 }
 
-interface CreateTaskRequest {
-  title: string;
-  description?: string;
-  priority?: 'P1' | 'P2' | 'P3' | 'P4';
-  deadline?: string;
-  deadlineTime?: string;
-  tags?: string[];
-  subtasks?: { title: string }[];
-}
+const priorityEnum = z.enum(['P1', 'P2', 'P3', 'P4']);
 
-interface UpdateTaskRequest {
-  title?: string;
-  description?: string;
-  priority?: 'P1' | 'P2' | 'P3' | 'P4';
-  deadline?: string;
-  deadlineTime?: string;
-  completed?: boolean;
-  tags?: string[];
-  linkedBookmarkIds?: string[];
-  linkedNoteIds?: string[];
-}
+const createTaskSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  priority: priorityEnum.optional(),
+  deadline: z.string().optional(),
+  deadlineTime: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  subtasks: z.array(z.object({ title: z.string().min(1) })).optional(),
+});
+
+const updateTaskSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  priority: priorityEnum.optional(),
+  deadline: z.string().optional(),
+  deadlineTime: z.string().optional(),
+  completed: z.boolean().optional(),
+  tags: z.array(z.string()).optional(),
+  linkedBookmarkIds: z.array(z.string()).optional(),
+  linkedNoteIds: z.array(z.string()).optional(),
+});
+
+const addSubtaskSchema = z.object({
+  title: z.string().min(1, 'Subtask title is required'),
+});
 
 // GET /api/tasks - List all tasks
 router.get('/', async (req: Request, res: Response) => {
@@ -147,14 +154,14 @@ router.get('/:id', async (req: Request, res: Response) => {
 // POST /api/tasks - Create task
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const body = req.body as CreateTaskRequest;
-
-    if (!body.title) {
+    const parsed = createTaskSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'Title is required',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
+    const body = parsed.data;
 
     const task = await storeBridge.create<Task>('tasks', {
       title: body.title,
@@ -194,7 +201,14 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const body = req.body as UpdateTaskRequest;
+    const parsed = updateTaskSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: parsed.error.issues.map(i => i.message).join('; '),
+      });
+    }
+    const body = parsed.data;
 
     const existing = await storeBridge.getById<Task>('tasks', id);
     if (!existing) {
@@ -317,14 +331,14 @@ router.delete('/:id', async (req: Request, res: Response) => {
 router.post('/:id/subtasks', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title } = req.body;
-
-    if (!title) {
+    const parsed = addSubtaskSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'Subtask title is required',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
+    const { title } = parsed.data;
 
     const existing = await storeBridge.getById<Task>('tasks', id);
     if (!existing) {

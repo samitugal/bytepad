@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { storeBridge } from '../bridges/storeBridge';
 import { logger } from '../utils/logger';
 
@@ -22,21 +23,26 @@ interface Idea {
   updatedAt: string;
 }
 
-interface CreateIdeaRequest {
-  title: string;
-  content?: string;
-  color?: IdeaColor;
-  tags?: string[];
-}
-
-interface UpdateIdeaRequest {
-  title?: string;
-  content?: string;
-  color?: IdeaColor;
-  tags?: string[];
-}
-
 const validColors: IdeaColor[] = ['yellow', 'green', 'blue', 'purple', 'orange', 'red', 'cyan'];
+const colorEnum = z.enum(validColors as [IdeaColor, ...IdeaColor[]]);
+
+const createIdeaSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  content: z.string().max(280, 'Content must be 280 characters or less').optional(),
+  color: colorEnum.optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+const updateIdeaSchema = z.object({
+  title: z.string().min(1).optional(),
+  content: z.string().max(280, 'Content must be 280 characters or less').optional(),
+  color: colorEnum.optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+const convertIdeaSchema = z.object({
+  to: z.enum(['note', 'task'], { message: 'Must specify "to" as "note" or "task"' }),
+});
 
 // GET /api/ideas - List all ideas
 router.get('/', async (req: Request, res: Response) => {
@@ -103,30 +109,14 @@ router.get('/:id', async (req: Request, res: Response) => {
 // POST /api/ideas - Create idea
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const body = req.body as CreateIdeaRequest;
-
-    if (!body.title) {
+    const parsed = createIdeaSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'Title is required',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
-
-    // Validate content length
-    if (body.content && body.content.length > 280) {
-      return res.status(400).json({
-        success: false,
-        error: 'Content must be 280 characters or less',
-      });
-    }
-
-    // Validate color
-    if (body.color && !validColors.includes(body.color)) {
-      return res.status(400).json({
-        success: false,
-        error: `Invalid color. Must be one of: ${validColors.join(', ')}`,
-      });
-    }
+    const body = parsed.data;
 
     const idea = await storeBridge.create<Idea>('ideas', {
       title: body.title,
@@ -154,7 +144,6 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const body = req.body as UpdateIdeaRequest;
 
     const existing = await storeBridge.getById<Idea>('ideas', id);
     if (!existing) {
@@ -164,21 +153,14 @@ router.put('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    // Validate content length
-    if (body.content && body.content.length > 280) {
+    const parsed = updateIdeaSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'Content must be 280 characters or less',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
-
-    // Validate color
-    if (body.color && !validColors.includes(body.color)) {
-      return res.status(400).json({
-        success: false,
-        error: `Invalid color. Must be one of: ${validColors.join(', ')}`,
-      });
-    }
+    const body = parsed.data;
 
     const idea = await storeBridge.update<Idea>('ideas', id, body);
 
@@ -201,14 +183,14 @@ router.put('/:id', async (req: Request, res: Response) => {
 router.post('/:id/convert', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { to } = req.body as { to: 'note' | 'task' };
-
-    if (!to || !['note', 'task'].includes(to)) {
+    const parsed = convertIdeaSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'Must specify "to" as "note" or "task"',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
+    const { to } = parsed.data;
 
     const existing = await storeBridge.getById<Idea>('ideas', id);
     if (!existing) {
