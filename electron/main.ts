@@ -369,8 +369,12 @@ function setupIPC() {
     return await removeDockerContainer()
   })
 
-  ipcMain.handle('docker:logs', async (_, lines?: number) => {
-    return await getContainerLogs(lines)
+  ipcMain.handle('docker:logs', async (_, lines?: unknown) => {
+    const safeLines =
+      typeof lines === 'number' && Number.isInteger(lines) && lines >= 1 && lines <= 100000
+        ? lines
+        : undefined
+    return await getContainerLogs(safeLines)
   })
 
   ipcMain.handle('docker:imageExists', async () => {
@@ -378,8 +382,8 @@ function setupIPC() {
   })
 
   // Combined MCP Docker enable handler
-  ipcMain.handle('mcp:setDockerEnabled', async (_, enabled: boolean) => {
-    if (enabled) {
+  ipcMain.handle('mcp:setDockerEnabled', async (_, enabled: unknown) => {
+    if (enabled === true) {
       // Check Docker availability
       const installed = await isDockerInstalled()
       if (!installed) {
