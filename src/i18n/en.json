@@ -127,7 +127,10 @@
             "importBackup": "Import from Backup",
             "dangerZone": "Danger Zone",
             "deleteAll": "Delete All Data",
-            "deleteWarning": "This will permanently delete all your notes, tasks, habits, and journal entries."
+            "deleteWarning": "This will permanently delete all your notes, tasks, habits, and journal entries.",
+            "credentialStorageTitle": "Credential Storage",
+            "rememberSecrets": "Remember API keys & tokens on this device",
+            "rememberSecretsWarning": "When enabled, your API keys and tokens are saved in this browser's local storage so they survive restarts. They are stored in plain text \u2014 anyone with access to this device or browser profile can read them. Leave this off on shared or public computers."
         },
         "mcp": {
             "nonLoopbackWarningTitle": "Server exposed beyond this device",

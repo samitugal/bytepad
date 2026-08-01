@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, shell, nativeImage, Notification, session } from 'electron'
+import { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, shell, nativeImage, Notification, session, safeStorage } from 'electron'
 import path from 'path'
 import Store from 'electron-store'
 import { startMCPServer, stopMCPServer, getServerInfo, getOrCreateApiKey, regenerateApiKey } from './server'
@@ -379,6 +379,70 @@ function setupIPC() {
   ipcMain.handle('store:has', (_, key: string) => {
     return store.has(key)
   })
+
+  // Secrets operations — encrypted at rest via Electron's safeStorage.
+  // Persisted under a `secureSecrets.*` namespace in the same electron-store
+  // file so encrypted envelopes never mix with plaintext `store:*` values.
+  // Envelope shape: { encrypted: boolean, data: string }. `data` is base64
+  // ciphertext when `encrypted` is true; it is only ever a plaintext JSON
+  // string when safeStorage.isEncryptionAvailable() is false (e.g. some
+  // Linux setups without a keyring reachable by libsecret) — the envelope
+  // makes that fallback explicit instead of silently writing plaintext
+  // under an `encrypted: true` label.
+  const SECRETS_PREFIX = 'secureSecrets.'
+
+  function encryptSecret(value: unknown): { encrypted: boolean; data: string } {
+    const json = JSON.stringify(value)
+    if (safeStorage.isEncryptionAvailable()) {
+      return { encrypted: true, data: safeStorage.encryptString(json).toString('base64') }
+    }
+    console.warn('[secrets] safeStorage encryption is unavailable on this system (no OS keychain/keyring reachable) — storing this value in plaintext and flagging it as unencrypted.')
+    return { encrypted: false, data: json }
+  }
+
+  function decryptSecret(entry: { encrypted: boolean; data: string } | undefined): unknown {
+    if (!entry) return undefined
+    try {
+      if (entry.encrypted) {
+        return JSON.parse(safeStorage.decryptString(Buffer.from(entry.data, 'base64')))
+      }
+      return JSON.parse(entry.data)
+    } catch (err) {
+      console.error('[secrets] Failed to read a stored secret (possibly corrupted or encrypted under a different OS key):', err)
+      return undefined
+    }
+  }
+
+  ipcMain.handle('secrets:isAvailable', () => safeStorage.isEncryptionAvailable())
+
+  ipcMain.handle('secrets:get', (_, key: string) => {
+    return decryptSecret(store.get(`${SECRETS_PREFIX}${key}`) as { encrypted: boolean; data: string } | undefined)
+  })
+
+  ipcMain.handle('secrets:set', (_, key: string, value: unknown) => {
+    const entry = encryptSecret(value)
+    store.set(`${SECRETS_PREFIX}${key}`, entry)
+    return { encrypted: entry.encrypted }
+  })
+
+  ipcMain.handle('secrets:delete', (_, key: string) => {
+    store.delete(`${SECRETS_PREFIX}${key}`)
+  })
+
+  // One-time migration: pre-safeStorage builds wrote secrets in plaintext
+  // to the legacy `store:*` key `bytepad-secrets`. Move that value into the
+  // encrypted envelope above and remove the plaintext copy. Idempotent: the
+  // whole block is gated on the legacy key still existing, so after the
+  // first successful run `store.has('bytepad-secrets')` is false and every
+  // later launch skips it. The new value is written before the old one is
+  // deleted, so a crash mid-migration just re-runs it next launch without
+  // losing any keys.
+  if (store.has('bytepad-secrets')) {
+    const legacySecrets = store.get('bytepad-secrets')
+    store.set(`${SECRETS_PREFIX}bytepad-secrets`, encryptSecret(legacySecrets))
+    store.delete('bytepad-secrets')
+    console.log('[secrets] Migrated legacy plaintext secrets into safeStorage-encrypted storage.')
+  }
 
   // App info
   ipcMain.handle('app:version', () => app.getVersion())

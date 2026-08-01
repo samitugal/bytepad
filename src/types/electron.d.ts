@@ -38,6 +38,14 @@ export interface ElectronAPI {
     has: (key: string) => Promise<boolean>
   }
 
+  // Secrets operations (safeStorage-encrypted, main-process only)
+  secrets: {
+    get: (key: string) => Promise<unknown>
+    set: (key: string, value: unknown) => Promise<{ encrypted: boolean }>
+    delete: (key: string) => Promise<void>
+    isAvailable: () => Promise<boolean>
+  }
+
   // App info
   getVersion: () => Promise<string>
   isPackaged: () => Promise<boolean>

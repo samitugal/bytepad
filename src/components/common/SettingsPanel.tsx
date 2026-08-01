@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react'
 import { exportAllData, downloadAsJson, importData, readFileAsJson, clearAllData, getDataStats } from '../../services/dataService'
 import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider, FONT_SIZES, FontSize, FONT_FAMILIES, FontFamily, ApiKeyType, GistSyncPreferences } from '../../stores/settingsStore'
-import { useI18nStore, LANGUAGES, Language } from '../../i18n'
+import { useI18nStore, useTranslation, LANGUAGES, Language } from '../../i18n'
+import { isElectron } from '../../utils/storage'
 import { useThemeStore, Theme } from '../../stores/themeStore'
 import { useNotificationStore } from '../../stores/notificationStore'
 import { useAuthStore } from '../../stores/authStore'
@@ -999,7 +1000,10 @@ function DataTab({
         setLocalNotesEnabled,
         setLocalNotesPath,
         setLocalNotesDirHandle,
+        rememberSecretsOnDevice,
+        setRememberSecretsOnDevice,
     } = useSettingsStore()
+    const { t } = useTranslation()
 
     const [localNotesStatus, setLocalNotesStatus] = useState<string | null>(null)
     const [isSavingNotes, setIsSavingNotes] = useState(false)
@@ -1151,6 +1155,25 @@ function DataTab({
                     </p>
                 </div>
             </div>
+
+            {/* Credential Storage — web only; Electron uses safeStorage encryption instead */}
+            {!isElectron() && (
+                <div>
+                    <h3 className="text-sm text-np-green mb-3">// {t('settings.data.credentialStorageTitle')}</h3>
+                    <label className="flex items-center gap-2 text-sm text-np-text-secondary cursor-pointer hover:text-np-text-primary">
+                        <input
+                            type="checkbox"
+                            checked={rememberSecretsOnDevice}
+                            onChange={(e) => setRememberSecretsOnDevice(e.target.checked)}
+                            className="w-4 h-4 accent-np-green"
+                        />
+                        {t('settings.data.rememberSecrets')}
+                    </label>
+                    <p className="text-xs text-np-warning mt-2">
+                        ⚠️ {t('settings.data.rememberSecretsWarning')}
+                    </p>
+                </div>
+            )}
 
             {/* Stats */}
             <div>
