@@ -353,6 +353,8 @@
         "stats": "İstatistikler",
         "totalXP": "Toplam XP",
         "toNextLevel": "sonraki seviyeye",
+        "maxLevel": "MAKS",
+        "maxLevelReached": "Maksimum seviyeye ulaşıldı",
         "streak": "Seri (mevcut/en iyi)",
         "activity": "Aktivite",
         "tasksCompleted": "Tamamlanan Görevler",
