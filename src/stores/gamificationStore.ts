@@ -421,6 +421,34 @@ export const useGamificationStore = create<GamificationState>()(
           currentXP: totalXP - levelInfo.xp,
         }
       },
+      // `migrate` above is gated by zustand on `typeof persistedVersion === 'number'`. Every
+      // install that persisted state before this `version` field existed has no version key
+      // at all (`undefined`), so that gate is false and `migrate` never runs for them — the
+      // exact installs this fix exists for. `merge` runs on every hydration regardless of
+      // version, so recompute `level`/`currentXP` from `totalXP` here too. This is a pure
+      // function of `totalXP`, so it's a no-op when the persisted values are already correct,
+      // and it only touches level fields — every other persisted stat/achievement/streak
+      // passes through via the spread untouched. Not invoked at all when there is no
+      // persisted state (brand-new user), so defaults are left alone.
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<UserStats> | null | undefined
+        const merged = { ...currentState, ...persisted }
+
+        if (!persisted) {
+          return merged
+        }
+
+        const totalXP = typeof persisted.totalXP === 'number' ? persisted.totalXP : merged.totalXP
+        const level = calculateLevel(totalXP)
+        const levelInfo = LEVELS.find(l => l.level === level) ?? LEVELS[0]
+
+        return {
+          ...merged,
+          totalXP,
+          level,
+          currentXP: totalXP - levelInfo.xp,
+        }
+      },
       partialize: (state) => ({
         level: state.level,
         currentXP: state.currentXP,
