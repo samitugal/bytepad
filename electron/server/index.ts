@@ -1,14 +1,14 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { Server as HttpServer, createServer } from 'http';
+import { Server as HttpServer, createServer, IncomingMessage } from 'http';
 import { WebSocketServer } from 'ws';
 import Store from 'electron-store';
 
 import { ServerConfig, getConfig, defaultConfig } from './config';
 import { authMiddleware } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
-import { getOrCreateApiKey } from './utils/apiKey';
+import { getOrCreateApiKey, validateApiKey } from './utils/apiKey';
 import { logger, setLogLevel } from './utils/logger';
 import apiRoutes from './routes';
 import { onStoreChange } from './bridges/storeBridge';
@@ -77,10 +77,12 @@ export async function startMCPServer(config?: Partial<ServerConfig>): Promise<vo
     contentSecurityPolicy: false, // Disable for API server
   }));
 
-  // CORS configuration
+  // CORS configuration - explicit allowlist only; '*' is not honored to avoid
+  // pairing a wildcard origin with credentialed requests.
   if (serverConfig.enableCors) {
+    const allowedOrigins = serverConfig.corsOrigins.filter((origin) => origin !== '*');
     app.use(cors({
-      origin: serverConfig.corsOrigins.includes('*') ? '*' : serverConfig.corsOrigins,
+      origin: allowedOrigins,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
@@ -266,6 +268,33 @@ export async function startMCPServer(config?: Partial<ServerConfig>): Promise<vo
     wss = new WebSocketServer({
       server: httpServer,
       path: '/ws',
+      verifyClient: (
+        info: { origin: string; secure: boolean; req: IncomingMessage },
+        callback: (res: boolean, code?: number, message?: string) => void
+      ) => {
+        try {
+          const requestUrl = new URL(info.req.url || '', 'http://localhost');
+          const tokenFromQuery = requestUrl.searchParams.get('token');
+
+          const authHeader = info.req.headers.authorization;
+          const tokenFromHeader = authHeader?.startsWith('Bearer ')
+            ? authHeader.slice(7)
+            : authHeader;
+
+          const token = tokenFromQuery || tokenFromHeader;
+
+          if (!token || !validateApiKey(token)) {
+            logger.warn(`WebSocket connection rejected from ${info.req.socket.remoteAddress} - missing or invalid token`);
+            callback(false, 401, 'Unauthorized');
+            return;
+          }
+
+          callback(true);
+        } catch (err) {
+          logger.error(`WebSocket verifyClient error: ${(err as Error).message}`);
+          callback(false, 500, 'Internal Error');
+        }
+      },
     });
 
     // Track subscriptions per client

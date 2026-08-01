@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import type { MCPServerInfo, DockerStatus } from '../../types/electron';
+import { useTranslation } from '../../i18n';
 
 type MCPMode = 'embedded' | 'docker';
 
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
+
 export function MCPSettings() {
+  const { t } = useTranslation();
   const [serverInfo, setServerInfo] = useState<MCPServerInfo | null>(null);
   const [dockerStatus, setDockerStatus] = useState<DockerStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -240,6 +244,13 @@ export function MCPSettings() {
           {isDockerRunning && (
             <div className="text-xs text-np-orange bg-np-orange/10 p-2 border border-np-orange">
               Docker mode is active. Stop Docker container to use embedded mode.
+            </div>
+          )}
+
+          {isEmbeddedRunning && serverInfo?.host && !LOOPBACK_HOSTS.has(serverInfo.host) && (
+            <div className="text-xs text-np-error bg-np-error/10 p-2 border border-np-error">
+              <p className="font-semibold">{t('settings.mcp.nonLoopbackWarningTitle')}</p>
+              <p className="mt-1">{t('settings.mcp.nonLoopbackWarning', { host: serverInfo.host })}</p>
             </div>
           )}
         </>

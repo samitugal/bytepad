@@ -128,6 +128,10 @@
             "dangerZone": "Tehlikeli Bölge",
             "deleteAll": "Tüm Verileri Sil",
             "deleteWarning": "Bu işlem tüm notlarınızı, görevlerinizi, alışkanlıklarınızı ve günlük girişlerinizi kalıcı olarak silecektir."
+        },
+        "mcp": {
+            "nonLoopbackWarningTitle": "Sunucu bu cihazın dışına açık",
+            "nonLoopbackWarning": "MCP sunucusu {host} adresine bağlı; bu, yalnızca bu bilgisayar yerine ağınızdaki diğer cihazlardan da bağlantı kabul edildiği anlamına gelir. Yalnızca riski anlıyorsanız kullanın."
         }
     },
     "chat": {

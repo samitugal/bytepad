@@ -8,11 +8,15 @@ export interface ServerConfig {
   logLevel: 'debug' | 'info' | 'warn' | 'error';
 }
 
+// Defaults are intentionally conservative: bind to loopback only and allow
+// no cross-origin browser access. Binding to '0.0.0.0' (LAN/Docker reachable)
+// or adding CORS origins is an explicit opt-in via settings/store, not a
+// built-in default, since it widens the server's network exposure.
 export const defaultConfig: ServerConfig = {
   port: 3847,
-  host: '0.0.0.0', // Allow Docker and external connections
+  host: '127.0.0.1', // Loopback only by default; set mcp.host to opt in to wider exposure
   enableCors: true,
-  corsOrigins: ['*'], // Allow all origins (Docker host.docker.internal)
+  corsOrigins: [], // No cross-origin browser access by default; add explicit origins to opt in
   enableWebSocket: true,
   enableMcp: true,
   logLevel: 'info',
