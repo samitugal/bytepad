@@ -113,7 +113,7 @@ export function IdeasModule() {
               onClick={() => setFilter(f)}
               className={`px-2 py-0.5 ${filter === f ? 'bg-np-selection text-np-text-primary' : 'text-np-text-secondary hover:text-np-text-primary'}`}
             >
-              {t(`ideas.${f}`)}
+              {t(`ideas.${f}`) || f}
             </button>
           ))}
         </div>
