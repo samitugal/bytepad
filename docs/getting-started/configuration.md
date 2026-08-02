@@ -45,7 +45,15 @@ BytePad can optionally sync data to Firestore for signed-in users, in addition t
    ```bash
    firebase deploy --only firestore:rules --project <your-project-id>
    ```
-   `<your-project-id>` is the `VITE_FIREBASE_PROJECT_ID` value from your `.env`. The `--project` flag is required because this repo does not commit a `.firebaserc` (doing so in a public repo would hardcode a specific project's ID); alternatively run `firebase use <your-project-id>` once to select it for subsequent commands.
+   `<your-project-id>` is the `VITE_FIREBASE_PROJECT_ID` value from your `.env`.
+
+   To avoid passing `--project` every time, copy the template and fill in your own project id:
+
+   ```bash
+   cp .firebaserc.example .firebaserc
+   ```
+
+   `.firebaserc` is gitignored, so your project id stays local. The repo ships only the example: committing a real `.firebaserc` to a public repo would hardcode one specific project's ID for everyone who clones it. Running `firebase use <your-project-id>` once has the same effect.
 
    These rules restrict every document to the signed-in user's own `uid`, to a fixed collection allowlist, and to the literal `data` document id, and deny anything not explicitly listed.
 

@@ -37,6 +37,9 @@ dist-electron/
 .env.local
 .env.*.local
 
+# Local Firebase project selection (copy .firebaserc.example)
+.firebaserc
+
 # System files
 Thumbs.db
 ehthumbs.db
