@@ -21,7 +21,7 @@ export function TaskFilters({ filter, sortBy, onFilterChange, onSortChange, t }:
             onClick={() => onFilterChange(f)}
             className={`px-2 py-0.5 ${filter === f ? 'bg-np-selection text-np-text-primary' : 'text-np-text-secondary hover:text-np-text-primary'}`}
           >
-            {t(`tasks.${f}`)}
+            {t(`tasks.${f}`) || f}
           </button>
         ))}
       </div>
@@ -33,7 +33,7 @@ export function TaskFilters({ filter, sortBy, onFilterChange, onSortChange, t }:
             onClick={() => onSortChange(s)}
             className={`px-2 py-0.5 ${sortBy === s ? 'bg-np-selection text-np-text-primary' : 'text-np-text-secondary hover:text-np-text-primary'}`}
           >
-            {s === 'manual' ? (t('tasks.manual') || 'Manual') : t(`tasks.${s}`)}
+            {s === 'manual' ? (t('tasks.manual') || 'Manual') : (t(`tasks.${s}`) || s)}
           </button>
         ))}
       </div>

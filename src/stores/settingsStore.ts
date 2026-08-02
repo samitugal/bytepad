@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { secretsStorage, isRememberOnDeviceEnabled, type StoredSecrets } from '../utils/storage'
 
 export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'groq' | 'ollama'
 export type ApiKeyType = LLMProvider | 'tavily'
@@ -172,11 +173,6 @@ export interface FocusPreferences {
 export interface EmailPreferences {
   enabled: boolean
   userEmail: string
-  emailjsServiceId: string
-  emailjsPublicKey: string
-  emailjsTemplateDaily: string
-  emailjsTemplateWeekly: string
-  emailjsTemplateStreak: string
   dailySummaryEnabled: boolean
   dailySummaryTime: string // HH:mm format
   weeklySummaryEnabled: boolean
@@ -207,6 +203,12 @@ interface SettingsState {
   // GitHub Gist Sync
   gistSync: GistSyncPreferences
 
+  // Web-only opt-in: persist secrets (apiKeys, gistSync.githubToken) to
+  // localStorage instead of the sessionStorage-only default. Always false
+  // in Electron, where safeStorage-backed encryption covers this instead
+  // (see storage.ts).
+  rememberSecretsOnDevice: boolean
+
   // Focus Mode Settings
   focusPreferences: FocusPreferences
 
@@ -235,6 +237,7 @@ interface SettingsState {
   setNoteFontSize: (size: FontSize) => void
   setEmailPreferences: (prefs: Partial<EmailPreferences>) => void
   setGistSync: (prefs: Partial<GistSyncPreferences>) => void
+  setRememberSecretsOnDevice: (enabled: boolean) => void
   setFocusPreferences: (prefs: Partial<FocusPreferences>) => void
   setGamificationEnabled: (enabled: boolean) => void
   setTimezone: (timezone: string) => void
@@ -246,6 +249,102 @@ interface SettingsState {
   // Helpers
   getCurrentApiKey: () => string
   getCurrentModel: () => LLMModel | undefined
+}
+
+// --- Secret handling -------------------------------------------------------
+// apiKeys and gistSync.githubToken are intentionally excluded from the
+// zustand `persist` blob below (see `partialize`) and are instead mirrored
+// to `secretsStorage` (Electron: electron-store via a safeStorage-encrypted
+// IPC channel, Web: sessionStorage by default, or localStorage if the user
+// opts in via `setRememberSecretsOnDevice` — see src/utils/storage.ts).
+// This keeps the runtime store shape and every existing call site
+// (`state.apiKeys[...]`, `getCurrentApiKey()`, etc.) unchanged; only where
+// these fields end up at rest on disk changes.
+function buildSecretsPayload(state: Pick<SettingsState, 'apiKeys' | 'gistSync'>): StoredSecrets {
+  return {
+    apiKeys: state.apiKeys,
+    githubToken: state.gistSync.githubToken,
+  }
+}
+
+// Fields that used to live on EmailPreferences to configure EmailJS (now
+// removed entirely — there is no send path left anywhere in the app).
+// Existing installs may still have these sitting in the persisted settings
+// blob (plaintext localStorage) from before removal; `emailjsPublicKey`
+// specifically may also still be sitting in secretsStorage (safeStorage
+// encrypted on desktop, session/local storage on web), since it used to be
+// mirrored there as a secret. Both are cleared by migrateAndLoadSecrets.
+const LEGACY_EMAILJS_FIELDS = [
+  'emailjsServiceId',
+  'emailjsPublicKey',
+  'emailjsTemplateDaily',
+  'emailjsTemplateWeekly',
+  'emailjsTemplateStreak',
+] as const
+
+function stripLegacyEmailjsFields(prefs: EmailPreferences): EmailPreferences {
+  const clean = { ...prefs } as EmailPreferences & Record<string, unknown>
+  for (const key of LEGACY_EMAILJS_FIELDS) {
+    delete clean[key]
+  }
+  return clean
+}
+
+let secretsMigrationRan = false
+
+// Runs once per app session after the settings store rehydrates.
+// - Always scrubs any legacy EmailJS fields left on emailPreferences from
+//   before that surface was removed (service id, public key, unused
+//   templates). This alone is a `set` call, so it also triggers a persist
+//   re-write that drops those keys from the localStorage blob.
+// - If secretsStorage already has a record, it wins (it's the source of
+//   truth going forward) and is applied over whatever hydration produced.
+//   If that record still carries an orphaned emailjsPublicKey from before
+//   removal, it's re-saved via buildSecretsPayload (which no longer knows
+//   about that field) — secretsStorage.save always overwrites the whole
+//   record, so this is what actually deletes the stale value rather than
+//   merely stopping future writes of it.
+// - Otherwise, if the persisted localStorage blob still carries plaintext
+//   secrets from before this change, migrate them into secretsStorage.
+// - Either way, force one persist write so `partialize` (which no longer
+//   writes secret values) overwrites any legacy plaintext left on disk.
+// Idempotent: once secretsStorage has a record and emailPreferences is
+// clean, subsequent runs are no-ops beyond re-applying the same values.
+async function migrateAndLoadSecrets() {
+  if (secretsMigrationRan) return
+  secretsMigrationRan = true
+
+  const state = useSettingsStore.getState()
+  const stored = await secretsStorage.load() as (StoredSecrets & { emailjsPublicKey?: string }) | null
+
+  const hasLegacyEmailjsFields = LEGACY_EMAILJS_FIELDS.some((key) => key in state.emailPreferences)
+  if (hasLegacyEmailjsFields) {
+    useSettingsStore.setState((s) => ({ emailPreferences: stripLegacyEmailjsFields(s.emailPreferences) }))
+  }
+
+  if (stored) {
+    useSettingsStore.setState((s) => ({
+      apiKeys: { ...s.apiKeys, ...(stored.apiKeys || {}) },
+      gistSync: { ...s.gistSync, githubToken: stored.githubToken ?? s.gistSync.githubToken },
+    }))
+    if ('emailjsPublicKey' in stored) {
+      await secretsStorage.save(buildSecretsPayload(useSettingsStore.getState()))
+    }
+    return
+  }
+
+  const hasLegacySecrets =
+    Object.values(state.apiKeys).some(Boolean) ||
+    !!state.gistSync.githubToken
+
+  if (hasLegacySecrets) {
+    await secretsStorage.save(buildSecretsPayload(state))
+  }
+
+  // No-op state update: triggers the persist middleware to re-write the
+  // localStorage blob using the current `partialize`, scrubbing any secret
+  // values that were written by pre-fix versions of the app.
+  useSettingsStore.setState((s) => ({ ...s }))
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -270,11 +369,6 @@ export const useSettingsStore = create<SettingsState>()(
       emailPreferences: {
         enabled: false,
         userEmail: '',
-        emailjsServiceId: '',
-        emailjsPublicKey: '',
-        emailjsTemplateDaily: '',
-        emailjsTemplateWeekly: '',
-        emailjsTemplateStreak: '',
         dailySummaryEnabled: false,
         dailySummaryTime: '20:00',
         weeklySummaryEnabled: false,
@@ -293,6 +387,10 @@ export const useSettingsStore = create<SettingsState>()(
         lastSyncStatus: null,
         lastSyncError: null,
       },
+      // Not persisted via `partialize` — source of truth is the localStorage
+      // marker read by isRememberOnDeviceEnabled() (see storage.ts), which
+      // is also always false in Electron.
+      rememberSecretsOnDevice: isRememberOnDeviceEnabled(),
       focusPreferences: {
         defaultDuration: 25,
         shortBreakDuration: 5,
@@ -322,9 +420,12 @@ export const useSettingsStore = create<SettingsState>()(
 
       setLLMModel: (model) => set({ llmModel: model }),
 
-      setApiKey: (provider, key) => set((state) => ({
-        apiKeys: { ...state.apiKeys, [provider]: key }
-      })),
+      setApiKey: (provider, key) => {
+        set((state) => ({
+          apiKeys: { ...state.apiKeys, [provider]: key }
+        }))
+        void secretsStorage.save(buildSecretsPayload(get()))
+      },
 
       setOllamaBaseUrl: (url) => set({ ollamaBaseUrl: url }),
 
@@ -336,13 +437,32 @@ export const useSettingsStore = create<SettingsState>()(
 
       setNoteFontSize: (size) => set({ noteFontSize: size }),
 
-      setEmailPreferences: (prefs) => set((state) => ({
-        emailPreferences: { ...state.emailPreferences, ...prefs }
-      })),
+      setEmailPreferences: (prefs) => {
+        set((state) => ({
+          emailPreferences: { ...state.emailPreferences, ...prefs }
+        }))
+      },
 
-      setGistSync: (prefs) => set((state) => ({
-        gistSync: { ...state.gistSync, ...prefs }
-      })),
+      setGistSync: (prefs) => {
+        set((state) => ({
+          gistSync: { ...state.gistSync, ...prefs }
+        }))
+        if ('githubToken' in prefs) {
+          void secretsStorage.save(buildSecretsPayload(get()))
+        }
+      },
+
+      setRememberSecretsOnDevice: (enabled) => {
+        set({ rememberSecretsOnDevice: enabled })
+        void (async () => {
+          await secretsStorage.setRememberOnDevice(enabled)
+          if (enabled) {
+            // Persist whatever is currently in memory immediately, rather
+            // than waiting for the next setApiKey/setGistSync/etc. call.
+            await secretsStorage.save(buildSecretsPayload(get()))
+          }
+        })()
+      },
 
       setFocusPreferences: (prefs) => set((state) => ({
         focusPreferences: { ...state.focusPreferences, ...prefs }
@@ -373,18 +493,20 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'bytepad-settings',
-      // Persist all settings including API keys, font size, etc.
+      // Persist settings, but NOT secrets (apiKeys, gistSync.githubToken).
+      // Those are mirrored separately via `secretsStorage` (see
+      // migrateAndLoadSecrets/buildSecretsPayload above) so they never land
+      // in this plaintext localStorage blob.
       partialize: (state) => ({
         llmProvider: state.llmProvider,
         llmModel: state.llmModel,
-        apiKeys: state.apiKeys,
         ollamaBaseUrl: state.ollamaBaseUrl,
         fontSize: state.fontSize,
         fontFamily: state.fontFamily,
         noteMarkdownPreview: state.noteMarkdownPreview,
         noteFontSize: state.noteFontSize,
         emailPreferences: state.emailPreferences,
-        gistSync: state.gistSync,
+        gistSync: { ...state.gistSync, githubToken: '' },
         focusPreferences: state.focusPreferences,
         gamificationEnabled: state.gamificationEnabled,
         onboardingCompleted: state.onboardingCompleted,
@@ -393,7 +515,15 @@ export const useSettingsStore = create<SettingsState>()(
         localNotesPath: state.localNotesPath,
         // Note: localNotesDirHandle cannot be serialized, user needs to re-select folder
       }),
-      // Merge persisted state with initial state to handle new fields
+      // Merge persisted state with initial state to handle new fields.
+      // Note: persistedState may still carry legacy plaintext apiKeys /
+      // gistSync.githubToken from pre-fix installs, or legacy
+      // emailPreferences.emailjsServiceId / emailjsPublicKey fields from
+      // before the EmailJS surface was removed (this old data isn't
+      // deleted out from under the user); migrateAndLoadSecrets() picks
+      // those up right after hydration, moves the secret ones into
+      // secretsStorage, and triggers a re-write that scrubs all of them
+      // from this blob going forward.
       merge: (persistedState, currentState) => ({
         ...currentState,
         ...(persistedState as Partial<SettingsState>),
@@ -401,3 +531,14 @@ export const useSettingsStore = create<SettingsState>()(
     }
   )
 )
+
+// Kick off the one-time secrets migration/load once hydration completes.
+// `onFinishHydration` covers the normal (async-scheduled) rehydrate path;
+// the `hasHydrated` check covers the case where hydration already finished
+// synchronously before this subscription was registered.
+useSettingsStore.persist.onFinishHydration(() => {
+  void migrateAndLoadSecrets()
+})
+if (useSettingsStore.persist.hasHydrated()) {
+  void migrateAndLoadSecrets()
+}

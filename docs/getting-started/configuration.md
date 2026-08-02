@@ -33,6 +33,30 @@ BytePad can sync your data to a GitHub Gist for backup and cross-device sync.
 | Sync Interval | Time between syncs (minutes) |
 | Gist ID | Your data storage Gist ID |
 
+## Firebase Cloud Sync (optional)
+
+BytePad can optionally sync data to Firestore for signed-in users, in addition to Gist Sync.
+
+### Setup
+
+1. Copy `.env.example` to `.env` and follow the "Firebase Setup Steps" in that file
+2. When creating the Firestore database in the Firebase Console, choose **production mode** (locked) as the starting mode, not test mode.
+3. Before storing any real data, deploy the access rules from `firestore.rules` (repo root) to your Firebase project:
+   ```bash
+   firebase deploy --only firestore:rules --project <your-project-id>
+   ```
+   `<your-project-id>` is the `VITE_FIREBASE_PROJECT_ID` value from your `.env`.
+
+   To avoid passing `--project` every time, copy the template and fill in your own project id:
+
+   ```bash
+   cp .firebaserc.example .firebaserc
+   ```
+
+   `.firebaserc` is gitignored, so your project id stays local. The repo ships only the example: committing a real `.firebaserc` to a public repo would hardcode one specific project's ID for everyone who clones it. Running `firebase use <your-project-id>` once has the same effect.
+
+   These rules restrict every document to the signed-in user's own `uid`, to a fixed collection allowlist, and to the literal `data` document id, and deny anything not explicitly listed.
+
 ## AI Configuration
 
 FlowBot requires an AI API key to function.

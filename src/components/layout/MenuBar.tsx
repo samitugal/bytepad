@@ -3,6 +3,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { useChatStore } from '../../stores/chatStore'
 import { useSettingsStore, PROVIDER_INFO } from '../../stores/settingsStore'
 import { useGamificationStore, LEVELS, ACHIEVEMENTS, formatXP } from '../../stores/gamificationStore'
+import { useTranslation } from '../../i18n'
 
 interface MenuBarProps {
   onSettingsClick?: () => void
@@ -44,6 +45,7 @@ const handleClose = () => {
 }
 
 export function MenuBar({ onSettingsClick }: MenuBarProps) {
+  const { t } = useTranslation()
   const { toggleFocusMode } = useUIStore()
   const { toggleOpen: toggleChat } = useChatStore()
   const { llmProvider, apiKeys } = useSettingsStore()
@@ -59,11 +61,13 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
     getXPProgress,
     getXPForNextLevel,
     getLevelTitle,
+    isMaxLevel,
   } = useGamificationStore()
 
   const xpProgress = getXPProgress()
   const xpForNext = getXPForNextLevel()
   const levelTitle = getLevelTitle()
+  const maxLevel = isMaxLevel()
   const unlockedAchievements = ACHIEVEMENTS.filter(a => achievements.includes(a.id))
 
   // Check if API key is configured
@@ -148,7 +152,14 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">🎮</span>
                       <div>
-                        <div className="text-np-text-primary font-bold">Level {level}</div>
+                        <div className="text-np-text-primary font-bold flex items-center gap-1">
+                          Level {level}
+                          {maxLevel && (
+                            <span className="text-[10px] px-1 py-0.5 rounded bg-np-purple/20 text-np-purple">
+                              {t('gamification.maxLevel')}
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-np-purple">{levelTitle}</div>
                       </div>
                     </div>
@@ -163,7 +174,11 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
                   <div className="mt-2">
                     <div className="flex justify-between text-xs text-np-text-secondary mb-1">
                       <span>{formatXP(currentXP)} XP</span>
-                      <span>{formatXP(xpForNext)} XP to next</span>
+                      {maxLevel ? (
+                        <span>{t('gamification.maxLevelReached')}</span>
+                      ) : (
+                        <span>{formatXP(xpForNext)} XP to next</span>
+                      )}
                     </div>
                     <div className="h-2 bg-np-bg-tertiary rounded-full overflow-hidden">
                       <div
@@ -230,7 +245,7 @@ export function MenuBar({ onSettingsClick }: MenuBarProps) {
                 {/* Level Progress */}
                 <div className="p-2 border-t border-np-border bg-np-bg-tertiary">
                   <div className="flex justify-between text-xs">
-                    {LEVELS.slice(0, 5).map(l => (
+                    {LEVELS.map(l => (
                       <div
                         key={l.level}
                         className={`text-center ${level >= l.level ? 'text-np-purple' : 'text-np-text-secondary/40'}`}

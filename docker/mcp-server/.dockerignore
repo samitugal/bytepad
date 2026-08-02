@@ -1,0 +1,17 @@
+# Build artifacts (produced inside the image by the builder stage)
+dist/
+data/
+
+# Dependencies (installed inside the image)
+node_modules/
+
+# Editor / OS / VCS cruft
+.git/
+.gitignore
+.DS_Store
+*.log
+npm-debug.log*
+
+# Local env files - never bake secrets/keys into the image
+.env
+.env.*

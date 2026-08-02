@@ -11,6 +11,7 @@ import { useNoteStore } from '../stores/noteStore'
 import { useJournalStore } from '../stores/journalStore'
 import { useBookmarkStore } from '../stores/bookmarkStore'
 import type { ChatMessage, ChatContext } from '../types'
+import { logger } from '../utils/logger'
 
 // Build dynamic system prompt with current datetime
 function buildSystemPrompt(): string {
@@ -103,7 +104,7 @@ async function searchWithTavily(query: string, maxResults: number = 5): Promise<
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('[Tavily] Error:', response.status, errorText)
+      logger.error('[Tavily] Error:', response.status, errorText)
       return `Search failed: ${response.status}`
     }
 
@@ -124,7 +125,7 @@ async function searchWithTavily(query: string, maxResults: number = 5): Promise<
 
     return result || 'No results found.'
   } catch (error) {
-    console.error('[Tavily] Error:', error)
+    logger.error('[Tavily] Error:', error)
     return `Search error: ${error instanceof Error ? error.message : 'Unknown error'}`
   }
 }
@@ -1049,7 +1050,7 @@ function getLLM() {
   const { llmProvider, llmModel, apiKeys } = useSettingsStore.getState()
   const apiKey = apiKeys[llmProvider]
 
-  console.log('[AI Service] Provider:', llmProvider, 'Model:', llmModel, 'API Key exists:', !!apiKey, 'Key length:', apiKey?.length)
+  logger.debug('[AI Service] Provider:', llmProvider, 'Model:', llmModel, 'API Key exists:', !!apiKey, 'Key length:', apiKey?.length)
 
   if (!apiKey) {
     throw new Error(`API key for ${llmProvider} is not configured. Please set it in Settings → AI.`)
@@ -1133,12 +1134,12 @@ export async function sendMessage(
     // Agent loop - continues until agent decides to respond (no more tool calls)
     while (iterations < MAX_ITERATIONS) {
       iterations++
-      console.log(`[Agent] Iteration ${iterations}/${MAX_ITERATIONS}, sending to LLM...`)
+      logger.debug(`[Agent] Iteration ${iterations}/${MAX_ITERATIONS}, sending to LLM...`)
 
       const response = await llmWithTools.invoke(messages)
 
       // Debug: log full response
-      console.log('[Agent] Response:', {
+      logger.debug('[Agent] Response:', {
         hasContent: !!response.content,
         contentLength: typeof response.content === 'string' ? response.content.length : 0,
         contentPreview: typeof response.content === 'string' ? response.content.substring(0, 200) : response.content,
@@ -1148,11 +1149,11 @@ export async function sendMessage(
       // If no tool calls, agent is done - return final response
       if (!response.tool_calls?.length) {
         const content = typeof response.content === 'string' ? response.content : ''
-        console.log('[Agent] No tool calls, returning final response:', content.substring(0, 100))
+        logger.debug('[Agent] No tool calls, returning final response:', content.substring(0, 100))
 
         // If content is empty but we have tool results, generate friendly summary
         if (!content && toolResults.length > 0) {
-          console.warn('[Agent] Empty response after tool execution - generating summary')
+          logger.warn('[Agent] Empty response after tool execution - generating summary')
           return {
             content: generateFriendlySummary(toolResults),
             toolResults
@@ -1165,7 +1166,7 @@ export async function sendMessage(
         }
       }
 
-      console.log(`[Agent] Tool calls: ${response.tool_calls.map(tc => tc.name).join(', ')}`)
+      logger.debug(`[Agent] Tool calls: ${response.tool_calls.map(tc => tc.name).join(', ')}`)
 
       // Add assistant message with tool calls to history
       messages.push(response)
@@ -1179,10 +1180,10 @@ export async function sendMessage(
           try {
             result = await executor(toolCall.args as Record<string, unknown>)
             toolResults.push(result)
-            console.log(`[Agent] Tool ${toolCall.name} executed:`, result.substring(0, 100))
+            logger.debug(`[Agent] Tool ${toolCall.name} executed:`, result.substring(0, 100))
           } catch (toolError) {
             result = `Error executing ${toolCall.name}: ${toolError}`
-            console.error(`[Agent] Tool error:`, toolError)
+            logger.error(`[Agent] Tool error:`, toolError)
           }
         } else {
           result = `Unknown tool: ${toolCall.name}`
@@ -1204,13 +1205,13 @@ export async function sendMessage(
     }
 
     // Max iterations reached - generate friendly summary instead of error
-    console.warn('[Agent] Max iterations reached, generating summary')
+    logger.warn('[Agent] Max iterations reached, generating summary')
     return {
       content: generateFriendlySummary(toolResults),
       toolResults
     }
   } catch (error) {
-    console.error('[Agent Error]', error)
+    logger.error('[Agent Error]', error)
     throw error
   }
 }

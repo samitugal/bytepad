@@ -27,7 +27,7 @@ function generateRequestId(): string {
   return `req_${Date.now()}_${++requestCounter}`;
 }
 
-export function setupStoreBridge(mainWindow: BrowserWindow) {
+export function setupStoreBridge(_mainWindow: BrowserWindow) {
   // Handle responses from renderer
   ipcMain.on('store:response', (_, requestId: string, data: unknown, error?: string) => {
     const pending = pendingRequests.get(requestId);

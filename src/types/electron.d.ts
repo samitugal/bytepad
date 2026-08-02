@@ -15,6 +15,7 @@ export interface DockerStatus {
   containerId: string | null
   containerStatus: string | null
   port: number
+  host: string
   error: string | null
 }
 
@@ -36,6 +37,14 @@ export interface ElectronAPI {
     set: (key: string, value: unknown) => Promise<void>
     delete: (key: string) => Promise<void>
     has: (key: string) => Promise<boolean>
+  }
+
+  // Secrets operations (safeStorage-encrypted, main-process only)
+  secrets: {
+    get: (key: string) => Promise<unknown>
+    set: (key: string, value: unknown) => Promise<{ encrypted: boolean }>
+    delete: (key: string) => Promise<void>
+    isAvailable: () => Promise<boolean>
   }
 
   // App info

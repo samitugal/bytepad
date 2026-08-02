@@ -34,8 +34,10 @@ export const useI18nStore = create<I18nState>()(
     )
 )
 
-// Helper function to get nested value from object using dot notation
-function getNestedValue(obj: unknown, path: string): string {
+// Helper function to get nested value from object using dot notation.
+// Returns undefined when the key is missing so callers (and t()) can tell
+// "not found" apart from a real, non-empty translation string.
+function getNestedValue(obj: unknown, path: string): string | undefined {
     const keys = path.split('.')
     let current: unknown = obj
 
@@ -43,11 +45,18 @@ function getNestedValue(obj: unknown, path: string): string {
         if (current && typeof current === 'object' && key in current) {
             current = (current as Record<string, unknown>)[key]
         } else {
-            return path // Return the path if not found
+            return undefined // Not found
         }
     }
 
-    return typeof current === 'string' ? current : path
+    return typeof current === 'string' ? current : undefined
+}
+
+// What an unguarded missing key renders as: the key path in development
+// (loud, so it's spotted) and empty string in production (graceful, so a
+// user never sees a raw key like "nav.dailynotes").
+function missingKeyFallback(key: string): string {
+    return import.meta.env.DEV ? key : ''
 }
 
 // Hook to get translation function
@@ -55,7 +64,7 @@ export function useTranslation() {
     const { language } = useI18nStore()
 
     const t = (key: string, params?: Record<string, string | number>): string => {
-        let text = getNestedValue(translations[language], key)
+        let text = getNestedValue(translations[language], key) ?? missingKeyFallback(key)
 
         // Replace parameters like {name} with actual values
         if (params) {
@@ -73,5 +82,5 @@ export function useTranslation() {
 // Direct translation function for use outside React components
 export function translate(key: string, language?: Language): string {
     const lang = language || useI18nStore.getState().language
-    return getNestedValue(translations[lang], key)
+    return getNestedValue(translations[lang], key) ?? missingKeyFallback(key)
 }

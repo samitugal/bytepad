@@ -5,6 +5,7 @@ import { useJournalStore } from '../../stores/journalStore'
 import { calculateWeeklyStats, getWeekRange, generateAIInsights, type WeeklyStats } from '../../services/analysisService'
 import { generateReportWithAgent } from '../../services/reportAgentService'
 import { useTranslation } from '../../i18n'
+import { logger } from '../../utils/logger'
 import { ProductivityReport } from './ProductivityReport'
 
 const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -91,7 +92,7 @@ export function AnalysisModule() {
       const result = await generateAIInsights(stats)
       setAiInsights(result)
     } catch (error) {
-      console.error('AI Insights error:', error)
+      logger.error('AI Insights error:', error)
     } finally {
       setIsLoadingAI(false)
     }
@@ -105,7 +106,7 @@ export function AnalysisModule() {
       setMdReport({ markdown: result.markdown, generatedAt: result.generatedAt })
       setShowMdPreview(true)
     } catch (error) {
-      console.error('MD Report error:', error)
+      logger.error('MD Report error:', error)
     } finally {
       setIsLoadingMdReport(false)
     }

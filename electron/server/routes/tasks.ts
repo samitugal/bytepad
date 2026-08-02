@@ -1,8 +1,19 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { storeBridge } from '../bridges/storeBridge';
 import { logger } from '../utils/logger';
+import { singleQueryString } from '../utils/queryParams';
 
 const router = Router();
+
+// Params
+interface IdParams {
+  id: string;
+}
+interface IdSubIdParams {
+  id: string;
+  subId: string;
+}
 
 // Types
 interface SubTask {
@@ -29,27 +40,33 @@ interface Task {
   updatedAt?: string;
 }
 
-interface CreateTaskRequest {
-  title: string;
-  description?: string;
-  priority?: 'P1' | 'P2' | 'P3' | 'P4';
-  deadline?: string;
-  deadlineTime?: string;
-  tags?: string[];
-  subtasks?: { title: string }[];
-}
+const priorityEnum = z.enum(['P1', 'P2', 'P3', 'P4']);
 
-interface UpdateTaskRequest {
-  title?: string;
-  description?: string;
-  priority?: 'P1' | 'P2' | 'P3' | 'P4';
-  deadline?: string;
-  deadlineTime?: string;
-  completed?: boolean;
-  tags?: string[];
-  linkedBookmarkIds?: string[];
-  linkedNoteIds?: string[];
-}
+const createTaskSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  priority: priorityEnum.optional(),
+  deadline: z.string().optional(),
+  deadlineTime: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  subtasks: z.array(z.object({ title: z.string().min(1) })).optional(),
+});
+
+const updateTaskSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  priority: priorityEnum.optional(),
+  deadline: z.string().optional(),
+  deadlineTime: z.string().optional(),
+  completed: z.boolean().optional(),
+  tags: z.array(z.string()).optional(),
+  linkedBookmarkIds: z.array(z.string()).optional(),
+  linkedNoteIds: z.array(z.string()).optional(),
+});
+
+const addSubtaskSchema = z.object({
+  title: z.string().min(1, 'Subtask title is required'),
+});
 
 // GET /api/tasks - List all tasks
 router.get('/', async (req: Request, res: Response) => {
@@ -94,7 +111,7 @@ router.get('/', async (req: Request, res: Response) => {
 // GET /api/tasks/search - Search tasks
 router.get('/search', async (req: Request, res: Response) => {
   try {
-    const query = req.query.q as string;
+    const query = singleQueryString(req.query.q);
     if (!query) {
       return res.status(400).json({
         success: false,
@@ -119,7 +136,7 @@ router.get('/search', async (req: Request, res: Response) => {
 });
 
 // GET /api/tasks/:id - Get single task
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const task = await storeBridge.getById<Task>('tasks', id);
@@ -147,14 +164,14 @@ router.get('/:id', async (req: Request, res: Response) => {
 // POST /api/tasks - Create task
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const body = req.body as CreateTaskRequest;
-
-    if (!body.title) {
+    const parsed = createTaskSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'Title is required',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
+    const body = parsed.data;
 
     const task = await storeBridge.create<Task>('tasks', {
       title: body.title,
@@ -191,10 +208,17 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // PUT /api/tasks/:id - Update task
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
-    const body = req.body as UpdateTaskRequest;
+    const parsed = updateTaskSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: parsed.error.issues.map(i => i.message).join('; '),
+      });
+    }
+    const body = parsed.data;
 
     const existing = await storeBridge.getById<Task>('tasks', id);
     if (!existing) {
@@ -222,7 +246,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/tasks/:id/complete - Toggle task completion
-router.post('/:id/complete', async (req: Request, res: Response) => {
+router.post('/:id/complete', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -253,7 +277,7 @@ router.post('/:id/complete', async (req: Request, res: Response) => {
 });
 
 // POST /api/tasks/:id/archive - Archive task
-router.post('/:id/archive', async (req: Request, res: Response) => {
+router.post('/:id/archive', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -284,7 +308,7 @@ router.post('/:id/archive', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/tasks/:id - Delete task
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -314,17 +338,17 @@ router.delete('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/tasks/:id/subtasks - Add subtask
-router.post('/:id/subtasks', async (req: Request, res: Response) => {
+router.post('/:id/subtasks', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
-    const { title } = req.body;
-
-    if (!title) {
+    const parsed = addSubtaskSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'Subtask title is required',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
+    const { title } = parsed.data;
 
     const existing = await storeBridge.getById<Task>('tasks', id);
     if (!existing) {
@@ -353,7 +377,7 @@ router.post('/:id/subtasks', async (req: Request, res: Response) => {
 });
 
 // PUT /api/tasks/:id/subtasks/:subId - Toggle subtask
-router.put('/:id/subtasks/:subId', async (req: Request, res: Response) => {
+router.put('/:id/subtasks/:subId', async (req: Request<IdSubIdParams>, res: Response) => {
   try {
     const { id, subId } = req.params;
 

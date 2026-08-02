@@ -6,7 +6,7 @@
 
 [![License](https://img.shields.io/badge/license-Personal%20Use-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#download)
-[![Version](https://img.shields.io/badge/version-0.24.3-green)](https://github.com/samitugal/bytepad/releases)
+[![Version](https://img.shields.io/badge/version-0.25.0-green)](https://github.com/samitugal/bytepad/releases)
 
 
 bytepad is a keyboard-first, privacy-first productivity app built for people who think better in plain text.
@@ -78,7 +78,8 @@ Over time, these links form a personal knowledge graph that reflects how you act
 - **Focus Mode** - Pomodoro timer with customizable work/break intervals
 - **Gamification** - XP, levels, and achievements to stay motivated
 - **Localization** - English and Turkish language support
-- **GitHub Gist Sync** - Optional cloud backup to private Gist
+- **GitHub Gist Sync** - Cross-device sync out of the box, backed by a private Gist
+- **Cloud Sync (bring your own Firebase)** - Google sign-in and Firestore sync, if you connect your own Firebase project. Not configured in downloaded builds — see [docs/features/cloud-sync.md](docs/features/cloud-sync.md)
 - **MCP Server** - Model Context Protocol integration for AI assistants (Claude Desktop, Cursor, etc.)
 
 ---
@@ -162,7 +163,7 @@ Or use docker-compose:
 ```yaml
 services:
   bytepad-mcp:
-    image: bytepad/mcp-server:0.24.3
+    image: bytepad/mcp-server:0.25.0
     ports:
       - "3847:3847"
     volumes:
@@ -226,7 +227,7 @@ bytepad is designed for keyboard-first navigation. Press `Ctrl+?` anytime to see
 ## Privacy
 
 - All data stored locally on your device
-- No external servers (except optional Gist sync)
+- No external servers by default (Gist sync uses your GitHub account; cloud sync, if you configure your own Firebase project, uses that project)
 - AI features only send necessary context to your chosen provider
 - API keys stored locally, never transmitted
 - MCP server runs locally - your data never leaves your machine

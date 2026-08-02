@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Dependencies
-node_modules/
+node_modules
 
 # Build output
 dist/
@@ -36,6 +36,9 @@ dist-electron/
 .env
 .env.local
 .env.*.local
+
+# Local Firebase project selection (copy .firebaserc.example)
+.firebaserc
 
 # System files
 Thumbs.db
@@ -68,3 +71,6 @@ coverage/
 .cursorrules.json5
 .cursorrules.jsonp
 .cursorrules.jsonp5
+# Local tooling & internal planning (not part of the public project)
+CLAUDE.md
+docs/internal/

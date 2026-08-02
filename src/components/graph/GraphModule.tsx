@@ -10,6 +10,7 @@ import { useTranslation } from '../../i18n'
 import { GraphVisualization } from './GraphVisualization'
 import { GraphControls } from './GraphControls'
 import { buildGraphData, collectAllTags } from '../../utils/graphUtils'
+import { logger } from '../../utils/logger'
 import type { GraphEntityType } from '../../types'
 
 const GRAPH_FILTERS_KEY = 'bytepad-graph-filters'
@@ -31,7 +32,7 @@ function loadFilters() {
       return { ...defaultFilters, ...JSON.parse(saved) }
     }
   } catch (e) {
-    console.error('Failed to load graph filters:', e)
+    logger.error('Failed to load graph filters:', e)
   }
   return defaultFilters
 }

@@ -1,8 +1,15 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { storeBridge } from '../bridges/storeBridge';
 import { logger } from '../utils/logger';
+import { singleQueryString } from '../utils/queryParams';
 
 const router = Router();
+
+// Params
+interface IdParams {
+  id: string;
+}
 
 // Types
 interface Note {
@@ -16,23 +23,23 @@ interface Note {
   updatedAt: string;
 }
 
-interface CreateNoteRequest {
-  title: string;
-  content?: string;
-  tags?: string[];
-  folderId?: string;
-}
+const createNoteSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  content: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  folderId: z.string().optional(),
+});
 
-interface UpdateNoteRequest {
-  title?: string;
-  content?: string;
-  tags?: string[];
-  folderId?: string;
-  pinned?: boolean;
-}
+const updateNoteSchema = z.object({
+  title: z.string().min(1).optional(),
+  content: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  folderId: z.string().optional(),
+  pinned: z.boolean().optional(),
+});
 
 // GET /api/notes - List all notes
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (_req: Request, res: Response) => {
   try {
     const notes = await storeBridge.getAll<Note>('notes');
     res.json({
@@ -52,7 +59,7 @@ router.get('/', async (req: Request, res: Response) => {
 // GET /api/notes/search - Search notes
 router.get('/search', async (req: Request, res: Response) => {
   try {
-    const query = req.query.q as string;
+    const query = singleQueryString(req.query.q);
     if (!query) {
       return res.status(400).json({
         success: false,
@@ -77,7 +84,7 @@ router.get('/search', async (req: Request, res: Response) => {
 });
 
 // GET /api/notes/:id - Get single note
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const note = await storeBridge.getById<Note>('notes', id);
@@ -103,7 +110,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // GET /api/notes/:id/backlinks - Get notes that link to this note
-router.get('/:id/backlinks', async (req: Request, res: Response) => {
+router.get('/:id/backlinks', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const targetNote = await storeBridge.getById<Note>('notes', id);
@@ -143,14 +150,14 @@ router.get('/:id/backlinks', async (req: Request, res: Response) => {
 // POST /api/notes - Create note
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const body = req.body as CreateNoteRequest;
-
-    if (!body.title) {
+    const parsed = createNoteSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'Title is required',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
+    const body = parsed.data;
 
     const note = await storeBridge.create<Note>('notes', {
       title: body.title,
@@ -175,10 +182,17 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // PUT /api/notes/:id - Update note
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
-    const body = req.body as UpdateNoteRequest;
+    const parsed = updateNoteSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: parsed.error.issues.map(i => i.message).join('; '),
+      });
+    }
+    const body = parsed.data;
 
     const existing = await storeBridge.getById<Note>('notes', id);
     if (!existing) {
@@ -206,7 +220,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/notes/:id - Delete note
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 

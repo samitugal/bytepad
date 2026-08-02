@@ -11,6 +11,7 @@ import { useHabitStore } from '../stores/habitStore'
 import { useJournalStore } from '../stores/journalStore'
 import { useBookmarkStore } from '../stores/bookmarkStore'
 import type { Note, Task, Habit, JournalEntry, Bookmark } from '../types'
+import { logger } from '../utils/logger'
 
 interface HabitSyncData {
   habits: Habit[]
@@ -75,11 +76,11 @@ const syncBookmarksToCloud = debounce(async () => {
 // Initialize cloud sync - call this after user logs in
 export async function initializeCloudSync(): Promise<void> {
   if (!isFirestoreConfigured() || !getCurrentUser()) {
-    console.log('Cloud sync not available: Firebase not configured or user not logged in')
+    logger.info('Cloud sync not available: Firebase not configured or user not logged in')
     return
   }
 
-  console.log('Initializing cloud sync...')
+  logger.info('Initializing cloud sync...')
 
   // Load initial data from cloud
   await loadAllDataFromCloud()
@@ -90,7 +91,7 @@ export async function initializeCloudSync(): Promise<void> {
   // Subscribe to local store changes
   setupLocalListeners()
 
-  console.log('Cloud sync initialized')
+  logger.info('Cloud sync initialized')
 }
 
 // Load all data from cloud
@@ -228,7 +229,7 @@ function setupLocalListeners(): void {
 export function stopCloudSync(): void {
   unsubscribers.forEach(unsub => unsub())
   unsubscribers.length = 0
-  console.log('Cloud sync stopped')
+  logger.info('Cloud sync stopped')
 }
 
 // Force sync all data to cloud
@@ -249,5 +250,5 @@ export async function forceSyncToCloud(): Promise<void> {
     saveUserData('bookmarks', bookmarks),
   ])
 
-  console.log('Force sync to cloud completed')
+  logger.info('Force sync to cloud completed')
 }

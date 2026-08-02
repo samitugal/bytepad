@@ -3,6 +3,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { singleQueryString } from './utils/queryParams.js';
 
 interface StoreBridge {
   getAll(storeName: string): Promise<unknown[]>;
@@ -23,7 +24,7 @@ export function createRoutes(storeBridge: StoreBridge): Router {
       success: true,
       status: 'healthy',
       service: 'bytepad-mcp-docker',
-      version: '0.24.3',
+      version: '0.25.0',
       timestamp: new Date().toISOString(),
     });
   });
@@ -36,6 +37,22 @@ export function createRoutes(storeBridge: StoreBridge): Router {
     router.get(`/${storeName}`, async (req: Request, res: Response) => {
       try {
         const items = await storeBridge.getAll(storeName);
+        res.json({ success: true, data: items });
+      } catch (err) {
+        res.status(500).json({ success: false, error: (err as Error).message });
+      }
+    });
+
+    // GET search - registered before GET /:id so the literal "search"
+    // segment isn't captured by the :id wildcard (e.g. /notes/search
+    // would otherwise be treated as a lookup for id "search").
+    router.get(`/${storeName}/search`, async (req: Request, res: Response) => {
+      try {
+        const query = singleQueryString(req.query.q);
+        if (!query) {
+          return res.status(400).json({ success: false, error: 'Query parameter "q" is required' });
+        }
+        const items = await storeBridge.search(storeName, query);
         res.json({ success: true, data: items });
       } catch (err) {
         res.status(500).json({ success: false, error: (err as Error).message });
@@ -86,17 +103,6 @@ export function createRoutes(storeBridge: StoreBridge): Router {
           return res.status(404).json({ success: false, error: 'Not found' });
         }
         res.json({ success: true, message: 'Deleted' });
-      } catch (err) {
-        res.status(500).json({ success: false, error: (err as Error).message });
-      }
-    });
-
-    // GET search
-    router.get(`/${storeName}/search`, async (req: Request, res: Response) => {
-      try {
-        const query = req.query.q as string || '';
-        const items = await storeBridge.search(storeName, query);
-        res.json({ success: true, data: items });
       } catch (err) {
         res.status(500).json({ success: false, error: (err as Error).message });
       }

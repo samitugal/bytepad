@@ -9,6 +9,17 @@ import { logger } from './logger.js';
 
 type StoreChangeCallback = (storeName: string, action: string, data: unknown) => void;
 
+// Every store file holds a JSON array of records. They always carry an id
+// (assigned on create, below) plus whatever other fields the entity has -
+// this file doesn't know or care about per-entity shape. Modeling elements
+// as `unknown` (rather than this) makes `Array.prototype.find`/`filter`/
+// spread all reject valid usage below, since `unknown` isn't known to be an
+// object at all.
+interface StoredItem {
+  id?: string;
+  [key: string]: unknown;
+}
+
 let dataDir = '/app/data';
 const storeChangeCallbacks: StoreChangeCallback[] = [];
 
@@ -51,7 +62,7 @@ export async function initializeStore(dir: string): Promise<void> {
 }
 
 // Read store data
-async function readStore(storeName: string): Promise<unknown[]> {
+async function readStore(storeName: string): Promise<StoredItem[]> {
   const fileName = storeFiles[storeName];
   if (!fileName) {
     throw new Error(`Unknown store: ${storeName}`);
@@ -86,16 +97,16 @@ function emitChange(storeName: string, action: string, data: unknown) {
 // Store bridge interface (matches Electron version)
 export const fileStoreBridge = {
   // Get all items from a store
-  async getAll(storeName: string): Promise<unknown[]> {
+  async getAll(storeName: string): Promise<StoredItem[]> {
     const data = await readStore(storeName);
     return Array.isArray(data) ? data : [];
   },
 
   // Get single item by ID
-  async getById(storeName: string, id: string): Promise<unknown | null> {
+  async getById(storeName: string, id: string): Promise<StoredItem | null> {
     const data = await readStore(storeName);
     if (!Array.isArray(data)) return null;
-    return data.find((item: { id?: string }) => item.id === id) || null;
+    return data.find((item) => item.id === id) || null;
   },
 
   // Get store state (for non-array stores like gamification)
@@ -113,7 +124,7 @@ export const fileStoreBridge = {
   },
 
   // Create new item
-  async create(storeName: string, item: unknown): Promise<unknown> {
+  async create(storeName: string, item: unknown): Promise<StoredItem> {
     const data = await readStore(storeName);
     if (!Array.isArray(data)) {
       throw new Error(`Store ${storeName} is not an array`);
@@ -133,11 +144,11 @@ export const fileStoreBridge = {
   },
 
   // Update existing item
-  async update(storeName: string, id: string, updates: unknown): Promise<unknown | null> {
+  async update(storeName: string, id: string, updates: unknown): Promise<StoredItem | null> {
     const data = await readStore(storeName);
     if (!Array.isArray(data)) return null;
 
-    const index = data.findIndex((item: { id?: string }) => item.id === id);
+    const index = data.findIndex((item) => item.id === id);
     if (index === -1) return null;
 
     const updatedItem = {
@@ -157,7 +168,7 @@ export const fileStoreBridge = {
     const data = await readStore(storeName);
     if (!Array.isArray(data)) return false;
 
-    const index = data.findIndex((item: { id?: string }) => item.id === id);
+    const index = data.findIndex((item) => item.id === id);
     if (index === -1) return false;
 
     data.splice(index, 1);
@@ -167,12 +178,12 @@ export const fileStoreBridge = {
   },
 
   // Search items
-  async search(storeName: string, query: string): Promise<unknown[]> {
+  async search(storeName: string, query: string): Promise<StoredItem[]> {
     const data = await readStore(storeName);
     if (!Array.isArray(data)) return [];
 
     const lowerQuery = query.toLowerCase();
-    return data.filter((item: Record<string, unknown>) => {
+    return data.filter((item) => {
       const searchableFields = ['title', 'content', 'description', 'name'];
       return searchableFields.some((field) => {
         const value = item[field];
