@@ -1,6 +1,6 @@
 // Service Worker for bytepad PWA
 // Version-based cache for automatic updates
-const APP_VERSION = '0.23.2';
+const APP_VERSION = '0.25.0';
 const CACHE_NAME = `bytepad-${APP_VERSION}`;
 
 const STATIC_ASSETS = [
