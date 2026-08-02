@@ -169,19 +169,6 @@ export interface FocusPreferences {
   dailyGoalSessions: number // (default: 5)
 }
 
-// Email Notification Preferences
-export interface EmailPreferences {
-  enabled: boolean
-  userEmail: string
-  dailySummaryEnabled: boolean
-  dailySummaryTime: string // HH:mm format
-  weeklySummaryEnabled: boolean
-  weeklySummaryDay: number // 0=Sunday, 1=Monday, etc.
-  streakAlertsEnabled: boolean
-  lastDailySent: string | null
-  lastWeeklySent: string | null
-}
-
 interface SettingsState {
   // LLM Settings
   llmProvider: LLMProvider
@@ -196,9 +183,6 @@ interface SettingsState {
   // Editor Settings
   noteMarkdownPreview: boolean
   noteFontSize: FontSize // Separate font size for note editor content
-
-  // Email Notifications
-  emailPreferences: EmailPreferences
 
   // GitHub Gist Sync
   gistSync: GistSyncPreferences
@@ -235,7 +219,6 @@ interface SettingsState {
   setFontFamily: (family: FontFamily) => void
   setNoteMarkdownPreview: (enabled: boolean) => void
   setNoteFontSize: (size: FontSize) => void
-  setEmailPreferences: (prefs: Partial<EmailPreferences>) => void
   setGistSync: (prefs: Partial<GistSyncPreferences>) => void
   setRememberSecretsOnDevice: (enabled: boolean) => void
   setFocusPreferences: (prefs: Partial<FocusPreferences>) => void
@@ -267,36 +250,17 @@ function buildSecretsPayload(state: Pick<SettingsState, 'apiKeys' | 'gistSync'>)
   }
 }
 
-// Fields that used to live on EmailPreferences to configure EmailJS (now
-// removed entirely — there is no send path left anywhere in the app).
-// Existing installs may still have these sitting in the persisted settings
-// blob (plaintext localStorage) from before removal; `emailjsPublicKey`
-// specifically may also still be sitting in secretsStorage (safeStorage
-// encrypted on desktop, session/local storage on web), since it used to be
-// mirrored there as a secret. Both are cleared by migrateAndLoadSecrets.
-const LEGACY_EMAILJS_FIELDS = [
-  'emailjsServiceId',
-  'emailjsPublicKey',
-  'emailjsTemplateDaily',
-  'emailjsTemplateWeekly',
-  'emailjsTemplateStreak',
-] as const
-
-function stripLegacyEmailjsFields(prefs: EmailPreferences): EmailPreferences {
-  const clean = { ...prefs } as EmailPreferences & Record<string, unknown>
-  for (const key of LEGACY_EMAILJS_FIELDS) {
-    delete clean[key]
-  }
-  return clean
-}
-
 let secretsMigrationRan = false
 
 // Runs once per app session after the settings store rehydrates.
-// - Always scrubs any legacy EmailJS fields left on emailPreferences from
-//   before that surface was removed (service id, public key, unused
-//   templates). This alone is a `set` call, so it also triggers a persist
-//   re-write that drops those keys from the localStorage blob.
+// - Always scrubs a legacy `emailPreferences` object left on the persisted
+//   state from before the Email Notifications feature (and the field
+//   entirely) was removed — there is no send path left anywhere in the
+//   app. `merge` below spreads whatever the old localStorage blob still
+//   has onto the live store, so the field can still be present at runtime
+//   even though it's no longer part of `SettingsState`. This alone is a
+//   `set` call, so it also triggers a persist re-write that drops the key
+//   from the localStorage blob (the current `partialize` never lists it).
 // - If secretsStorage already has a record, it wins (it's the source of
 //   truth going forward) and is applied over whatever hydration produced.
 //   If that record still carries an orphaned emailjsPublicKey from before
@@ -308,8 +272,9 @@ let secretsMigrationRan = false
 //   secrets from before this change, migrate them into secretsStorage.
 // - Either way, force one persist write so `partialize` (which no longer
 //   writes secret values) overwrites any legacy plaintext left on disk.
-// Idempotent: once secretsStorage has a record and emailPreferences is
-// clean, subsequent runs are no-ops beyond re-applying the same values.
+// Idempotent: once secretsStorage has a record and the persisted blob no
+// longer carries `emailPreferences`, subsequent runs are no-ops beyond
+// re-applying the same values.
 async function migrateAndLoadSecrets() {
   if (secretsMigrationRan) return
   secretsMigrationRan = true
@@ -317,9 +282,12 @@ async function migrateAndLoadSecrets() {
   const state = useSettingsStore.getState()
   const stored = await secretsStorage.load() as (StoredSecrets & { emailjsPublicKey?: string }) | null
 
-  const hasLegacyEmailjsFields = LEGACY_EMAILJS_FIELDS.some((key) => key in state.emailPreferences)
-  if (hasLegacyEmailjsFields) {
-    useSettingsStore.setState((s) => ({ emailPreferences: stripLegacyEmailjsFields(s.emailPreferences) }))
+  // Legacy `emailPreferences` from before the Email Notifications feature
+  // was removed. Detected via a runtime cast since the field no longer
+  // exists on `SettingsState` — see comment above.
+  const hasLegacyEmailPreferences = 'emailPreferences' in (state as unknown as Record<string, unknown>)
+  if (hasLegacyEmailPreferences) {
+    useSettingsStore.setState((s) => ({ ...s }))
   }
 
   if (stored) {
@@ -366,17 +334,6 @@ export const useSettingsStore = create<SettingsState>()(
       fontFamily: 'system',
       noteMarkdownPreview: false,
       noteFontSize: 'base',
-      emailPreferences: {
-        enabled: false,
-        userEmail: '',
-        dailySummaryEnabled: false,
-        dailySummaryTime: '20:00',
-        weeklySummaryEnabled: false,
-        weeklySummaryDay: 0, // Sunday
-        streakAlertsEnabled: true,
-        lastDailySent: null,
-        lastWeeklySent: null,
-      },
       gistSync: {
         enabled: false,
         githubToken: '',
@@ -436,12 +393,6 @@ export const useSettingsStore = create<SettingsState>()(
       setNoteMarkdownPreview: (enabled) => set({ noteMarkdownPreview: enabled }),
 
       setNoteFontSize: (size) => set({ noteFontSize: size }),
-
-      setEmailPreferences: (prefs) => {
-        set((state) => ({
-          emailPreferences: { ...state.emailPreferences, ...prefs }
-        }))
-      },
 
       setGistSync: (prefs) => {
         set((state) => ({
@@ -505,7 +456,6 @@ export const useSettingsStore = create<SettingsState>()(
         fontFamily: state.fontFamily,
         noteMarkdownPreview: state.noteMarkdownPreview,
         noteFontSize: state.noteFontSize,
-        emailPreferences: state.emailPreferences,
         gistSync: { ...state.gistSync, githubToken: '' },
         focusPreferences: state.focusPreferences,
         gamificationEnabled: state.gamificationEnabled,
@@ -517,12 +467,12 @@ export const useSettingsStore = create<SettingsState>()(
       }),
       // Merge persisted state with initial state to handle new fields.
       // Note: persistedState may still carry legacy plaintext apiKeys /
-      // gistSync.githubToken from pre-fix installs, or legacy
-      // emailPreferences.emailjsServiceId / emailjsPublicKey fields from
-      // before the EmailJS surface was removed (this old data isn't
-      // deleted out from under the user); migrateAndLoadSecrets() picks
-      // those up right after hydration, moves the secret ones into
-      // secretsStorage, and triggers a re-write that scrubs all of them
+      // gistSync.githubToken from pre-fix installs, or a legacy
+      // `emailPreferences` object from before the Email Notifications
+      // feature was removed entirely (this old data isn't deleted out from
+      // under the user); migrateAndLoadSecrets() picks those up right
+      // after hydration, moves the secret ones into secretsStorage, drops
+      // `emailPreferences`, and triggers a re-write that scrubs all of it
       // from this blob going forward.
       merge: (persistedState, currentState) => ({
         ...currentState,
