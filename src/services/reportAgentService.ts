@@ -8,6 +8,7 @@ import { useFocusStore } from '../stores/focusStore'
 import { useGamificationStore } from '../stores/gamificationStore'
 import { useSettingsStore, PROVIDER_INFO } from '../stores/settingsStore'
 import { getWeekRange, getWeekDates } from './analysisService'
+import { logger } from '../utils/logger'
 
 // Tool definitions for Report Agent
 export const REPORT_AGENT_TOOLS = [
@@ -342,7 +343,7 @@ export async function generateReportWithAgent(weekOffset: number = 0): Promise<{
       generatedAt: new Date().toISOString(),
     }
   } catch (error) {
-    console.error('Report Agent error:', error)
+    logger.error('Report Agent error:', error)
     return {
       success: false,
       markdown: `# Error\n\nFailed to generate report: ${error instanceof Error ? error.message : 'Unknown error'}`,

@@ -1,5 +1,6 @@
 import { initializeApp, FirebaseApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, Auth } from 'firebase/auth'
+import { logger } from '../utils/logger'
 
 // Firebase configuration - User needs to add their own config
 const firebaseConfig = {
@@ -32,15 +33,15 @@ const googleProvider = new GoogleAuthProvider()
 
 export const signInWithGoogle = async (): Promise<User | null> => {
   if (!auth) {
-    console.warn('Firebase not configured. Please add Firebase config to .env file.')
+    logger.warn('Firebase not configured. Please add Firebase config to .env file.')
     return null
   }
-  
+
   try {
     const result = await signInWithPopup(auth, googleProvider)
     return result.user
   } catch (error) {
-    console.error('Google sign-in error:', error)
+    logger.error('Google sign-in error:', error)
     return null
   }
 }
@@ -51,7 +52,7 @@ export const signOutUser = async (): Promise<void> => {
   try {
     await signOut(auth)
   } catch (error) {
-    console.error('Sign-out error:', error)
+    logger.error('Sign-out error:', error)
   }
 }
 
