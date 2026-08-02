@@ -19,6 +19,18 @@ const store = new Store();
 const CONTAINER_NAME = 'bytepad-mcp';
 const IMAGE_NAME = 'bytepad/mcp-server';
 const IMAGE_TAG = '0.24.3';
+
+/**
+ * Single definition of the "image missing" guidance shown to users.
+ *
+ * Packaged builds ship only `out/**` (see electron-builder.yml), so they carry
+ * neither docker-compose.yml nor docker/mcp-server/. Any instruction naming
+ * those files is wrong outside a source checkout. Everything that surfaces this
+ * message - main-process IPC handlers and the settings UI - must read it from
+ * here so a copy cannot drift again.
+ */
+export const IMAGE_NOT_FOUND_MESSAGE =
+  `Docker image not found. Build it from the bytepad source with: docker build -t ${IMAGE_NAME}:${IMAGE_TAG} docker/mcp-server`;
 const DEFAULT_PORT = 3847;
 // Loopback only by default; set mcp.docker.host to opt in to wider exposure.
 // Mirrors the embedded server's mcp.host default in electron/server/config.ts.
@@ -339,14 +351,9 @@ export async function startDockerContainer(): Promise<{ success: boolean; error?
 
     // Check if image doesn't exist
     if (errorMessage.includes('Unable to find image') || errorMessage.includes('No such image')) {
-      // Packaged builds don't ship docker-compose.yml (electron-builder only
-      // bundles `out/**/*`), so pointing users at `docker-compose build` is
-      // misleading outside a source checkout. Point at the plain `docker
-      // build` invocation instead, which matches this file's own
-      // (currently unwired) buildDockerImage() and works from source.
       return {
         success: false,
-        error: `Docker image not found. Build it from the bytepad source with: docker build -t ${IMAGE_NAME}:${IMAGE_TAG} docker/mcp-server`,
+        error: IMAGE_NOT_FOUND_MESSAGE,
       };
     }
 
