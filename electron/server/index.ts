@@ -13,6 +13,7 @@ import { getOrCreateApiKey, validateApiKey } from './utils/apiKey';
 import { logger, setLogLevel } from './utils/logger';
 import apiRoutes from './routes';
 import { onStoreChange } from './bridges/storeBridge';
+import { singleQueryString } from './utils/queryParams';
 import { createMCPServer } from './mcp';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -234,7 +235,7 @@ export async function startMCPServer(config?: Partial<ServerConfig>): Promise<vo
 
   // MCP messages endpoint - receives client JSON-RPC requests
   app.post('/messages', async (req: Request, res: Response) => {
-    const sessionId = req.query.sessionId as string;
+    const sessionId = singleQueryString(req.query.sessionId);
 
     if (!sessionId) {
       logger.warn('MCP messages: Missing sessionId parameter');

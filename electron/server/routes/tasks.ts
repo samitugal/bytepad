@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { storeBridge } from '../bridges/storeBridge';
 import { logger } from '../utils/logger';
+import { singleQueryString } from '../utils/queryParams';
 
 const router = Router();
 
@@ -110,7 +111,7 @@ router.get('/', async (req: Request, res: Response) => {
 // GET /api/tasks/search - Search tasks
 router.get('/search', async (req: Request, res: Response) => {
   try {
-    const query = req.query.q as string;
+    const query = singleQueryString(req.query.q);
     if (!query) {
       return res.status(400).json({
         success: false,

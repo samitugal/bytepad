@@ -21,6 +21,7 @@ import { fileStoreBridge, initializeStore, onStoreChange } from './fileStoreBrid
 import { createRoutes } from './routes.js';
 import { logger } from './logger.js';
 import { hasApiKey, validateApiKey } from './apiKey.js';
+import { singleQueryString } from './utils/queryParams.js';
 
 const PORT = parseInt(process.env.MCP_PORT || '3847', 10);
 const HOST = process.env.MCP_HOST || '0.0.0.0';
@@ -391,7 +392,7 @@ async function startServer(): Promise<void> {
 
   // MCP messages endpoint - receives client JSON-RPC requests
   app.post('/messages', async (req: Request, res: Response) => {
-    const sessionId = req.query.sessionId as string;
+    const sessionId = singleQueryString(req.query.sessionId);
 
     if (!sessionId) {
       res.status(400).json({ error: 'Missing sessionId parameter' });

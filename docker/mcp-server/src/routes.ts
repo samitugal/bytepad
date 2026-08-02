@@ -3,6 +3,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { singleQueryString } from './utils/queryParams.js';
 
 interface StoreBridge {
   getAll(storeName: string): Promise<unknown[]>;
@@ -94,7 +95,7 @@ export function createRoutes(storeBridge: StoreBridge): Router {
     // GET search
     router.get(`/${storeName}/search`, async (req: Request, res: Response) => {
       try {
-        const query = req.query.q as string || '';
+        const query = singleQueryString(req.query.q) ?? '';
         const items = await storeBridge.search(storeName, query);
         res.json({ success: true, data: items });
       } catch (err) {
