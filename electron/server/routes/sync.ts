@@ -45,7 +45,7 @@ async function sendSyncCommand(command: string): Promise<{ success: boolean; err
 }
 
 // GET /api/sync/status - Get current sync status
-router.get('/status', async (req: Request, res: Response) => {
+router.get('/status', async (_req: Request, res: Response) => {
   try {
     const settings = await storeBridge.getState('settings') as {
       gistSync?: {
@@ -78,7 +78,7 @@ router.get('/status', async (req: Request, res: Response) => {
 });
 
 // GET /api/sync/gist-info - Get Gist information
-router.get('/gist-info', async (req: Request, res: Response) => {
+router.get('/gist-info', async (_req: Request, res: Response) => {
   try {
     const settings = await storeBridge.getState('settings') as {
       gistSync?: {
@@ -116,7 +116,7 @@ router.get('/gist-info', async (req: Request, res: Response) => {
 });
 
 // POST /api/sync/push - Force push to Gist
-router.post('/push', async (req: Request, res: Response) => {
+router.post('/push', async (_req: Request, res: Response) => {
   try {
     if (syncStatus.syncInProgress) {
       return res.status(409).json({
@@ -161,7 +161,7 @@ router.post('/push', async (req: Request, res: Response) => {
 });
 
 // POST /api/sync/pull - Force pull from Gist
-router.post('/pull', async (req: Request, res: Response) => {
+router.post('/pull', async (_req: Request, res: Response) => {
   try {
     if (syncStatus.syncInProgress) {
       return res.status(409).json({
@@ -205,7 +205,7 @@ router.post('/pull', async (req: Request, res: Response) => {
 });
 
 // POST /api/sync/trigger - Trigger smart sync
-router.post('/trigger', async (req: Request, res: Response) => {
+router.post('/trigger', async (_req: Request, res: Response) => {
   try {
     if (syncStatus.syncInProgress) {
       return res.status(409).json({

@@ -15,6 +15,7 @@ import {
   ReadResourceRequestSchema,
   ListToolsRequestSchema,
   CallToolRequestSchema,
+  type CallToolResult,
 } from '@modelcontextprotocol/sdk/types.js';
 import { fileStoreBridge, initializeStore, onStoreChange } from './fileStoreBridge.js';
 import { createRoutes } from './routes.js';
@@ -42,11 +43,11 @@ const mcpTransports: Map<string, SSEServerTransport> = new Map();
 
 // Idempotency cache for tool calls - prevents duplicate execution
 interface CacheEntry {
-  result: unknown;
+  result: CallToolResult;
   timestamp: number;
 }
 interface PendingEntry {
-  resolvers: { resolve: (value: unknown) => void; reject: (error: unknown) => void }[];
+  resolvers: { resolve: (value: CallToolResult) => void; reject: (error: unknown) => void }[];
 }
 const toolCallCache = new Map<string, CacheEntry>();
 const pendingOperations = new Map<string, PendingEntry>();
@@ -104,7 +105,7 @@ function createMCPServer(): Server {
       case 'tasks':
         if (id === 'pending') {
           const all = await fileStoreBridge.getAll('tasks');
-          data = all.filter((t: { completed?: boolean; archivedAt?: string }) => !t.completed && !t.archivedAt);
+          data = all.filter((t) => !t.completed && !t.archivedAt);
         } else {
           data = id ? await fileStoreBridge.getById('tasks', id) : await fileStoreBridge.getAll('tasks');
         }
@@ -125,10 +126,10 @@ function createMCPServer(): Server {
         const today = new Date().toISOString().split('T')[0];
         const tasks = await fileStoreBridge.getAll('tasks');
         const habits = await fileStoreBridge.getAll('habits');
-        const activeTasks = tasks.filter((t: { archivedAt?: string }) => !t.archivedAt);
+        const activeTasks = tasks.filter((t) => !t.archivedAt);
         data = {
           date: today,
-          tasks: { total: activeTasks.length, pending: activeTasks.filter((t: { completed?: boolean }) => !t.completed).length },
+          tasks: { total: activeTasks.length, pending: activeTasks.filter((t) => !t.completed).length },
           habits: { total: habits.length },
         };
         break;
@@ -167,7 +168,7 @@ function createMCPServer(): Server {
       const cached = toolCallCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
         logger.info(`MCP: Returning cached result for ${name} (idempotency)`);
-        return cached.result as { content: { type: 'text'; text: string }[] };
+        return cached.result;
       }
 
       // Step 2: Check if operation is already pending
@@ -260,11 +261,11 @@ function createMCPServer(): Server {
         const results: Record<string, unknown[]> = {};
         if (type === 'all' || type === 'notes') {
           const notes = await fileStoreBridge.getAll('notes');
-          results.notes = notes.filter((n: { title: string; content?: string }) => n.title.toLowerCase().includes(query) || n.content?.toLowerCase().includes(query));
+          results.notes = notes.filter((n) => (n.title as string).toLowerCase().includes(query) || (n.content as string | undefined)?.toLowerCase().includes(query));
         }
         if (type === 'all' || type === 'tasks') {
           const tasks = await fileStoreBridge.getAll('tasks');
-          results.tasks = tasks.filter((t: { title: string; description?: string }) => t.title.toLowerCase().includes(query) || t.description?.toLowerCase().includes(query));
+          results.tasks = tasks.filter((t) => (t.title as string).toLowerCase().includes(query) || (t.description as string | undefined)?.toLowerCase().includes(query));
         }
         result = results;
         break;

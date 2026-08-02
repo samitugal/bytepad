@@ -5,6 +5,15 @@ import { logger } from '../utils/logger';
 
 const router = Router();
 
+// Params
+interface IdParams {
+  id: string;
+}
+interface IdDateParams {
+  id: string;
+  date: string;
+}
+
 // Types
 interface Habit {
   id: string;
@@ -45,7 +54,7 @@ function getToday(): string {
 }
 
 // GET /api/habits - List all habits
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (_req: Request, res: Response) => {
   try {
     const habits = await storeBridge.getAll<Habit>('habits');
     const today = getToday();
@@ -72,7 +81,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // GET /api/habits/:id - Get single habit with completion history
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const habit = await storeBridge.getById<Habit>('habits', id);
@@ -103,7 +112,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // GET /api/habits/:id/stats - Get habit statistics
-router.get('/:id/stats', async (req: Request, res: Response) => {
+router.get('/:id/stats', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const habit = await storeBridge.getById<Habit>('habits', id);
@@ -205,7 +214,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // PUT /api/habits/:id - Update habit
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const parsed = updateHabitSchema.safeParse(req.body);
@@ -243,7 +252,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/habits/:id/complete - Toggle completion for today
-router.post('/:id/complete', async (req: Request, res: Response) => {
+router.post('/:id/complete', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -278,7 +287,7 @@ router.post('/:id/complete', async (req: Request, res: Response) => {
 });
 
 // POST /api/habits/:id/complete/:date - Toggle completion for specific date
-router.post('/:id/complete/:date', async (req: Request, res: Response) => {
+router.post('/:id/complete/:date', async (req: Request<IdDateParams>, res: Response) => {
   try {
     const { id, date } = req.params;
 
@@ -321,7 +330,7 @@ router.post('/:id/complete/:date', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/habits/:id - Delete habit
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 

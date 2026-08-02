@@ -5,6 +5,11 @@ import { logger } from '../utils/logger';
 
 const router = Router();
 
+// Params
+interface IdParams {
+  id: string;
+}
+
 // Types
 interface Bookmark {
   id: string;
@@ -110,7 +115,7 @@ router.get('/search', async (req: Request, res: Response) => {
 });
 
 // GET /api/bookmarks/collections - List unique collections
-router.get('/collections', async (req: Request, res: Response) => {
+router.get('/collections', async (_req: Request, res: Response) => {
   try {
     const bookmarks = await storeBridge.getAll<Bookmark>('bookmarks');
     const collections = [...new Set(bookmarks.map(b => b.collection).filter(Boolean))];
@@ -130,7 +135,7 @@ router.get('/collections', async (req: Request, res: Response) => {
 });
 
 // GET /api/bookmarks/:id - Get single bookmark
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const bookmark = await storeBridge.getById<Bookmark>('bookmarks', id);
@@ -192,7 +197,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // PUT /api/bookmarks/:id - Update bookmark
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -231,7 +236,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/bookmarks/:id/read - Mark as read/unread
-router.post('/:id/read', async (req: Request, res: Response) => {
+router.post('/:id/read', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -263,7 +268,7 @@ router.post('/:id/read', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/bookmarks/:id - Delete bookmark
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 

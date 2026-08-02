@@ -5,6 +5,15 @@ import { logger } from '../utils/logger';
 
 const router = Router();
 
+// Params
+interface IdParams {
+  id: string;
+}
+interface IdSubIdParams {
+  id: string;
+  subId: string;
+}
+
 // Types
 interface SubTask {
   id: string;
@@ -126,7 +135,7 @@ router.get('/search', async (req: Request, res: Response) => {
 });
 
 // GET /api/tasks/:id - Get single task
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const task = await storeBridge.getById<Task>('tasks', id);
@@ -198,7 +207,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // PUT /api/tasks/:id - Update task
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const parsed = updateTaskSchema.safeParse(req.body);
@@ -236,7 +245,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/tasks/:id/complete - Toggle task completion
-router.post('/:id/complete', async (req: Request, res: Response) => {
+router.post('/:id/complete', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -267,7 +276,7 @@ router.post('/:id/complete', async (req: Request, res: Response) => {
 });
 
 // POST /api/tasks/:id/archive - Archive task
-router.post('/:id/archive', async (req: Request, res: Response) => {
+router.post('/:id/archive', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -298,7 +307,7 @@ router.post('/:id/archive', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/tasks/:id - Delete task
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -328,7 +337,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/tasks/:id/subtasks - Add subtask
-router.post('/:id/subtasks', async (req: Request, res: Response) => {
+router.post('/:id/subtasks', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const parsed = addSubtaskSchema.safeParse(req.body);
@@ -367,7 +376,7 @@ router.post('/:id/subtasks', async (req: Request, res: Response) => {
 });
 
 // PUT /api/tasks/:id/subtasks/:subId - Toggle subtask
-router.put('/:id/subtasks/:subId', async (req: Request, res: Response) => {
+router.put('/:id/subtasks/:subId', async (req: Request<IdSubIdParams>, res: Response) => {
   try {
     const { id, subId } = req.params;
 

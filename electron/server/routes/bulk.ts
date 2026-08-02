@@ -135,7 +135,7 @@ const importBodySchema = z.object({
 });
 
 // GET /api/bulk/stats - Get aggregate statistics
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/stats', async (_req: Request, res: Response) => {
   try {
     const [notes, tasks, habits, journal, bookmarks, ideas, focus, gamification] = await Promise.all([
       storeBridge.getAll('notes'),
@@ -198,7 +198,7 @@ router.get('/stats', async (req: Request, res: Response) => {
 });
 
 // POST /api/bulk/export - Export all data as JSON
-router.post('/export', async (req: Request, res: Response) => {
+router.post('/export', async (_req: Request, res: Response) => {
   try {
     logger.info('Starting data export...');
 
@@ -395,7 +395,7 @@ router.post('/import', async (req: Request, res: Response) => {
 });
 
 // GET /api/bulk/today - Get today's summary
-router.get('/today', async (req: Request, res: Response) => {
+router.get('/today', async (_req: Request, res: Response) => {
   try {
     const today = new Date().toISOString().split('T')[0];
 

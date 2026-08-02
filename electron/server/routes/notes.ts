@@ -5,6 +5,11 @@ import { logger } from '../utils/logger';
 
 const router = Router();
 
+// Params
+interface IdParams {
+  id: string;
+}
+
 // Types
 interface Note {
   id: string;
@@ -33,7 +38,7 @@ const updateNoteSchema = z.object({
 });
 
 // GET /api/notes - List all notes
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (_req: Request, res: Response) => {
   try {
     const notes = await storeBridge.getAll<Note>('notes');
     res.json({
@@ -78,7 +83,7 @@ router.get('/search', async (req: Request, res: Response) => {
 });
 
 // GET /api/notes/:id - Get single note
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const note = await storeBridge.getById<Note>('notes', id);
@@ -104,7 +109,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // GET /api/notes/:id/backlinks - Get notes that link to this note
-router.get('/:id/backlinks', async (req: Request, res: Response) => {
+router.get('/:id/backlinks', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const targetNote = await storeBridge.getById<Note>('notes', id);
@@ -176,7 +181,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // PUT /api/notes/:id - Update note
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const parsed = updateNoteSchema.safeParse(req.body);
@@ -214,7 +219,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/notes/:id - Delete note
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 

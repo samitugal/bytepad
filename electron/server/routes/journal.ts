@@ -5,6 +5,11 @@ import { logger } from '../utils/logger';
 
 const router = Router();
 
+// Params
+interface DateParams {
+  date: string;
+}
+
 // Types
 interface JournalEntry {
   id: string;
@@ -140,7 +145,7 @@ router.get('/moods', async (req: Request, res: Response) => {
 });
 
 // GET /api/journal/:date - Get entry for specific date
-router.get('/:date', async (req: Request, res: Response) => {
+router.get('/:date', async (req: Request<DateParams>, res: Response) => {
   try {
     const { date } = req.params;
 
@@ -211,7 +216,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // PUT /api/journal/:date - Update entry
-router.put('/:date', async (req: Request, res: Response) => {
+router.put('/:date', async (req: Request<DateParams>, res: Response) => {
   try {
     const { date } = req.params;
 
@@ -250,7 +255,7 @@ router.put('/:date', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/journal/:date - Delete entry
-router.delete('/:date', async (req: Request, res: Response) => {
+router.delete('/:date', async (req: Request<DateParams>, res: Response) => {
   try {
     const { date } = req.params;
 
