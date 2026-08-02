@@ -4,6 +4,7 @@ import { useNoteStore } from '../../stores/noteStore'
 import { useHabitStore } from '../../stores/habitStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useTranslation } from '../../i18n'
+import { getKnownVersion, resolveAppVersion } from '../../utils/appVersion'
 
 export function StatusBar() {
   const { t, language } = useTranslation()
@@ -12,6 +13,7 @@ export function StatusBar() {
   const habitStore = useHabitStore()
   const taskStore = useTaskStore()
   const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [appVersion, setAppVersion] = useState(getKnownVersion())
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true)
@@ -22,6 +24,10 @@ export function StatusBar() {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
+  }, [])
+
+  useEffect(() => {
+    resolveAppVersion().then(setAppVersion)
   }, [])
 
   const getStatusText = () => {
@@ -58,7 +64,7 @@ export function StatusBar() {
             <span>⚡</span> {language === 'tr' ? 'Çevrimdışı' : 'Offline'}
           </span>
         )}
-        <span>bytepad v0.25.0</span>
+        <span>bytepad v{appVersion}</span>
       </div>
     </div>
   )

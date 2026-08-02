@@ -20,7 +20,7 @@ RUN npm run build
 FROM node:20-alpine
 
 LABEL maintainer="Sami Tugal <tugalsami@gmail.com>"
-LABEL version="0.24.3"
+LABEL version="0.25.0"
 LABEL description="bytepad MCP Server for AI tool integration"
 
 WORKDIR /app

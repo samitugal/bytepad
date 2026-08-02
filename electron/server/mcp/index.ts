@@ -1,3 +1,4 @@
+import { app } from 'electron';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -57,7 +58,11 @@ export function createMCPServer(): Server {
   const server = new Server(
     {
       name: 'bytepad',
-      version: '0.25.0',
+      // Live, not baked - this runs in the Electron main process, where
+      // app.getVersion() is always available (unlike the standalone Docker
+      // MCP server under docker/mcp-server, which is a separate build with
+      // its own version stream - see docs/VERSION_LOCATIONS.md).
+      version: app.getVersion(),
     },
     {
       capabilities: {

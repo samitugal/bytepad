@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   checkForUpdates,
   getCurrentVersion,
+  resolveCurrentVersion,
   dismissUpdate,
   isUpdateDismissed,
   ReleaseInfo,
@@ -21,8 +22,14 @@ export function useUpdateCheck(): UseUpdateCheckReturn {
   const [releaseInfo, setReleaseInfo] = useState<ReleaseInfo | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  // Starts as the best synchronously-known value; in Electron this is
+  // replaced by the live app.getVersion() result once the effect below
+  // resolves (see src/utils/appVersion.ts).
+  const [currentVersion, setCurrentVersion] = useState(getCurrentVersion());
 
-  const currentVersion = getCurrentVersion();
+  useEffect(() => {
+    resolveCurrentVersion().then(setCurrentVersion);
+  }, []);
 
   // Check for updates on mount and periodically
   useEffect(() => {

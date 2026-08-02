@@ -65,6 +65,19 @@ jobs:
         run: npm run check:i18n
         continue-on-error: true
 
+      # Blocking, unlike the two checks above: this is a brand-new check
+      # (issue #20) with no pre-existing backlog to work through - it is
+      # green on this branch from the moment it lands, so there is no
+      # "clear the backlog, then flip to blocking" step to do later. It
+      # also directly targets a repeat failure mode: public/sw.js sat two
+      # releases stale and docker/mcp-server/Dockerfile's LABEL survived a
+      # whole release unbumped, both times because the only guard was a
+      # manual `grep` someone was supposed to remember to run. See
+      # docs/VERSION_LOCATIONS.md for the two version streams this checks
+      # (app version vs. the independently-versioned docker/mcp-server).
+      - name: Version consistency check
+        run: npm run check:version
+
       # Build-mode (`-b`) is required now that tsconfig.json is a solution
       # file (references tsconfig.app.json for src/ and tsconfig.node.json
       # for electron/**, each with their own noEmit:true) rather than a
