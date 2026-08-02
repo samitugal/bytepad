@@ -95,8 +95,9 @@
         },
         "sync": {
             "googleAccount": "Google Account",
-            "notConfigured": "Google Sign-in is not configured.",
-            "addFirebaseConfig": "Add Firebase config to",
+            "notConfigured": "Cloud sync and Google sign-in are disabled in this build.",
+            "addFirebaseConfig": "To enable them, connect your own Firebase project — bytepad doesn't ship with a shared backend.",
+            "cloudSyncGuideLink": "See the setup guide",
             "signOut": "Sign Out",
             "signInWithGoogle": "Sign in with Google",
             "signingIn": "Signing in...",

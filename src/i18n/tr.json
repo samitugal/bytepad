@@ -95,8 +95,9 @@
         },
         "sync": {
             "googleAccount": "Google Hesabı",
-            "notConfigured": "Google girişi yapılandırılmamış.",
-            "addFirebaseConfig": "Firebase yapılandırmasını ekleyin:",
+            "notConfigured": "Bu derlemede bulut senkronizasyonu ve Google ile giriş devre dışı.",
+            "addFirebaseConfig": "Bunları etkinleştirmek için kendi Firebase projenizi bağlayın — bytepad paylaşılan bir backend ile gelmez.",
+            "cloudSyncGuideLink": "Kurulum kılavuzuna bakın",
             "signOut": "Çıkış Yap",
             "signInWithGoogle": "Google ile Giriş Yap",
             "signingIn": "Giriş yapılıyor...",
