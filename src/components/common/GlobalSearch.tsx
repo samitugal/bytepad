@@ -45,7 +45,7 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
   const results = useMemo(() => {
     if (!debouncedQuery.trim()) return []
     
-    const rawQuery = query.toLowerCase()
+    const rawQuery = debouncedQuery.toLowerCase()
     const isTagSearch = rawQuery.startsWith('#')
     const q = isTagSearch ? rawQuery.slice(1) : rawQuery
     const searchResults: SearchResult[] = []
@@ -180,7 +180,7 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
     })
 
     return searchResults
-  }, [query, notes, tasks, habits, journalEntries, bookmarks])
+  }, [debouncedQuery, notes, tasks, habits, journalEntries, bookmarks])
 
   // Debounce search query
   useEffect(() => {
