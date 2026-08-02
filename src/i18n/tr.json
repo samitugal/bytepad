@@ -86,12 +86,7 @@
             "tavilyHint": "API anahtarınızı şuradan alın:",
             "browserNotifications": "Tarayıcı Bildirimleri",
             "pushNotifications": "Push Bildirimleri",
-            "quietHours": "Sessiz Saatler",
-            "emailNotifications": "E-posta Bildirimleri",
-            "yourEmail": "E-posta Adresiniz",
-            "dailySummary": "Günlük özet e-postası",
-            "weeklyReport": "Haftalık rapor e-postası",
-            "streakAlerts": "Seri risk uyarıları"
+            "quietHours": "Sessiz Saatler"
         },
         "sync": {
             "googleAccount": "Google Hesabı",

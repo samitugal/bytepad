@@ -54,7 +54,6 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
         fontSize,
         fontFamily,
         noteFontSize,
-        emailPreferences,
         gistSync,
         setLLMProvider,
         setLLMModel,
@@ -63,7 +62,6 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
         setFontSize,
         setFontFamily,
         setNoteFontSize,
-        setEmailPreferences,
         setGistSync,
     } = useSettingsStore()
 
@@ -248,8 +246,6 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                         <IntegrationsTab
                             apiKeys={apiKeys}
                             setApiKey={setApiKey}
-                            emailPreferences={emailPreferences}
-                            setEmailPreferences={setEmailPreferences}
                             notifPrefs={notifPrefs}
                             permissionGranted={permissionGranted}
                             handleEnableNotifications={handleEnableNotifications}
@@ -573,8 +569,6 @@ function AITab({
 function IntegrationsTab({
     apiKeys,
     setApiKey,
-    emailPreferences,
-    setEmailPreferences,
     notifPrefs,
     permissionGranted,
     handleEnableNotifications,
@@ -583,16 +577,6 @@ function IntegrationsTab({
 }: {
     apiKeys: Record<string, string>
     setApiKey: (provider: ApiKeyType, key: string) => void
-    emailPreferences: {
-        enabled: boolean
-        userEmail: string
-        dailySummaryEnabled: boolean
-        dailySummaryTime: string
-        weeklySummaryEnabled: boolean
-        weeklySummaryDay: number
-        streakAlertsEnabled: boolean
-    }
-    setEmailPreferences: (prefs: Partial<typeof emailPreferences>) => void
     notifPrefs: { enabled: boolean; quietHoursStart: string; quietHoursEnd: string }
     permissionGranted: boolean
     handleEnableNotifications: () => void
@@ -657,68 +641,6 @@ function IntegrationsTab({
                                 className="np-input text-xs"
                             />
                         </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Email Notifications */}
-            <div>
-                <h3 className="text-sm text-np-green mb-3">// Email Notifications</h3>
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-np-text-secondary">Email Notifications</span>
-                        <button
-                            onClick={() => setEmailPreferences({ enabled: !emailPreferences.enabled })}
-                            className={`np-btn text-xs ${emailPreferences.enabled ? 'text-np-error' : 'text-np-green'}`}
-                        >
-                            {emailPreferences.enabled ? 'Disable' : 'Enable'}
-                        </button>
-                    </div>
-
-                    {emailPreferences.enabled && (
-                        <>
-                            <div>
-                                <label className="block text-xs text-np-text-secondary mb-1">Your Email</label>
-                                <input
-                                    type="email"
-                                    value={emailPreferences.userEmail}
-                                    onChange={(e) => setEmailPreferences({ userEmail: e.target.value })}
-                                    placeholder="your@email.com"
-                                    className="w-full bg-np-bg-primary border border-np-border text-np-text-primary 
-                             font-mono text-sm px-2 py-1.5 focus:outline-none focus:border-np-blue"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-sm text-np-text-secondary">
-                                    <input
-                                        type="checkbox"
-                                        checked={emailPreferences.dailySummaryEnabled}
-                                        onChange={(e) => setEmailPreferences({ dailySummaryEnabled: e.target.checked })}
-                                        className="w-4 h-4"
-                                    />
-                                    Daily summary email
-                                </label>
-                                <label className="flex items-center gap-2 text-sm text-np-text-secondary">
-                                    <input
-                                        type="checkbox"
-                                        checked={emailPreferences.weeklySummaryEnabled}
-                                        onChange={(e) => setEmailPreferences({ weeklySummaryEnabled: e.target.checked })}
-                                        className="w-4 h-4"
-                                    />
-                                    Weekly report email
-                                </label>
-                                <label className="flex items-center gap-2 text-sm text-np-text-secondary">
-                                    <input
-                                        type="checkbox"
-                                        checked={emailPreferences.streakAlertsEnabled}
-                                        onChange={(e) => setEmailPreferences({ streakAlertsEnabled: e.target.checked })}
-                                        className="w-4 h-4"
-                                    />
-                                    Streak risk alerts
-                                </label>
-                            </div>
-                        </>
                     )}
                 </div>
             </div>

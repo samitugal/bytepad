@@ -86,12 +86,7 @@
             "tavilyHint": "Get your API key at",
             "browserNotifications": "Browser Notifications",
             "pushNotifications": "Push Notifications",
-            "quietHours": "Quiet Hours",
-            "emailNotifications": "Email Notifications",
-            "yourEmail": "Your Email",
-            "dailySummary": "Daily summary email",
-            "weeklyReport": "Weekly report email",
-            "streakAlerts": "Streak risk alerts"
+            "quietHours": "Quiet Hours"
         },
         "sync": {
             "googleAccount": "Google Account",

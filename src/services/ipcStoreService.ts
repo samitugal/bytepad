@@ -307,7 +307,6 @@ function sanitizeSettingsForBridge(state: ReturnType<typeof useSettingsStore.get
     fontFamily: state.fontFamily,
     noteMarkdownPreview: state.noteMarkdownPreview,
     noteFontSize: state.noteFontSize,
-    emailPreferences: state.emailPreferences,
     gistSync: {
       ...state.gistSync,
       githubToken: state.gistSync.githubToken ? REDACTED : '',
