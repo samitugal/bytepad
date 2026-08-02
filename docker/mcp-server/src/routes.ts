@@ -43,6 +43,22 @@ export function createRoutes(storeBridge: StoreBridge): Router {
       }
     });
 
+    // GET search - registered before GET /:id so the literal "search"
+    // segment isn't captured by the :id wildcard (e.g. /notes/search
+    // would otherwise be treated as a lookup for id "search").
+    router.get(`/${storeName}/search`, async (req: Request, res: Response) => {
+      try {
+        const query = singleQueryString(req.query.q);
+        if (!query) {
+          return res.status(400).json({ success: false, error: 'Query parameter "q" is required' });
+        }
+        const items = await storeBridge.search(storeName, query);
+        res.json({ success: true, data: items });
+      } catch (err) {
+        res.status(500).json({ success: false, error: (err as Error).message });
+      }
+    });
+
     // GET by ID
     router.get(`/${storeName}/:id`, async (req: Request, res: Response) => {
       try {
@@ -87,17 +103,6 @@ export function createRoutes(storeBridge: StoreBridge): Router {
           return res.status(404).json({ success: false, error: 'Not found' });
         }
         res.json({ success: true, message: 'Deleted' });
-      } catch (err) {
-        res.status(500).json({ success: false, error: (err as Error).message });
-      }
-    });
-
-    // GET search
-    router.get(`/${storeName}/search`, async (req: Request, res: Response) => {
-      try {
-        const query = singleQueryString(req.query.q) ?? '';
-        const items = await storeBridge.search(storeName, query);
-        res.json({ success: true, data: items });
       } catch (err) {
         res.status(500).json({ success: false, error: (err as Error).message });
       }
