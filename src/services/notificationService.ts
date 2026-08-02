@@ -1,10 +1,11 @@
 import { useNotificationStore } from '../stores/notificationStore'
 import { useHabitStore } from '../stores/habitStore'
 import { useTaskStore } from '../stores/taskStore'
+import { logger } from '../utils/logger'
 
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!('Notification' in window)) {
-    console.warn('This browser does not support notifications')
+    logger.warn('This browser does not support notifications')
     return false
   }
   

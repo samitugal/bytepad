@@ -1,8 +1,18 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { storeBridge } from '../bridges/storeBridge';
 import { logger } from '../utils/logger';
 
 const router = Router();
+
+// Params
+interface IdParams {
+  id: string;
+}
+interface IdDateParams {
+  id: string;
+  date: string;
+}
 
 // Types
 interface Habit {
@@ -18,23 +28,25 @@ interface Habit {
   reminderTime?: string;
 }
 
-interface CreateHabitRequest {
-  name: string;
-  frequency?: 'daily' | 'weekly';
-  category?: string;
-  tags?: string[];
-  reminderEnabled?: boolean;
-  reminderTime?: string;
-}
+const frequencyEnum = z.enum(['daily', 'weekly']);
 
-interface UpdateHabitRequest {
-  name?: string;
-  frequency?: 'daily' | 'weekly';
-  category?: string;
-  tags?: string[];
-  reminderEnabled?: boolean;
-  reminderTime?: string;
-}
+const createHabitSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  frequency: frequencyEnum.optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  reminderEnabled: z.boolean().optional(),
+  reminderTime: z.string().optional(),
+});
+
+const updateHabitSchema = z.object({
+  name: z.string().min(1).optional(),
+  frequency: frequencyEnum.optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  reminderEnabled: z.boolean().optional(),
+  reminderTime: z.string().optional(),
+});
 
 // Helper to get today's date
 function getToday(): string {
@@ -42,7 +54,7 @@ function getToday(): string {
 }
 
 // GET /api/habits - List all habits
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (_req: Request, res: Response) => {
   try {
     const habits = await storeBridge.getAll<Habit>('habits');
     const today = getToday();
@@ -69,7 +81,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // GET /api/habits/:id - Get single habit with completion history
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const habit = await storeBridge.getById<Habit>('habits', id);
@@ -100,7 +112,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // GET /api/habits/:id/stats - Get habit statistics
-router.get('/:id/stats', async (req: Request, res: Response) => {
+router.get('/:id/stats', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const habit = await storeBridge.getById<Habit>('habits', id);
@@ -168,14 +180,14 @@ router.get('/:id/stats', async (req: Request, res: Response) => {
 // POST /api/habits - Create habit
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const body = req.body as CreateHabitRequest;
-
-    if (!body.name) {
+    const parsed = createHabitSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'Name is required',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
+    const body = parsed.data;
 
     const habit = await storeBridge.create<Habit>('habits', {
       name: body.name,
@@ -202,10 +214,17 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // PUT /api/habits/:id - Update habit
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
-    const body = req.body as UpdateHabitRequest;
+    const parsed = updateHabitSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: parsed.error.issues.map(i => i.message).join('; '),
+      });
+    }
+    const body = parsed.data;
 
     const existing = await storeBridge.getById<Habit>('habits', id);
     if (!existing) {
@@ -233,7 +252,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/habits/:id/complete - Toggle completion for today
-router.post('/:id/complete', async (req: Request, res: Response) => {
+router.post('/:id/complete', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -268,7 +287,7 @@ router.post('/:id/complete', async (req: Request, res: Response) => {
 });
 
 // POST /api/habits/:id/complete/:date - Toggle completion for specific date
-router.post('/:id/complete/:date', async (req: Request, res: Response) => {
+router.post('/:id/complete/:date', async (req: Request<IdDateParams>, res: Response) => {
   try {
     const { id, date } = req.params;
 
@@ -311,7 +330,7 @@ router.post('/:id/complete/:date', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/habits/:id - Delete habit
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 

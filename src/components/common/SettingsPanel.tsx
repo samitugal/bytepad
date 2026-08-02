@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react'
 import { exportAllData, downloadAsJson, importData, readFileAsJson, clearAllData, getDataStats } from '../../services/dataService'
 import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider, FONT_SIZES, FontSize, FONT_FAMILIES, FontFamily, ApiKeyType, GistSyncPreferences } from '../../stores/settingsStore'
-import { useI18nStore, LANGUAGES, Language } from '../../i18n'
+import { useI18nStore, useTranslation, LANGUAGES, Language } from '../../i18n'
+import { isElectron } from '../../utils/storage'
+import { logger } from '../../utils/logger'
 import { useThemeStore, Theme } from '../../stores/themeStore'
 import { useNotificationStore } from '../../stores/notificationStore'
 import { useAuthStore } from '../../stores/authStore'
@@ -289,7 +291,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
                 {/* Footer */}
                 <div className="px-4 py-2 border-t border-np-border text-xs text-np-text-secondary flex justify-between shrink-0">
-                    <span>bytepad v0.24.3</span>
+                    <span>bytepad v0.25.0</span>
                     <span>Ctrl+, to open settings</span>
                 </div>
             </div>
@@ -584,8 +586,6 @@ function IntegrationsTab({
     emailPreferences: {
         enabled: boolean
         userEmail: string
-        emailjsServiceId: string
-        emailjsPublicKey: string
         dailySummaryEnabled: boolean
         dailySummaryTime: string
         weeklySummaryEnabled: boolean
@@ -689,33 +689,6 @@ function IntegrationsTab({
                                 />
                             </div>
 
-                            <div className="pt-2 border-t border-np-border">
-                                <p className="text-xs text-np-text-secondary mb-2">
-                                    EmailJS Configuration -{' '}
-                                    <a href="https://emailjs.com" target="_blank" rel="noopener" className="text-np-blue hover:underline">
-                                        emailjs.com
-                                    </a>
-                                </p>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <input
-                                        type="text"
-                                        value={emailPreferences.emailjsServiceId}
-                                        onChange={(e) => setEmailPreferences({ emailjsServiceId: e.target.value })}
-                                        placeholder="Service ID"
-                                        className="bg-np-bg-primary border border-np-border text-np-text-primary 
-                               font-mono text-xs px-2 py-1 focus:outline-none focus:border-np-blue"
-                                    />
-                                    <input
-                                        type="text"
-                                        value={emailPreferences.emailjsPublicKey}
-                                        onChange={(e) => setEmailPreferences({ emailjsPublicKey: e.target.value })}
-                                        placeholder="Public Key"
-                                        className="bg-np-bg-primary border border-np-border text-np-text-primary 
-                               font-mono text-xs px-2 py-1 focus:outline-none focus:border-np-blue"
-                                    />
-                                </div>
-                            </div>
-
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm text-np-text-secondary">
                                     <input
@@ -785,15 +758,27 @@ function SyncTab({
     signIn: () => void
     signOut: () => void
 }) {
+    const { t } = useTranslation()
+
     return (
         <div className="space-y-6">
             {/* Google Account */}
             <div>
                 <h3 className="text-sm text-np-green mb-3">// Google Account</h3>
                 {!authConfigured ? (
-                    <div className="text-xs text-np-text-secondary bg-np-bg-tertiary p-3 border border-np-border">
-                        <p className="mb-2">Google Sign-in is not configured.</p>
-                        <p>Add Firebase config to <code className="text-np-cyan">.env</code> file.</p>
+                    <div className="text-xs text-np-text-secondary bg-np-bg-tertiary p-3 border border-np-border space-y-2">
+                        <p>{t('settings.sync.notConfigured')}</p>
+                        <p>{t('settings.sync.addFirebaseConfig')}</p>
+                        <p>
+                            <a
+                                href="https://github.com/samitugal/bytepad/blob/main/docs/features/cloud-sync.md"
+                                target="_blank"
+                                rel="noopener"
+                                className="text-np-blue hover:underline"
+                            >
+                                {t('settings.sync.cloudSyncGuideLink')}
+                            </a>
+                        </p>
                     </div>
                 ) : user ? (
                     <div className="flex items-center justify-between bg-np-bg-tertiary p-3 border border-np-border">
@@ -999,22 +984,22 @@ function DataTab({
         setLocalNotesEnabled,
         setLocalNotesPath,
         setLocalNotesDirHandle,
+        rememberSecretsOnDevice,
+        setRememberSecretsOnDevice,
     } = useSettingsStore()
+    const { t } = useTranslation()
 
     const [localNotesStatus, setLocalNotesStatus] = useState<string | null>(null)
     const [isSavingNotes, setIsSavingNotes] = useState(false)
 
     const handleSelectFolder = async () => {
-        console.log('Select Folder clicked')
-
         // Check if File System Access API is supported
         if (!('showDirectoryPicker' in window)) {
             setLocalNotesStatus('Error: Your browser does not support folder selection. Please use Chrome, Edge, or Opera.')
-            console.error('showDirectoryPicker not supported')
+            logger.warn('showDirectoryPicker not supported')
             return
         }
 
-        console.log('showDirectoryPicker is supported, opening dialog...')
         setLocalNotesStatus('Opening folder picker...')
 
         try {
@@ -1023,8 +1008,6 @@ function DataTab({
                 mode: 'readwrite',
             })
 
-            console.log('Folder selected:', dirHandle)
-
             if (dirHandle) {
                 setLocalNotesDirHandle(dirHandle)
                 setLocalNotesPath(dirHandle.name)
@@ -1032,7 +1015,7 @@ function DataTab({
                 setLocalNotesStatus(`✓ Folder selected: ${dirHandle.name}`)
             }
         } catch (error) {
-            console.error('Folder selection error:', error)
+            logger.error('Folder selection error:', error)
             if ((error as Error).name === 'AbortError') {
                 // User cancelled
                 setLocalNotesStatus('Folder selection cancelled')
@@ -1077,7 +1060,7 @@ function DataTab({
             const result = await downloadAllDataAsZip()
             setLocalNotesStatus(`✓ Downloaded ZIP with ${result.notes} notes, ${result.tasks} tasks, ${result.habits} habits, ${result.journal} journal entries`)
         } catch (error) {
-            console.error('ZIP download error:', error)
+            logger.error('ZIP download error:', error)
             setLocalNotesStatus(`Error: ${error instanceof Error ? error.message : 'Failed to create ZIP'}`)
         }
     }
@@ -1151,6 +1134,25 @@ function DataTab({
                     </p>
                 </div>
             </div>
+
+            {/* Credential Storage — web only; Electron uses safeStorage encryption instead */}
+            {!isElectron() && (
+                <div>
+                    <h3 className="text-sm text-np-green mb-3">// {t('settings.data.credentialStorageTitle')}</h3>
+                    <label className="flex items-center gap-2 text-sm text-np-text-secondary cursor-pointer hover:text-np-text-primary">
+                        <input
+                            type="checkbox"
+                            checked={rememberSecretsOnDevice}
+                            onChange={(e) => setRememberSecretsOnDevice(e.target.checked)}
+                            className="w-4 h-4 accent-np-green"
+                        />
+                        {t('settings.data.rememberSecrets')}
+                    </label>
+                    <p className="text-xs text-np-warning mt-2">
+                        ⚠️ {t('settings.data.rememberSecretsWarning')}
+                    </p>
+                </div>
+            )}
 
             {/* Stats */}
             <div>

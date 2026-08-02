@@ -5,6 +5,7 @@ import { useHabitStore } from '../../stores/habitStore'
 import { useJournalStore } from '../../stores/journalStore'
 import { sendMessage } from '../../services/aiService'
 import { useTranslation } from '../../i18n'
+import { logger } from '../../utils/logger'
 import type { ChatContext } from '../../types'
 
 // Destructive tools that require confirmation (for future use)
@@ -101,7 +102,7 @@ export function ChatWindow() {
       // Use the agent's natural language response only - never show raw tool results
       addMessage({ role: 'assistant', content: response.content })
     } catch (err) {
-      console.error('[FlowBot Error]', err)
+      logger.error('[FlowBot Error]', err)
       const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu'
 
       if (errorMessage.includes('API key') || errorMessage.includes('apiKey')) {

@@ -1,5 +1,6 @@
 import type { Habit, Task, JournalEntry } from '../types'
 import { useSettingsStore, PROVIDER_INFO } from '../stores/settingsStore'
+import { logger } from '../utils/logger'
 
 export interface WeeklyStats {
   weekStart: string
@@ -320,7 +321,7 @@ export async function generateAIInsights(stats: WeeklyStats): Promise<{
 
     return parseAIInsightsResponse(response, stats)
   } catch (error) {
-    console.error('AI Insights error:', error)
+    logger.error('AI Insights error:', error)
     return {
       insights: stats.insights,
       recommendations: stats.recommendations,
@@ -487,7 +488,7 @@ function parseAIInsightsResponse(
       }
     }
   } catch (e) {
-    console.error('Failed to parse AI response:', e)
+    logger.error('Failed to parse AI response:', e)
   }
 
   return {
@@ -531,7 +532,7 @@ export async function generateAIMarkdownReport(stats: WeeklyStats): Promise<AIMa
       generatedAt: new Date().toISOString(),
     }
   } catch (error) {
-    console.error('AI Markdown Report error:', error)
+    logger.error('AI Markdown Report error:', error)
     return {
       markdown: generateFallbackMarkdownReport(stats),
       generatedAt: new Date().toISOString(),

@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+# Cancel superseded runs on the same ref (branch or PR) so that a burst of
+# pushes/dependabot PRs doesn't queue up redundant work.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Pinned to match .github/workflows/release.yml (no `engines` field
+          # in package.json, so this is the only place the version is fixed).
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Report-only for now: there is a pre-existing backlog of 28 errors /
+      # 10 warnings on main (tracked by issue #14 - #13 only added the
+      # typecheck gate below, it didn't clear this backlog). This step is
+      # intentionally non-blocking (continue-on-error) until that backlog is
+      # cleared; output is still printed so regressions are visible in the
+      # log. Once #14 lands, remove continue-on-error to make this blocking.
+      #
+      # eslint.config.js ignores `dist`, `out` and `dist-electron` (all three
+      # are generated/minified build output - linting them produces bogus
+      # "rule not found" errors, not real findings), so step ordering
+      # relative to the build steps below no longer matters for that reason.
+      # It still runs first simply to fail fast on the cheapest check.
+      - name: Lint (non-blocking)
+        run: npm run lint
+        continue-on-error: true
+
+      # Report-only for now: there is a pre-existing backlog of ~128 keys
+      # defined in src/i18n/en.json but never referenced anywhere (issue #49
+      # is about to remove a whole settings section, which will retire a
+      # chunk of that backlog on its own - cleaning it here first would just
+      # collide). This step is intentionally non-blocking (continue-on-error)
+      # until that backlog is cleared; output is still printed so regressions
+      # are visible in the log. The category that actually matters - t()
+      # calls referencing a key that doesn't exist, which silently renders
+      # the raw key path to the user instead of failing - is already at 0 on
+      # main, so once #49 lands and the unused-key backlog is cleared, this
+      # can become blocking (drop continue-on-error, or split the script's
+      # exit code so only categories 2-4 gate the build).
+      - name: i18n key check (non-blocking)
+        run: npm run check:i18n
+        continue-on-error: true
+
+      # Build-mode (`-b`) is required now that tsconfig.json is a solution
+      # file (references tsconfig.app.json for src/ and tsconfig.node.json
+      # for electron/**, each with their own noEmit:true) rather than a
+      # single project - plain `tsc --noEmit` against a references-only
+      # config compiles the (empty) `files` list and silently checks
+      # nothing. `-b` traverses both referenced projects; neither emits JS
+      # since each sets its own noEmit, so this remains typecheck-only.
+      # This is also what newly closes the gap issue #13 exists for:
+      # electron/** (main process, preload, the embedded MCP server) is now
+      # covered, not just src/.
+      - name: Typecheck
+        run: npx tsc -b
+
+      # docker/mcp-server is a separate, independently-versioned package
+      # (its own express 4 vs the app's express 5, its own @types/node 20)
+      # that only ever builds inside the Docker build context copying just
+      # this directory - it deliberately is NOT part of the root tsc -b
+      # project-reference graph above, so it needs its own install+typecheck.
+      - name: Typecheck (container MCP server)
+        working-directory: docker/mcp-server
+        run: |
+          npm ci
+          npx tsc --noEmit
+
+      - name: Build (web)
+        run: npm run build
+
+      - name: Build (electron)
+        run: npm run build:electron

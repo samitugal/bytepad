@@ -327,8 +327,6 @@ export function TaskKanban({
 
     const currentStatus = getTaskStatus(task)
     if (currentStatus === targetStatus) return
-    
-    console.log('Kanban: Moving task', taskId, 'from', currentStatus, 'to', targetStatus)
 
     // Update task based on new status
     if (targetStatus === 'done') {

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from '../../i18n'
 import { useReportStore } from '../../stores/reportStore'
 import { generateProductivityReport } from '../../services/productivityReportService'
+import { logger } from '../../utils/logger'
 import { ReportSummary } from './ReportSummary'
 import { StrengthsWeaknesses } from './StrengthsWeaknesses'
 import { AchievementsMissed } from './AchievementsMissed'
@@ -30,7 +31,7 @@ export function ProductivityReport({ onClose }: ProductivityReportProps) {
       await generateProductivityReport(period)
       setSelectedReport(null)
     } catch (error) {
-      console.error('Report generation failed:', error)
+      logger.error('Report generation failed:', error)
     }
   }
 

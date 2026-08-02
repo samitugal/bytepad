@@ -6,7 +6,7 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { createServer, Server as HttpServer } from 'http';
+import { createServer, Server as HttpServer, IncomingMessage } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
@@ -15,16 +15,25 @@ import {
   ReadResourceRequestSchema,
   ListToolsRequestSchema,
   CallToolRequestSchema,
+  type CallToolResult,
 } from '@modelcontextprotocol/sdk/types.js';
 import { fileStoreBridge, initializeStore, onStoreChange } from './fileStoreBridge.js';
 import { createRoutes } from './routes.js';
 import { logger } from './logger.js';
+import { hasApiKey, validateApiKey } from './apiKey.js';
+import { singleQueryString } from './utils/queryParams.js';
 
 const PORT = parseInt(process.env.MCP_PORT || '3847', 10);
 const HOST = process.env.MCP_HOST || '0.0.0.0';
-const API_KEY = process.env.BYTEPAD_API_KEY || '';
-const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 const DATA_DIR = process.env.DATA_DIR || '/app/data';
+// Note: LOG_LEVEL is read directly by logger.ts, not needed here.
+
+// Explicit CORS allowlist, configurable via env (comma-separated origins).
+// Empty by default - no cross-origin browser access unless deliberately opted in.
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 let app: Express | null = null;
 let httpServer: HttpServer | null = null;
@@ -35,11 +44,11 @@ const mcpTransports: Map<string, SSEServerTransport> = new Map();
 
 // Idempotency cache for tool calls - prevents duplicate execution
 interface CacheEntry {
-  result: unknown;
+  result: CallToolResult;
   timestamp: number;
 }
 interface PendingEntry {
-  resolvers: { resolve: (value: unknown) => void; reject: (error: unknown) => void }[];
+  resolvers: { resolve: (value: CallToolResult) => void; reject: (error: unknown) => void }[];
 }
 const toolCallCache = new Map<string, CacheEntry>();
 const pendingOperations = new Map<string, PendingEntry>();
@@ -63,7 +72,7 @@ setInterval(() => {
 // Create MCP server with tools and resources
 function createMCPServer(): Server {
   const server = new Server(
-    { name: 'bytepad', version: '0.24.3' },
+    { name: 'bytepad', version: '0.25.0' },
     { capabilities: { resources: {}, tools: {} } }
   );
 
@@ -97,7 +106,7 @@ function createMCPServer(): Server {
       case 'tasks':
         if (id === 'pending') {
           const all = await fileStoreBridge.getAll('tasks');
-          data = all.filter((t: { completed?: boolean; archivedAt?: string }) => !t.completed && !t.archivedAt);
+          data = all.filter((t) => !t.completed && !t.archivedAt);
         } else {
           data = id ? await fileStoreBridge.getById('tasks', id) : await fileStoreBridge.getAll('tasks');
         }
@@ -118,10 +127,10 @@ function createMCPServer(): Server {
         const today = new Date().toISOString().split('T')[0];
         const tasks = await fileStoreBridge.getAll('tasks');
         const habits = await fileStoreBridge.getAll('habits');
-        const activeTasks = tasks.filter((t: { archivedAt?: string }) => !t.archivedAt);
+        const activeTasks = tasks.filter((t) => !t.archivedAt);
         data = {
           date: today,
-          tasks: { total: activeTasks.length, pending: activeTasks.filter((t: { completed?: boolean }) => !t.completed).length },
+          tasks: { total: activeTasks.length, pending: activeTasks.filter((t) => !t.completed).length },
           habits: { total: habits.length },
         };
         break;
@@ -160,7 +169,7 @@ function createMCPServer(): Server {
       const cached = toolCallCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
         logger.info(`MCP: Returning cached result for ${name} (idempotency)`);
-        return cached.result as { content: { type: 'text'; text: string }[] };
+        return cached.result;
       }
 
       // Step 2: Check if operation is already pending
@@ -253,11 +262,11 @@ function createMCPServer(): Server {
         const results: Record<string, unknown[]> = {};
         if (type === 'all' || type === 'notes') {
           const notes = await fileStoreBridge.getAll('notes');
-          results.notes = notes.filter((n: { title: string; content?: string }) => n.title.toLowerCase().includes(query) || n.content?.toLowerCase().includes(query));
+          results.notes = notes.filter((n) => (n.title as string).toLowerCase().includes(query) || (n.content as string | undefined)?.toLowerCase().includes(query));
         }
         if (type === 'all' || type === 'tasks') {
           const tasks = await fileStoreBridge.getAll('tasks');
-          results.tasks = tasks.filter((t: { title: string; description?: string }) => t.title.toLowerCase().includes(query) || t.description?.toLowerCase().includes(query));
+          results.tasks = tasks.filter((t) => (t.title as string).toLowerCase().includes(query) || (t.description as string | undefined)?.toLowerCase().includes(query));
         }
         result = results;
         break;
@@ -285,7 +294,7 @@ function authMiddleware(req: express.Request, res: express.Response, next: expre
   }
 
   const token = authHeader.slice(7);
-  if (token !== API_KEY) {
+  if (!validateApiKey(token)) {
     return res.status(401).json({ success: false, error: 'Invalid API key' });
   }
 
@@ -293,6 +302,13 @@ function authMiddleware(req: express.Request, res: express.Response, next: expre
 }
 
 async function startServer(): Promise<void> {
+  // Refuse to start without a real API key. An unset/blank BYTEPAD_API_KEY
+  // must never be treated as "no auth required" - see apiKey.ts.
+  if (!hasApiKey()) {
+    logger.error('BYTEPAD_API_KEY is not set. Refusing to start without an API key configured.');
+    process.exit(1);
+  }
+
   // Initialize file-based store
   await initializeStore(DATA_DIR);
   logger.info(`Data directory: ${DATA_DIR}`);
@@ -303,9 +319,10 @@ async function startServer(): Promise<void> {
   // Security
   app.use(helmet({ contentSecurityPolicy: false }));
 
-  // CORS
+  // CORS - explicit allowlist only; '*' is never honored so a wildcard
+  // origin can't be paired with credentialed requests.
   app.use(cors({
-    origin: '*',
+    origin: CORS_ORIGINS,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -336,7 +353,7 @@ async function startServer(): Promise<void> {
       success: true,
       status: 'healthy',
       service: 'bytepad-mcp-docker',
-      version: process.env.npm_package_version || '0.24.3',
+      version: process.env.npm_package_version || '0.25.0',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
     });
@@ -375,7 +392,7 @@ async function startServer(): Promise<void> {
 
   // MCP messages endpoint - receives client JSON-RPC requests
   app.post('/messages', async (req: Request, res: Response) => {
-    const sessionId = req.query.sessionId as string;
+    const sessionId = singleQueryString(req.query.sessionId);
 
     if (!sessionId) {
       res.status(400).json({ error: 'Missing sessionId parameter' });
@@ -406,8 +423,39 @@ async function startServer(): Promise<void> {
   // Create HTTP server
   httpServer = createServer(app);
 
-  // WebSocket server
-  wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // WebSocket server - upgrade requires the same bearer key as the REST API,
+  // supplied either via Authorization header or a ?token= query param.
+  wss = new WebSocketServer({
+    server: httpServer,
+    path: '/ws',
+    verifyClient: (
+      info: { origin: string; secure: boolean; req: IncomingMessage },
+      callback: (res: boolean, code?: number, message?: string) => void
+    ) => {
+      try {
+        const requestUrl = new URL(info.req.url || '', 'http://localhost');
+        const tokenFromQuery = requestUrl.searchParams.get('token');
+
+        const authHeader = info.req.headers.authorization;
+        const tokenFromHeader = authHeader?.startsWith('Bearer ')
+          ? authHeader.slice(7)
+          : authHeader;
+
+        const token = tokenFromQuery || tokenFromHeader;
+
+        if (!token || !validateApiKey(token)) {
+          logger.warn(`WebSocket connection rejected from ${info.req.socket.remoteAddress} - missing or invalid token`);
+          callback(false, 401, 'Unauthorized');
+          return;
+        }
+
+        callback(true);
+      } catch (err) {
+        logger.error(`WebSocket verifyClient error: ${(err as Error).message}`);
+        callback(false, 500, 'Internal Error');
+      }
+    },
+  });
   const clientSubscriptions = new Map<WebSocket, Set<string>>();
 
   wss.on('connection', (ws, req) => {
@@ -461,9 +509,6 @@ async function startServer(): Promise<void> {
   httpServer.listen(PORT, HOST, () => {
     logger.info(`MCP Server started on http://${HOST}:${PORT}`);
     logger.info(`WebSocket available at ws://${HOST}:${PORT}/ws`);
-    if (!API_KEY) {
-      logger.warn('No API key configured! Set BYTEPAD_API_KEY environment variable.');
-    }
   });
 
   // Graceful shutdown

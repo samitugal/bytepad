@@ -3,33 +3,28 @@ import { getApiKey } from '../utils/apiKey';
 
 const router = Router();
 
-router.get('/', (req, res) => {
+router.get('/', (_req, res) => {
+  // Kept minimal and unauthenticated: no service name, version, or uptime,
+  // since this endpoint is reachable without an API key.
   res.json({
     success: true,
-    status: 'healthy',
-    service: 'bytepad-mcp',
-    version: process.env.npm_package_version || '1.0.0',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
+    status: 'ok',
   });
 });
 
-router.get('/ready', (req, res) => {
-  // Check if API key is configured
+router.get('/ready', (_req, res) => {
+  // Check if API key is configured, without echoing that state back in the body.
   const hasApiKey = !!getApiKey();
 
   if (hasApiKey) {
     res.json({
       success: true,
       status: 'ready',
-      apiKeyConfigured: true,
     });
   } else {
     res.status(503).json({
       success: false,
       status: 'not_ready',
-      apiKeyConfigured: false,
-      message: 'API key not configured',
     });
   }
 });

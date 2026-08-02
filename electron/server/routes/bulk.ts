@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { storeBridge } from '../bridges/storeBridge';
 import { logger } from '../utils/logger';
 
@@ -22,8 +23,119 @@ interface ExportData {
   };
 }
 
+// Import schemas - each mirrors the fields the entity stores accept.
+// Unknown/unexpected keys on each item are stripped by default zod object
+// behavior, so imported payloads can only write whitelisted fields into
+// the stores instead of arbitrary attacker-controlled objects.
+
+const noteImportSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1),
+  content: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  folderId: z.string().optional(),
+  pinned: z.boolean().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+const taskImportSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  priority: z.enum(['P1', 'P2', 'P3', 'P4']).optional(),
+  deadline: z.string().optional(),
+  deadlineTime: z.string().optional(),
+  completed: z.boolean().optional(),
+  completedAt: z.string().optional(),
+  archivedAt: z.string().optional(),
+  subtasks: z.array(z.object({
+    id: z.string().optional(),
+    title: z.string(),
+    completed: z.boolean().optional(),
+  })).optional(),
+  tags: z.array(z.string()).optional(),
+  linkedBookmarkIds: z.array(z.string()).optional(),
+  linkedNoteIds: z.array(z.string()).optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+const habitImportSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1),
+  frequency: z.enum(['daily', 'weekly']).optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  completions: z.record(z.string(), z.boolean()).optional(),
+  streak: z.number().optional(),
+  createdAt: z.string().optional(),
+  reminderEnabled: z.boolean().optional(),
+  reminderTime: z.string().optional(),
+});
+
+const journalImportSchema = z.object({
+  id: z.string().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
+  mood: z.number().min(1).max(5).optional(),
+  energy: z.number().min(1).max(5).optional(),
+  content: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+const bookmarkImportSchema = z.object({
+  id: z.string().optional(),
+  url: z.string().url(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  favicon: z.string().optional(),
+  image: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  collection: z.string().optional(),
+  isRead: z.boolean().optional(),
+  createdAt: z.string().optional(),
+  domain: z.string().optional(),
+  linkedTaskId: z.string().optional(),
+  linkedNoteId: z.string().optional(),
+});
+
+const ideaImportSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1),
+  content: z.string().max(280).optional(),
+  color: z.enum(['yellow', 'green', 'blue', 'purple', 'orange', 'red', 'cyan']).optional(),
+  tags: z.array(z.string()).optional(),
+  linkedNoteIds: z.array(z.string()).optional(),
+  linkedTaskIds: z.array(z.string()).optional(),
+  status: z.enum(['active', 'archived', 'converted']).optional(),
+  order: z.number().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+// Top-level import body: only checks the envelope shape. Each entity array,
+// if present, must be an array - individual items are validated (and
+// unknown fields stripped) per-item below so a single bad record doesn't
+// reject the whole import, matching prior permissive behavior.
+const importBodySchema = z.object({
+  version: z.number().optional(),
+  exportedAt: z.string().optional(),
+  data: z.object({
+    notes: z.array(z.unknown()).optional(),
+    tasks: z.array(z.unknown()).optional(),
+    habits: z.array(z.unknown()).optional(),
+    journal: z.array(z.unknown()).optional(),
+    bookmarks: z.array(z.unknown()).optional(),
+    ideas: z.array(z.unknown()).optional(),
+    dailyNotes: z.array(z.unknown()).optional(),
+    focusSessions: z.array(z.unknown()).optional(),
+    gamification: z.unknown().optional(),
+    focusStats: z.unknown().optional(),
+  }, { message: 'Invalid import data: missing "data" field' }),
+});
+
 // GET /api/bulk/stats - Get aggregate statistics
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/stats', async (_req: Request, res: Response) => {
   try {
     const [notes, tasks, habits, journal, bookmarks, ideas, focus, gamification] = await Promise.all([
       storeBridge.getAll('notes'),
@@ -86,7 +198,7 @@ router.get('/stats', async (req: Request, res: Response) => {
 });
 
 // POST /api/bulk/export - Export all data as JSON
-router.post('/export', async (req: Request, res: Response) => {
+router.post('/export', async (_req: Request, res: Response) => {
   try {
     logger.info('Starting data export...');
 
@@ -141,15 +253,14 @@ router.post('/export', async (req: Request, res: Response) => {
 // POST /api/bulk/import - Import data from JSON
 router.post('/import', async (req: Request, res: Response) => {
   try {
-    const importData = req.body as ExportData;
-
-    // Validate structure
-    if (!importData.data) {
+    const parsedBody = importBodySchema.safeParse(req.body);
+    if (!parsedBody.success) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid import data: missing "data" field',
+        error: parsedBody.error.issues.map(i => i.message).join('; '),
       });
     }
+    const importData = parsedBody.data;
 
     logger.info('Starting data import...');
 
@@ -166,8 +277,13 @@ router.post('/import', async (req: Request, res: Response) => {
     // Import notes
     if (importData.data.notes && Array.isArray(importData.data.notes)) {
       for (const note of importData.data.notes) {
+        const parsed = noteImportSchema.safeParse(note);
+        if (!parsed.success) {
+          results.errors.push(`Note import error: ${parsed.error.issues.map(i => i.message).join('; ')}`);
+          continue;
+        }
         try {
-          await storeBridge.create('notes', note);
+          await storeBridge.create('notes', parsed.data);
           results.notes++;
         } catch (error) {
           results.errors.push(`Note import error: ${(error as Error).message}`);
@@ -178,8 +294,13 @@ router.post('/import', async (req: Request, res: Response) => {
     // Import tasks
     if (importData.data.tasks && Array.isArray(importData.data.tasks)) {
       for (const task of importData.data.tasks) {
+        const parsed = taskImportSchema.safeParse(task);
+        if (!parsed.success) {
+          results.errors.push(`Task import error: ${parsed.error.issues.map(i => i.message).join('; ')}`);
+          continue;
+        }
         try {
-          await storeBridge.create('tasks', task);
+          await storeBridge.create('tasks', parsed.data);
           results.tasks++;
         } catch (error) {
           results.errors.push(`Task import error: ${(error as Error).message}`);
@@ -190,8 +311,13 @@ router.post('/import', async (req: Request, res: Response) => {
     // Import habits
     if (importData.data.habits && Array.isArray(importData.data.habits)) {
       for (const habit of importData.data.habits) {
+        const parsed = habitImportSchema.safeParse(habit);
+        if (!parsed.success) {
+          results.errors.push(`Habit import error: ${parsed.error.issues.map(i => i.message).join('; ')}`);
+          continue;
+        }
         try {
-          await storeBridge.create('habits', habit);
+          await storeBridge.create('habits', parsed.data);
           results.habits++;
         } catch (error) {
           results.errors.push(`Habit import error: ${(error as Error).message}`);
@@ -202,8 +328,13 @@ router.post('/import', async (req: Request, res: Response) => {
     // Import journal entries
     if (importData.data.journal && Array.isArray(importData.data.journal)) {
       for (const entry of importData.data.journal) {
+        const parsed = journalImportSchema.safeParse(entry);
+        if (!parsed.success) {
+          results.errors.push(`Journal import error: ${parsed.error.issues.map(i => i.message).join('; ')}`);
+          continue;
+        }
         try {
-          await storeBridge.create('journal', entry);
+          await storeBridge.create('journal', parsed.data);
           results.journal++;
         } catch (error) {
           results.errors.push(`Journal import error: ${(error as Error).message}`);
@@ -214,8 +345,13 @@ router.post('/import', async (req: Request, res: Response) => {
     // Import bookmarks
     if (importData.data.bookmarks && Array.isArray(importData.data.bookmarks)) {
       for (const bookmark of importData.data.bookmarks) {
+        const parsed = bookmarkImportSchema.safeParse(bookmark);
+        if (!parsed.success) {
+          results.errors.push(`Bookmark import error: ${parsed.error.issues.map(i => i.message).join('; ')}`);
+          continue;
+        }
         try {
-          await storeBridge.create('bookmarks', bookmark);
+          await storeBridge.create('bookmarks', parsed.data);
           results.bookmarks++;
         } catch (error) {
           results.errors.push(`Bookmark import error: ${(error as Error).message}`);
@@ -226,8 +362,13 @@ router.post('/import', async (req: Request, res: Response) => {
     // Import ideas
     if (importData.data.ideas && Array.isArray(importData.data.ideas)) {
       for (const idea of importData.data.ideas) {
+        const parsed = ideaImportSchema.safeParse(idea);
+        if (!parsed.success) {
+          results.errors.push(`Idea import error: ${parsed.error.issues.map(i => i.message).join('; ')}`);
+          continue;
+        }
         try {
-          await storeBridge.create('ideas', idea);
+          await storeBridge.create('ideas', parsed.data);
           results.ideas++;
         } catch (error) {
           results.errors.push(`Idea import error: ${(error as Error).message}`);
@@ -254,7 +395,7 @@ router.post('/import', async (req: Request, res: Response) => {
 });
 
 // GET /api/bulk/today - Get today's summary
-router.get('/today', async (req: Request, res: Response) => {
+router.get('/today', async (_req: Request, res: Response) => {
   try {
     const today = new Date().toISOString().split('T')[0];
 

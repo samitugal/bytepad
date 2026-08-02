@@ -1,5 +1,6 @@
-import { initializeApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth'
+import { initializeApp, FirebaseApp } from 'firebase/app'
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, Auth } from 'firebase/auth'
+import { logger } from '../utils/logger'
 
 // Firebase configuration - User needs to add their own config
 const firebaseConfig = {
@@ -11,9 +12,11 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
 }
 
-// Initialize Firebase only if config is provided
-let app: ReturnType<typeof initializeApp> | null = null
-let auth: ReturnType<typeof getAuth> | null = null
+// This module owns the single Firebase app/auth initialization for the
+// whole client. Other services (e.g. src/services/firestore.ts) must
+// import `app` / `auth` from here instead of calling initializeApp again.
+let app: FirebaseApp | null = null
+let auth: Auth | null = null
 
 const isConfigured = () => {
   return firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId
@@ -24,19 +27,21 @@ if (isConfigured()) {
   auth = getAuth(app)
 }
 
+export { app, auth }
+
 const googleProvider = new GoogleAuthProvider()
 
 export const signInWithGoogle = async (): Promise<User | null> => {
   if (!auth) {
-    console.warn('Firebase not configured. Please add Firebase config to .env file.')
+    logger.warn('Firebase not configured. Please add Firebase config to .env file.')
     return null
   }
-  
+
   try {
     const result = await signInWithPopup(auth, googleProvider)
     return result.user
   } catch (error) {
-    console.error('Google sign-in error:', error)
+    logger.error('Google sign-in error:', error)
     return null
   }
 }
@@ -47,7 +52,7 @@ export const signOutUser = async (): Promise<void> => {
   try {
     await signOut(auth)
   } catch (error) {
-    console.error('Sign-out error:', error)
+    logger.error('Sign-out error:', error)
   }
 }
 

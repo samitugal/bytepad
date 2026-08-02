@@ -6,6 +6,7 @@ import { useTaskStore } from '../stores/taskStore'
 import { useHabitStore } from '../stores/habitStore'
 import { useJournalStore } from '../stores/journalStore'
 import type { Note, Task, Habit, JournalEntry } from '../types'
+import { logger } from '../utils/logger'
 
 // Check if File System Access API is supported
 export const isFileSystemAccessSupported = (): boolean => {
@@ -24,7 +25,7 @@ const sanitizeFilename = (name: string): string => {
 // Request directory access from user
 export const selectNotesDirectory = async (): Promise<{ handle: FileSystemDirectoryHandle; path: string } | null> => {
   if (!isFileSystemAccessSupported()) {
-    console.warn('File System Access API is not supported in this browser')
+    logger.warn('File System Access API is not supported in this browser')
     return null
   }
 
@@ -44,7 +45,7 @@ export const selectNotesDirectory = async (): Promise<{ handle: FileSystemDirect
       // User cancelled the picker
       return null
     }
-    console.error('Error selecting directory:', error)
+    logger.error('Error selecting directory:', error)
     throw error
   }
 }
@@ -69,7 +70,7 @@ export const saveNoteToFile = async (note: Note, dirHandle: FileSystemDirectoryH
     
     return true
   } catch (error) {
-    console.error('Error saving note to file:', error)
+    logger.error('Error saving note to file:', error)
     return false
   }
 }
@@ -135,7 +136,7 @@ export const autoSaveNoteLocally = async (note: Note): Promise<void> => {
   try {
     await saveNoteToFile(note, localNotesDirHandle)
   } catch (error) {
-    console.error('Auto-save to local file failed:', error)
+    logger.error('Auto-save to local file failed:', error)
   }
 }
 
@@ -153,7 +154,7 @@ export const deleteNoteFile = async (noteTitle: string): Promise<boolean> => {
     return true
   } catch (error) {
     // File might not exist, which is fine
-    console.warn('Could not delete note file:', error)
+    logger.warn('Could not delete note file:', error)
     return false
   }
 }
@@ -165,9 +166,7 @@ export const downloadNoteAsTxt = (note: Note): void => {
   const baseFilename = note.title && note.title.trim() ? note.title.trim() : 'untitled'
   const safeFilename = sanitizeFilename(baseFilename)
   const filename = `${safeFilename}.txt`
-  
-  console.log('Downloading note:', { title: note.title, filename })
-  
+
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
   saveAs(blob, filename)
 }

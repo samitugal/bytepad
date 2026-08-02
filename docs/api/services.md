@@ -27,15 +27,6 @@ pushToGist(): Promise<void>
 getSyncStatus(): SyncStatus
 ```
 
-## agentService
-
-FlowBot agent with tool calling.
-
-```typescript
-// Execute agent with tools
-executeAgent(input: string, tools: Tool[]): Promise<AgentResult>
-```
-
 ## notificationService
 
 Desktop notifications and reminders.

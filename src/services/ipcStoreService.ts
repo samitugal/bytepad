@@ -13,6 +13,7 @@ import { useDailyNotesStore } from '../stores/dailyNotesStore';
 import { useFocusStore } from '../stores/focusStore';
 import { useGamificationStore } from '../stores/gamificationStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { logger } from '../utils/logger';
 
 type StoreName =
   | 'notes'
@@ -273,17 +274,52 @@ const storeAccessors: Record<StoreName, {
   },
 
   settings: {
-    getAll: () => [useSettingsStore.getState()],
-    getById: (_id) => useSettingsStore.getState(),
+    getAll: () => [sanitizeSettingsForBridge(useSettingsStore.getState())],
+    getById: (_id) => sanitizeSettingsForBridge(useSettingsStore.getState()),
     create: (_data) => null,
     update: (_id, _data) => {
       // Settings are updated via specific setters, not generic update
-      return useSettingsStore.getState();
+      return sanitizeSettingsForBridge(useSettingsStore.getState());
     },
     delete: (_id) => false,
-    getState: () => useSettingsStore.getState(),
+    getState: () => sanitizeSettingsForBridge(useSettingsStore.getState()),
   },
 };
+
+// The settings store carries secrets (LLM API keys, GitHub sync token)
+// alongside its regular preferences. Nothing on the bridge/MCP-server side
+// legitimately needs the raw secret values (gist sync, for instance, only
+// reads `gistSync.enabled`/`gistId` via this bridge — the actual sync call
+// is made from the renderer, which already has the real token in memory).
+// Redact secrets before handing the settings snapshot out over IPC so a
+// compromised MCP client/consumer can't read them wholesale.
+const REDACTED = '[redacted]';
+
+function sanitizeSettingsForBridge(state: ReturnType<typeof useSettingsStore.getState>) {
+  return {
+    llmProvider: state.llmProvider,
+    llmModel: state.llmModel,
+    apiKeys: Object.fromEntries(
+      Object.entries(state.apiKeys).map(([provider, key]) => [provider, key ? REDACTED : ''])
+    ),
+    ollamaBaseUrl: state.ollamaBaseUrl,
+    fontSize: state.fontSize,
+    fontFamily: state.fontFamily,
+    noteMarkdownPreview: state.noteMarkdownPreview,
+    noteFontSize: state.noteFontSize,
+    emailPreferences: state.emailPreferences,
+    gistSync: {
+      ...state.gistSync,
+      githubToken: state.gistSync.githubToken ? REDACTED : '',
+    },
+    focusPreferences: state.focusPreferences,
+    gamificationEnabled: state.gamificationEnabled,
+    onboardingCompleted: state.onboardingCompleted,
+    timezone: state.timezone,
+    localNotesEnabled: state.localNotesEnabled,
+    localNotesPath: state.localNotesPath,
+  };
+}
 
 // Action executors for specific store actions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -322,17 +358,17 @@ declare global {
 // Initialize IPC listeners
 export function initializeIpcStoreService() {
   if (window.__IPC_STORE_INITIALIZED__) {
-    console.log('[IPC Store] Already initialized, skipping');
+    logger.debug('[IPC Store] Already initialized, skipping');
     return;
   }
 
   if (!window.electronAPI) {
-    console.log('[IPC Store] Not in Electron environment');
+    logger.debug('[IPC Store] Not in Electron environment');
     return;
   }
 
   window.__IPC_STORE_INITIALIZED__ = true;
-  console.log('[IPC Store] Initializing...');
+  logger.debug('[IPC Store] Initializing...');
 
   const { storeBridge } = window.electronAPI as { storeBridge?: {
     onStoreRequest: (handler: (channel: string, requestId: string, ...args: unknown[]) => void) => void;
@@ -341,11 +377,11 @@ export function initializeIpcStoreService() {
   }};
 
   if (!storeBridge) {
-    console.log('[IPC Store] Store bridge not available in preload');
+    logger.debug('[IPC Store] Store bridge not available in preload');
     return;
   }
 
-  console.log('[IPC Store] Initializing store bridge via preload...');
+  logger.debug('[IPC Store] Initializing store bridge via preload...');
 
   // Handle all store requests from main process
   storeBridge.onStoreRequest((channel, requestId, ...args) => {
@@ -407,5 +443,5 @@ export function initializeIpcStoreService() {
     }
   });
 
-  console.log('[IPC Store] Store bridge initialized');
+  logger.debug('[IPC Store] Store bridge initialized');
 }

@@ -298,9 +298,9 @@ export function CalendarModule() {
                     ? 'bg-np-blue text-white'
                     : 'bg-np-bg-primary text-np-text-secondary hover:bg-np-bg-tertiary'
                 }`}
-                title={`${t(`calendar.${view}`)} (${view[0].toUpperCase()})`}
+                title={`${t(`calendar.${view}`) || view} (${view[0].toUpperCase()})`}
               >
-                {t(`calendar.${view}`)}
+                {t(`calendar.${view}`) || view}
               </button>
             ))}
           </div>

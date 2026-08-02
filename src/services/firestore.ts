@@ -1,46 +1,32 @@
-import { initializeApp, getApps } from 'firebase/app'
-import { 
-  getFirestore, 
-  doc, 
-  setDoc, 
-  getDoc, 
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
   onSnapshot,
   Firestore,
   Unsubscribe
 } from 'firebase/firestore'
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth'
+import { onAuthStateChanged, User } from 'firebase/auth'
+import { app, auth, isFirebaseConfigured } from './firebase'
+import { logger } from '../utils/logger'
 
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
-}
-
-const isConfigured = () => {
-  return !!(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId)
-}
-
-// Initialize Firebase
+// Firebase app/auth are initialized once in src/services/firebase.ts;
+// this module only derives Firestore from that shared app instance.
 let db: Firestore | null = null
 let currentUser: User | null = null
 const unsubscribers: Unsubscribe[] = []
 
-if (isConfigured() && getApps().length === 0) {
-  const app = initializeApp(firebaseConfig)
+if (app && auth) {
   db = getFirestore(app)
-  
+
   // Track auth state
-  const auth = getAuth(app)
   onAuthStateChanged(auth, (user) => {
     currentUser = user
   })
 }
 
-export const isFirestoreConfigured = isConfigured
+export const isFirestoreConfigured = isFirebaseConfigured
 
 // Generic sync functions
 export async function saveUserData<T>(
@@ -57,7 +43,7 @@ export async function saveUserData<T>(
       userId: currentUser.uid
     })
   } catch (error) {
-    console.error(`Error saving ${collectionName}:`, error)
+    logger.error(`Error saving ${collectionName}:`, error)
   }
 }
 
@@ -75,7 +61,7 @@ export async function loadUserData<T>(
     }
     return null
   } catch (error) {
-    console.error(`Error loading ${collectionName}:`, error)
+    logger.error(`Error loading ${collectionName}:`, error)
     return null
   }
 }
@@ -96,13 +82,13 @@ export function subscribeToUserData<T>(
         callback(null)
       }
     }, (error) => {
-      console.error(`Error subscribing to ${collectionName}:`, error)
+      logger.error(`Error subscribing to ${collectionName}:`, error)
     })
     
     unsubscribers.push(unsubscribe)
     return unsubscribe
   } catch (error) {
-    console.error(`Error setting up subscription for ${collectionName}:`, error)
+    logger.error(`Error setting up subscription for ${collectionName}:`, error)
     return null
   }
 }

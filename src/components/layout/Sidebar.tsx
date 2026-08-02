@@ -5,6 +5,7 @@ import { useJournalStore } from '../../stores/journalStore'
 import { useBookmarkStore } from '../../stores/bookmarkStore'
 import { useDailyNotesStore } from '../../stores/dailyNotesStore'
 import { useTranslation } from '../../i18n'
+import { getModuleLabel } from '../../i18n/moduleLabels'
 import type { ModuleType } from '../../types'
 
 const MODULE_IDS: { id: ModuleType; shortcut: string }[] = [
@@ -68,22 +69,6 @@ export function Sidebar() {
       .map(([tag, count]) => ({ tag, count }))
   }, [notes, journalEntries, bookmarks, dailyNotes])
   
-  // Map module IDs to translated labels
-  const getModuleLabel = (id: ModuleType): string => {
-    const labelMap: Record<ModuleType, string> = {
-      notes: t('nav.notes'),
-      dailynotes: t('dailyNotes.title'),
-      ideas: t('ideas.title'),
-      habits: t('nav.habits'),
-      tasks: t('nav.tasks'),
-      journal: t('nav.journal'),
-      bookmarks: t('nav.bookmarks'),
-      calendar: t('nav.calendar'),
-      graph: t('nav.graph'),
-      analysis: t('nav.analysis'),
-    }
-    return labelMap[id] || id
-  }
   const [width, setWidth] = useState(() => {
     const saved = localStorage.getItem('bytepad-sidebar-width')
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH
@@ -142,7 +127,7 @@ export function Sidebar() {
                 : 'text-np-text-secondary hover:bg-np-bg-tertiary hover:text-np-text-primary'
             }`}
           >
-            <span className="truncate">{activeModule === module.id ? '>' : ' '} {getModuleLabel(module.id)}</span>
+            <span className="truncate">{activeModule === module.id ? '>' : ' '} {getModuleLabel(t, module.id)}</span>
             <span className="text-xs text-np-text-secondary flex-shrink-0">^{module.shortcut}</span>
           </button>
         ))}

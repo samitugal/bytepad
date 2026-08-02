@@ -8,6 +8,7 @@ import { useNoteStore } from '../stores/noteStore'
 import { useFocusStore } from '../stores/focusStore'
 import { useGamificationStore } from '../stores/gamificationStore'
 import { useSettingsStore, PROVIDER_INFO } from '../stores/settingsStore'
+import { logger } from '../utils/logger'
 import { useReportStore } from '../stores/reportStore'
 import type {
   ProductivityData,
@@ -502,7 +503,7 @@ function parseAIResponse(
       }
     }
   } catch (e) {
-    console.error('Failed to parse AI response:', e)
+    logger.error('Failed to parse AI response:', e)
   }
 
   // Fallback if parsing fails
@@ -663,7 +664,7 @@ export async function generateProductivityReport(
         reportStore.setGenerationProgress('Processing AI response...')
         reportContent = parseAIResponse(aiResponse, data)
       } catch (aiError) {
-        console.warn('AI report failed, using fallback:', aiError)
+        logger.warn('AI report failed, using fallback:', aiError)
         reportContent = generateFallbackReport(data)
       }
     } else {

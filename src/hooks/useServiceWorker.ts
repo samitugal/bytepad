@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from '../utils/logger';
 
 interface ServiceWorkerState {
   isSupported: boolean;
@@ -45,7 +46,7 @@ export function useServiceWorker(): UseServiceWorkerReturn {
     const registerSW = async () => {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js');
-        console.log('[App] SW registered:', registration.scope);
+        logger.info('[App] SW registered:', registration.scope);
 
         setState((s) => ({
           ...s,
@@ -67,12 +68,12 @@ export function useServiceWorker(): UseServiceWorkerReturn {
           const newWorker = registration.installing;
           if (!newWorker) return;
 
-          console.log('[App] New SW installing...');
+          logger.info('[App] New SW installing...');
 
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               // New SW installed, waiting to activate
-              console.log('[App] New SW installed, update available');
+              logger.info('[App] New SW installed, update available');
               setState((s) => ({
                 ...s,
                 isUpdateAvailable: true,
@@ -84,11 +85,11 @@ export function useServiceWorker(): UseServiceWorkerReturn {
 
         // Handle controller change (after skipWaiting)
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-          console.log('[App] Controller changed, reloading...');
+          logger.info('[App] Controller changed, reloading...');
           window.location.reload();
         });
       } catch (error) {
-        console.error('[App] SW registration failed:', error);
+        logger.error('[App] SW registration failed:', error);
       }
     };
 
@@ -100,7 +101,7 @@ export function useServiceWorker(): UseServiceWorkerReturn {
     const { waitingWorker } = state;
     if (!waitingWorker) return;
 
-    console.log('[App] Sending SKIP_WAITING to SW');
+    logger.info('[App] Sending SKIP_WAITING to SW');
     waitingWorker.postMessage({ type: 'SKIP_WAITING' });
   }, [state.waitingWorker]);
 
@@ -111,9 +112,9 @@ export function useServiceWorker(): UseServiceWorkerReturn {
 
     try {
       await registration.update();
-      console.log('[App] Checked for updates');
+      logger.debug('[App] Checked for updates');
     } catch (error) {
-      console.error('[App] Update check failed:', error);
+      logger.error('[App] Update check failed:', error);
     }
   }, [state.registration]);
 

@@ -1,8 +1,15 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { storeBridge } from '../bridges/storeBridge';
 import { logger } from '../utils/logger';
+import { singleQueryString } from '../utils/queryParams';
 
 const router = Router();
+
+// Params
+interface IdParams {
+  id: string;
+}
 
 // Types
 interface Bookmark {
@@ -21,21 +28,21 @@ interface Bookmark {
   linkedNoteId?: string;
 }
 
-interface CreateBookmarkRequest {
-  url: string;
-  title: string;
-  description?: string;
-  tags?: string[];
-  collection?: string;
-}
+const createBookmarkSchema = z.object({
+  url: z.string().min(1, 'URL is required').url('Invalid URL format'),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  collection: z.string().optional(),
+});
 
-interface UpdateBookmarkRequest {
-  title?: string;
-  description?: string;
-  tags?: string[];
-  collection?: string;
-  isRead?: boolean;
-}
+const updateBookmarkSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  collection: z.string().optional(),
+  isRead: z.boolean().optional(),
+});
 
 // Helper to extract domain from URL
 function extractDomain(url: string): string {
@@ -84,7 +91,7 @@ router.get('/', async (req: Request, res: Response) => {
 // GET /api/bookmarks/search - Search bookmarks
 router.get('/search', async (req: Request, res: Response) => {
   try {
-    const query = req.query.q as string;
+    const query = singleQueryString(req.query.q);
     if (!query) {
       return res.status(400).json({
         success: false,
@@ -109,7 +116,7 @@ router.get('/search', async (req: Request, res: Response) => {
 });
 
 // GET /api/bookmarks/collections - List unique collections
-router.get('/collections', async (req: Request, res: Response) => {
+router.get('/collections', async (_req: Request, res: Response) => {
   try {
     const bookmarks = await storeBridge.getAll<Bookmark>('bookmarks');
     const collections = [...new Set(bookmarks.map(b => b.collection).filter(Boolean))];
@@ -129,7 +136,7 @@ router.get('/collections', async (req: Request, res: Response) => {
 });
 
 // GET /api/bookmarks/:id - Get single bookmark
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const bookmark = await storeBridge.getById<Bookmark>('bookmarks', id);
@@ -157,31 +164,14 @@ router.get('/:id', async (req: Request, res: Response) => {
 // POST /api/bookmarks - Create bookmark
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const body = req.body as CreateBookmarkRequest;
-
-    if (!body.url) {
+    const parsed = createBookmarkSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'URL is required',
+        error: parsed.error.issues.map(i => i.message).join('; '),
       });
     }
-
-    if (!body.title) {
-      return res.status(400).json({
-        success: false,
-        error: 'Title is required',
-      });
-    }
-
-    // Validate URL
-    try {
-      new URL(body.url);
-    } catch {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid URL format',
-      });
-    }
+    const body = parsed.data;
 
     const bookmark = await storeBridge.create<Bookmark>('bookmarks', {
       url: body.url,
@@ -208,10 +198,9 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // PUT /api/bookmarks/:id - Update bookmark
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
-    const body = req.body as UpdateBookmarkRequest;
 
     const existing = await storeBridge.getById<Bookmark>('bookmarks', id);
     if (!existing) {
@@ -220,6 +209,15 @@ router.put('/:id', async (req: Request, res: Response) => {
         error: 'Bookmark not found',
       });
     }
+
+    const parsed = updateBookmarkSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: parsed.error.issues.map(i => i.message).join('; '),
+      });
+    }
+    const body = parsed.data;
 
     const bookmark = await storeBridge.update<Bookmark>('bookmarks', id, body);
 
@@ -239,7 +237,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/bookmarks/:id/read - Mark as read/unread
-router.post('/:id/read', async (req: Request, res: Response) => {
+router.post('/:id/read', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -271,7 +269,7 @@ router.post('/:id/read', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/bookmarks/:id - Delete bookmark
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 

@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import type { MCPServerInfo, DockerStatus } from '../../types/electron';
+import { useTranslation } from '../../i18n';
 
 type MCPMode = 'embedded' | 'docker';
 
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
+
 export function MCPSettings() {
+  const { t } = useTranslation();
   const [serverInfo, setServerInfo] = useState<MCPServerInfo | null>(null);
   const [dockerStatus, setDockerStatus] = useState<DockerStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -93,7 +97,9 @@ export function MCPSettings() {
             setInfoMessage('Docker Desktop is installed but not running. Please start Docker Desktop.');
             setError(null);
           } else if (result?.errorCode === 'IMAGE_NOT_FOUND') {
-            setInfoMessage('Docker image not found. Please build it first:\n\ncd docker/mcp-server && docker-compose build');
+            // Show the guidance the main process sent rather than repeating it
+            // here - a second copy is what let this instruction go stale before.
+            setInfoMessage(result?.error || 'Docker image not found. Build it from the bytepad source first.');
             setError(null);
           } else {
             setError(result?.error || 'Failed to start Docker container');
@@ -242,6 +248,13 @@ export function MCPSettings() {
               Docker mode is active. Stop Docker container to use embedded mode.
             </div>
           )}
+
+          {isEmbeddedRunning && serverInfo?.host && !LOOPBACK_HOSTS.has(serverInfo.host) && (
+            <div className="text-xs text-np-error bg-np-error/10 p-2 border border-np-error">
+              <p className="font-semibold">{t('settings.mcp.nonLoopbackWarningTitle')}</p>
+              <p className="mt-1">{t('settings.mcp.nonLoopbackWarning', { host: serverInfo.host })}</p>
+            </div>
+          )}
         </>
       )}
 
@@ -283,6 +296,13 @@ export function MCPSettings() {
           {isEmbeddedRunning && (
             <div className="text-xs text-np-orange bg-np-orange/10 p-2 border border-np-orange">
               Embedded mode is active. Stop embedded server to use Docker mode.
+            </div>
+          )}
+
+          {isDockerRunning && dockerStatus?.host && !LOOPBACK_HOSTS.has(dockerStatus.host) && (
+            <div className="text-xs text-np-error bg-np-error/10 p-2 border border-np-error">
+              <p className="font-semibold">{t('settings.mcp.nonLoopbackWarningTitle')}</p>
+              <p className="mt-1">{t('settings.mcp.nonLoopbackWarning', { host: dockerStatus.host })}</p>
             </div>
           )}
 
