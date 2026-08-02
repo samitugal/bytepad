@@ -42,7 +42,8 @@ docs/
 │   ├── flowbot.md               # AI coach usage
 │   ├── knowledge-graph.md       # Graph visualization
 │   ├── focus-mode.md            # Pomodoro/Focus features
-│   └── sync.md                  # Gist sync setup
+│   ├── sync.md                  # Gist sync setup
+│   └── cloud-sync.md            # Firebase cloud sync (bring your own project)
 ├── development/
 │   ├── architecture.md          # Project architecture
 │   ├── contributing.md          # Contribution guidelines
