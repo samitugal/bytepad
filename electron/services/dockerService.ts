@@ -18,7 +18,7 @@ const store = new Store();
 
 const CONTAINER_NAME = 'bytepad-mcp';
 const IMAGE_NAME = 'bytepad/mcp-server';
-const IMAGE_TAG = '0.24.3';
+const IMAGE_TAG = '0.25.0';
 
 /**
  * Single definition of the "image missing" guidance shown to users.

@@ -6,7 +6,7 @@
 
 [![License](https://img.shields.io/badge/license-Personal%20Use-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#download)
-[![Version](https://img.shields.io/badge/version-0.24.3-green)](https://github.com/samitugal/bytepad/releases)
+[![Version](https://img.shields.io/badge/version-0.25.0-green)](https://github.com/samitugal/bytepad/releases)
 
 
 bytepad is a keyboard-first, privacy-first productivity app built for people who think better in plain text.
@@ -162,7 +162,7 @@ Or use docker-compose:
 ```yaml
 services:
   bytepad-mcp:
-    image: bytepad/mcp-server:0.24.3
+    image: bytepad/mcp-server:0.25.0
     ports:
       - "3847:3847"
     volumes:
