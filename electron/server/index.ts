@@ -2,7 +2,7 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { Server as HttpServer, createServer, IncomingMessage } from 'http';
-import { WebSocketServer } from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
 import Store from 'electron-store';
 
 import { ServerConfig, getConfig, defaultConfig } from './config';
@@ -114,12 +114,12 @@ export async function startMCPServer(config?: Partial<ServerConfig>): Promise<vo
   app.use('/api', apiRoutes);
 
   // Root health check redirect
-  app.get('/health', (req, res) => {
+  app.get('/health', (_req, res) => {
     res.redirect('/api/health');
   });
 
   // MCP SSE endpoint - establishes SSE stream (GET /mcp)
-  app.get('/mcp', async (req: Request, res: Response) => {
+  app.get('/mcp', async (_req: Request, res: Response) => {
     logger.info('MCP SSE: New connection request');
 
     try {

@@ -7,6 +7,7 @@ import {
   ListResourcesRequestSchema,
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
+  type CallToolResult,
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { resourceList, readResource } from './resources';
@@ -19,12 +20,14 @@ let mcpServer: Server | null = null;
 // Idempotency cache for tool calls - prevents duplicate execution
 // Key: hash of (toolName + arguments)
 interface CacheEntry {
-  result: unknown;
+  result: CallToolResult;
   timestamp: number;
 }
 interface PendingEntry {
+  // Unused placeholder (see "Will be replaced" below) - never read, so its
+  // type is deliberately kept loose rather than widened to match `resolvers`.
   promise: Promise<unknown>;
-  resolvers: { resolve: (value: unknown) => void; reject: (error: unknown) => void }[];
+  resolvers: { resolve: (value: CallToolResult) => void; reject: (error: unknown) => void }[];
 }
 const toolCallCache = new Map<string, CacheEntry>();
 const pendingOperations = new Map<string, PendingEntry>();
@@ -113,7 +116,7 @@ export function createMCPServer(): Server {
       const cached = toolCallCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
         logger.info(`MCP [${requestId}]: Returning cached result for ${toolName} (idempotency)`);
-        return cached.result as { content: { type: 'text'; text: string }[] };
+        return cached.result;
       }
 
       // Step 2: Check if operation is already pending

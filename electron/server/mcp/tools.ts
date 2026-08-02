@@ -228,37 +228,56 @@ export const toolList: MCPTool[] = [
 const priorityEnum = z.enum(['P1', 'P2', 'P3', 'P4']);
 const ideaColorEnum = z.enum(['yellow', 'green', 'blue', 'purple', 'orange', 'red', 'cyan']);
 
+// Named separately (rather than only inline in the map below) so their
+// z.infer'd types are available to the switch branches in executeTool that
+// build partial update payloads - see update_note/update_task below.
+const updateNoteSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1).optional(),
+  content: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
+const createTaskSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  priority: priorityEnum.optional(),
+  deadline: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  subtasks: z.array(z.string()).optional(),
+});
+const updateTaskSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  priority: priorityEnum.optional(),
+  deadline: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+// Shape returned by storeBridge.create for tasks - the store always assigns
+// an id, but that isn't part of the create payload, so it's modeled
+// separately from createTaskSchema's inferred input type.
+interface CreatedTask {
+  id: string;
+  title: string;
+  description?: string;
+  priority: string;
+  deadline?: string;
+  tags?: string[];
+}
+
 const toolArgSchemas: Record<string, z.ZodTypeAny> = {
   create_note: z.object({
     title: z.string().min(1),
     content: z.string().optional(),
     tags: z.array(z.string()).optional(),
   }),
-  update_note: z.object({
-    id: z.string().min(1),
-    title: z.string().min(1).optional(),
-    content: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-  }),
+  update_note: updateNoteSchema,
   delete_note: z.object({
     id: z.string().min(1),
   }),
-  create_task: z.object({
-    title: z.string().min(1),
-    description: z.string().optional(),
-    priority: priorityEnum.optional(),
-    deadline: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    subtasks: z.array(z.string()).optional(),
-  }),
-  update_task: z.object({
-    id: z.string().min(1),
-    title: z.string().min(1).optional(),
-    description: z.string().optional(),
-    priority: priorityEnum.optional(),
-    deadline: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-  }),
+  create_task: createTaskSchema,
+  update_task: updateTaskSchema,
   complete_task: z.object({
     id: z.string().min(1),
   }),
@@ -343,13 +362,15 @@ export async function executeTool(
         });
         break;
 
-      case 'update_note':
-        result = await storeBridge.update('notes', args.id as string, {
-          ...(args.title && { title: args.title }),
-          ...(args.content !== undefined && { content: args.content }),
-          ...(args.tags && { tags: args.tags }),
+      case 'update_note': {
+        const data = args as z.infer<typeof updateNoteSchema>;
+        result = await storeBridge.update('notes', data.id, {
+          ...(data.title && { title: data.title }),
+          ...(data.content !== undefined && { content: data.content }),
+          ...(data.tags && { tags: data.tags }),
         });
         break;
+      }
 
       case 'delete_note':
         await storeBridge.delete('notes', args.id as string);
@@ -358,34 +379,37 @@ export async function executeTool(
 
       // Tasks
       case 'create_task': {
-        const task = await storeBridge.create('tasks', {
-          title: args.title,
-          description: args.description,
-          priority: args.priority || 'P3',
-          deadline: args.deadline,
-          tags: args.tags,
+        const taskData = args as z.infer<typeof createTaskSchema>;
+        const task = await storeBridge.create<CreatedTask>('tasks', {
+          title: taskData.title,
+          description: taskData.description,
+          priority: taskData.priority || 'P3',
+          deadline: taskData.deadline,
+          tags: taskData.tags,
         });
 
         // Add subtasks if provided
-        if (args.subtasks && Array.isArray(args.subtasks)) {
-          for (const subtaskTitle of args.subtasks) {
-            await storeBridge.action('tasks', 'addSubtask', (task as { id: string }).id, subtaskTitle);
+        if (taskData.subtasks && Array.isArray(taskData.subtasks)) {
+          for (const subtaskTitle of taskData.subtasks) {
+            await storeBridge.action('tasks', 'addSubtask', task.id, subtaskTitle);
           }
         }
 
-        result = await storeBridge.getById('tasks', (task as { id: string }).id);
+        result = await storeBridge.getById('tasks', task.id);
         break;
       }
 
-      case 'update_task':
-        result = await storeBridge.update('tasks', args.id as string, {
-          ...(args.title && { title: args.title }),
-          ...(args.description !== undefined && { description: args.description }),
-          ...(args.priority && { priority: args.priority }),
-          ...(args.deadline && { deadline: args.deadline }),
-          ...(args.tags && { tags: args.tags }),
+      case 'update_task': {
+        const data = args as z.infer<typeof updateTaskSchema>;
+        result = await storeBridge.update('tasks', data.id, {
+          ...(data.title && { title: data.title }),
+          ...(data.description !== undefined && { description: data.description }),
+          ...(data.priority && { priority: data.priority }),
+          ...(data.deadline && { deadline: data.deadline }),
+          ...(data.tags && { tags: data.tags }),
         });
         break;
+      }
 
       case 'complete_task':
         await storeBridge.action('tasks', 'toggleComplete', args.id);

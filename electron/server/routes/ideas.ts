@@ -5,6 +5,11 @@ import { logger } from '../utils/logger';
 
 const router = Router();
 
+// Params
+interface IdParams {
+  id: string;
+}
+
 // Types
 type IdeaColor = 'yellow' | 'green' | 'blue' | 'purple' | 'orange' | 'red' | 'cyan';
 type IdeaStatus = 'active' | 'archived' | 'converted';
@@ -81,7 +86,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // GET /api/ideas/:id - Get single idea
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const idea = await storeBridge.getById<Idea>('ideas', id);
@@ -141,7 +146,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // PUT /api/ideas/:id - Update idea
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -180,7 +185,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/ideas/:id/convert - Convert idea to note or task
-router.post('/:id/convert', async (req: Request, res: Response) => {
+router.post('/:id/convert', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
     const parsed = convertIdeaSchema.safeParse(req.body);
@@ -225,7 +230,7 @@ router.post('/:id/convert', async (req: Request, res: Response) => {
 });
 
 // POST /api/ideas/:id/archive - Archive idea
-router.post('/:id/archive', async (req: Request, res: Response) => {
+router.post('/:id/archive', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -256,7 +261,7 @@ router.post('/:id/archive', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/ideas/:id - Delete idea
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const { id } = req.params;
 

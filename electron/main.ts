@@ -652,10 +652,25 @@ function setupIPC() {
   })
 }
 
-// Extend app type for isQuitting property
-declare module 'electron' {
-  interface App {
-    isQuitting?: boolean
+// Extend app type for isQuitting property.
+// NOTE: `declare module 'electron' { interface App {...} }` looks like the
+// obvious way to do this, but it's wrong here: the 'electron' module type
+// only re-exports `type App = Electron.App` (a type alias) via
+// `namespace CrossProcessExports`, not an interface. Augmenting with
+// `interface App` inside that module block creates an unrelated, disconnected
+// declaration (duplicate identifier vs. the alias) instead of merging into
+// the real `Electron.App` interface that `app`'s type actually resolves to.
+// The real target is the `Electron` namespace itself, which is ambient/global.
+declare global {
+  // There is no ES2015-module syntax for merging a member into an existing
+  // ambient namespace (electron.d.ts declares `namespace Electron { ... }`
+  // globally) - `namespace` is the only way to augment it, so this specific
+  // use is exempted from the rule.
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Electron {
+    interface App {
+      isQuitting?: boolean
+    }
   }
 }
 
@@ -715,7 +730,7 @@ app.on('will-quit', async () => {
   }
 })
 
-app.on('before-quit', (event) => {
+app.on('before-quit', (_event) => {
   app.isQuitting = true
   // Send signal to renderer to push data before quitting
   if (mainWindow && !mainWindow.isDestroyed()) {
