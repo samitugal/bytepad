@@ -24,6 +24,7 @@ interface GlobalSearchProps {
 export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
   const globalSearchQuery = useUIStore((s) => s.globalSearchQuery)
   const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   
   const notes = useNoteStore((s) => s.notes)
@@ -42,7 +43,7 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
 
   // Search across all modules
   const results = useMemo(() => {
-    if (!query.trim()) return []
+    if (!debouncedQuery.trim()) return []
     
     const rawQuery = query.toLowerCase()
     const isTagSearch = rawQuery.startsWith('#')
@@ -180,6 +181,15 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
 
     return searchResults
   }, [query, notes, tasks, habits, journalEntries, bookmarks])
+
+  // Debounce search query
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      setDebouncedQuery(query)
+    }, 200)
+
+    return () => clearTimeout(debounceTimer)
+  }, [query])
 
   // Reset selection when results change
   useEffect(() => {
