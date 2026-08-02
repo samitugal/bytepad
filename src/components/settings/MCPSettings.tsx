@@ -97,7 +97,9 @@ export function MCPSettings() {
             setInfoMessage('Docker Desktop is installed but not running. Please start Docker Desktop.');
             setError(null);
           } else if (result?.errorCode === 'IMAGE_NOT_FOUND') {
-            setInfoMessage('Docker image not found. Please build it first:\n\ncd docker/mcp-server && docker-compose build');
+            // Show the guidance the main process sent rather than repeating it
+            // here - a second copy is what let this instruction go stale before.
+            setInfoMessage(result?.error || 'Docker image not found. Build it from the bytepad source first.');
             setError(null);
           } else {
             setError(result?.error || 'Failed to start Docker container');

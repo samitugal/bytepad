@@ -2,6 +2,7 @@ import { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, shell, nativeI
 import path from 'path'
 import Store from 'electron-store'
 import { startMCPServer, stopMCPServer, getServerInfo, getOrCreateApiKey, regenerateApiKey } from './server'
+import { IMAGE_NOT_FOUND_MESSAGE } from './services/dockerService'
 import { setupStoreBridge, setMainWindow } from './server/bridges/storeBridge'
 import {
   isDockerInstalled,
@@ -578,7 +579,7 @@ function setupIPC() {
     if (!hasImage) {
       return {
         success: false,
-        error: 'Docker image not found. Please run: docker-compose build',
+        error: IMAGE_NOT_FOUND_MESSAGE,
         errorCode: 'IMAGE_NOT_FOUND'
       }
     }
@@ -632,7 +633,7 @@ function setupIPC() {
       if (!hasImage) {
         return {
           success: false,
-          error: 'Docker image not built. Run: cd docker/mcp-server && docker-compose build',
+          error: IMAGE_NOT_FOUND_MESSAGE,
           errorCode: 'IMAGE_NOT_FOUND'
         }
       }
