@@ -49,6 +49,22 @@ jobs:
         run: npm run lint
         continue-on-error: true
 
+      # Report-only for now: there is a pre-existing backlog of ~128 keys
+      # defined in src/i18n/en.json but never referenced anywhere (issue #49
+      # is about to remove a whole settings section, which will retire a
+      # chunk of that backlog on its own - cleaning it here first would just
+      # collide). This step is intentionally non-blocking (continue-on-error)
+      # until that backlog is cleared; output is still printed so regressions
+      # are visible in the log. The category that actually matters - t()
+      # calls referencing a key that doesn't exist, which silently renders
+      # the raw key path to the user instead of failing - is already at 0 on
+      # main, so once #49 lands and the unused-key backlog is cleared, this
+      # can become blocking (drop continue-on-error, or split the script's
+      # exit code so only categories 2-4 gate the build).
+      - name: i18n key check (non-blocking)
+        run: npm run check:i18n
+        continue-on-error: true
+
       # Build-mode (`-b`) is required now that tsconfig.json is a solution
       # file (references tsconfig.app.json for src/ and tsconfig.node.json
       # for electron/**, each with their own noEmit:true) rather than a
