@@ -75,7 +75,6 @@ const REMEMBER_ON_DEVICE_KEY = 'bytepad-secrets-remember'
 export interface StoredSecrets {
   apiKeys?: Record<string, string>
   githubToken?: string
-  emailjsPublicKey?: string
 }
 
 // Web-only: whether the user opted in to persisting secrets to localStorage.

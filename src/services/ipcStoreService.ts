@@ -286,13 +286,13 @@ const storeAccessors: Record<StoreName, {
   },
 };
 
-// The settings store carries secrets (LLM API keys, GitHub sync token,
-// EmailJS public key) alongside its regular preferences. Nothing on the
-// bridge/MCP-server side legitimately needs the raw secret values (gist sync,
-// for instance, only reads `gistSync.enabled`/`gistId` via this bridge — the
-// actual sync call is made from the renderer, which already has the real
-// token in memory). Redact secrets before handing the settings snapshot out
-// over IPC so a compromised MCP client/consumer can't read them wholesale.
+// The settings store carries secrets (LLM API keys, GitHub sync token)
+// alongside its regular preferences. Nothing on the bridge/MCP-server side
+// legitimately needs the raw secret values (gist sync, for instance, only
+// reads `gistSync.enabled`/`gistId` via this bridge — the actual sync call
+// is made from the renderer, which already has the real token in memory).
+// Redact secrets before handing the settings snapshot out over IPC so a
+// compromised MCP client/consumer can't read them wholesale.
 const REDACTED = '[redacted]';
 
 function sanitizeSettingsForBridge(state: ReturnType<typeof useSettingsStore.getState>) {
@@ -307,10 +307,7 @@ function sanitizeSettingsForBridge(state: ReturnType<typeof useSettingsStore.get
     fontFamily: state.fontFamily,
     noteMarkdownPreview: state.noteMarkdownPreview,
     noteFontSize: state.noteFontSize,
-    emailPreferences: {
-      ...state.emailPreferences,
-      emailjsPublicKey: state.emailPreferences.emailjsPublicKey ? REDACTED : '',
-    },
+    emailPreferences: state.emailPreferences,
     gistSync: {
       ...state.gistSync,
       githubToken: state.gistSync.githubToken ? REDACTED : '',

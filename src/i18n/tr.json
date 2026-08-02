@@ -89,7 +89,6 @@
             "quietHours": "Sessiz Saatler",
             "emailNotifications": "E-posta Bildirimleri",
             "yourEmail": "E-posta Adresiniz",
-            "emailjsConfig": "EmailJS Yapılandırması",
             "dailySummary": "Günlük özet e-postası",
             "weeklyReport": "Haftalık rapor e-postası",
             "streakAlerts": "Seri risk uyarıları"

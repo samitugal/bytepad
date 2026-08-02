@@ -586,8 +586,6 @@ function IntegrationsTab({
     emailPreferences: {
         enabled: boolean
         userEmail: string
-        emailjsServiceId: string
-        emailjsPublicKey: string
         dailySummaryEnabled: boolean
         dailySummaryTime: string
         weeklySummaryEnabled: boolean
@@ -689,33 +687,6 @@ function IntegrationsTab({
                                     className="w-full bg-np-bg-primary border border-np-border text-np-text-primary 
                              font-mono text-sm px-2 py-1.5 focus:outline-none focus:border-np-blue"
                                 />
-                            </div>
-
-                            <div className="pt-2 border-t border-np-border">
-                                <p className="text-xs text-np-text-secondary mb-2">
-                                    EmailJS Configuration -{' '}
-                                    <a href="https://emailjs.com" target="_blank" rel="noopener" className="text-np-blue hover:underline">
-                                        emailjs.com
-                                    </a>
-                                </p>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <input
-                                        type="text"
-                                        value={emailPreferences.emailjsServiceId}
-                                        onChange={(e) => setEmailPreferences({ emailjsServiceId: e.target.value })}
-                                        placeholder="Service ID"
-                                        className="bg-np-bg-primary border border-np-border text-np-text-primary 
-                               font-mono text-xs px-2 py-1 focus:outline-none focus:border-np-blue"
-                                    />
-                                    <input
-                                        type="text"
-                                        value={emailPreferences.emailjsPublicKey}
-                                        onChange={(e) => setEmailPreferences({ emailjsPublicKey: e.target.value })}
-                                        placeholder="Public Key"
-                                        className="bg-np-bg-primary border border-np-border text-np-text-primary 
-                               font-mono text-xs px-2 py-1 focus:outline-none focus:border-np-blue"
-                                    />
-                                </div>
                             </div>
 
                             <div className="space-y-2">

@@ -89,7 +89,6 @@
             "quietHours": "Quiet Hours",
             "emailNotifications": "Email Notifications",
             "yourEmail": "Your Email",
-            "emailjsConfig": "EmailJS Configuration",
             "dailySummary": "Daily summary email",
             "weeklyReport": "Weekly report email",
             "streakAlerts": "Streak risk alerts"
