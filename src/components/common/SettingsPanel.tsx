@@ -758,15 +758,27 @@ function SyncTab({
     signIn: () => void
     signOut: () => void
 }) {
+    const { t } = useTranslation()
+
     return (
         <div className="space-y-6">
             {/* Google Account */}
             <div>
                 <h3 className="text-sm text-np-green mb-3">// Google Account</h3>
                 {!authConfigured ? (
-                    <div className="text-xs text-np-text-secondary bg-np-bg-tertiary p-3 border border-np-border">
-                        <p className="mb-2">Google Sign-in is not configured.</p>
-                        <p>Add Firebase config to <code className="text-np-cyan">.env</code> file.</p>
+                    <div className="text-xs text-np-text-secondary bg-np-bg-tertiary p-3 border border-np-border space-y-2">
+                        <p>{t('settings.sync.notConfigured')}</p>
+                        <p>{t('settings.sync.addFirebaseConfig')}</p>
+                        <p>
+                            <a
+                                href="https://github.com/samitugal/bytepad/blob/main/docs/features/cloud-sync.md"
+                                target="_blank"
+                                rel="noopener"
+                                className="text-np-blue hover:underline"
+                            >
+                                {t('settings.sync.cloudSyncGuideLink')}
+                            </a>
+                        </p>
                     </div>
                 ) : user ? (
                     <div className="flex items-center justify-between bg-np-bg-tertiary p-3 border border-np-border">
