@@ -240,6 +240,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and co
 
 ---
 
+## Security
+
+See [SECURITY.md](SECURITY.md) for supported versions and how to report a vulnerability privately.
+
+---
+
 ## License
 
 **Personal Use License** - This software is licensed for personal, non-commercial use only.
