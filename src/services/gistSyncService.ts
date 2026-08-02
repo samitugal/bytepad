@@ -16,6 +16,26 @@ import { logger } from '../utils/logger'
 
 const GIST_FILENAME = 'bytepad-data.json'
 
+// Races `promise` against a timer. Used anywhere a network call must not be
+// allowed to block indefinitely (app-quit push, startup hydration wait).
+// Rejects with `timeoutMessage` if the timer wins; otherwise settles exactly
+// like `promise`.
+function withTimeout<T>(promise: Promise<T>, ms: number, timeoutMessage: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(timeoutMessage)), ms)
+        promise.then(
+            (value) => {
+                clearTimeout(timer)
+                resolve(value)
+            },
+            (error) => {
+                clearTimeout(timer)
+                reject(error)
+            }
+        )
+    })
+}
+
 interface SyncData {
     version: number
     lastModified: string
@@ -113,10 +133,25 @@ function collectAllData(): SyncData {
 }
 
 // Helper to check if data has actually changed (shallow compare for arrays)
+//
+// This used to bail to `true` (assume changed) for any array over 100 items,
+// presumably to avoid an expensive JSON.stringify on large collections. Two
+// things made that guard worse than not having it, rather than a genuine
+// perf/safety trade-off:
+//   1. It is never on the push/quit path - writeToGist doesn't call this at
+//      all. Only the pull-side `shouldApplyRemoteData` does (from
+//      syncWithGist, pullOnStartup, forcePullFromGist), each a handful of
+//      calls per session, not a hot loop.
+//   2. "Assume changed" doesn't skip work, it moves it: the caller still
+//      unconditionally replaces the whole store's array and triggers a
+//      re-render, which costs more than the string compare it avoided.
+// Net effect: any user with >100 notes/tasks/etc. had this dirty check
+// permanently disabled for that collection, so every pull reapplied
+// byte-identical remote data. Comparing unconditionally instead - if a
+// genuinely huge collection ever makes this measurably slow, the fix is a
+// cheaper comparison (e.g. hashing), not skipping the comparison.
 function hasDataChanged(oldData: unknown[], newData: unknown[]): boolean {
     if (oldData.length !== newData.length) return true
-    // Quick check: compare JSON strings for small arrays, or just assume changed for large ones
-    if (oldData.length > 100) return true
     return JSON.stringify(oldData) !== JSON.stringify(newData)
 }
 
@@ -566,22 +601,82 @@ function validateDataBeforePush(localData: SyncData, remoteData: SyncData | null
     return { valid: !hasCriticalWarning, warnings }
 }
 
+// Fetches the current remote copy and runs validateDataBeforePush against
+// what we're about to write. Pulled out of writeToGist so every push path
+// shares this exact check instead of each caller rolling its own - see the
+// `validation` modes on writeToGist below for how each path uses the result.
+async function checkPushSafety(
+    token: string,
+    gistId: string,
+    localData: SyncData
+): Promise<{ valid: boolean; warnings: string[] }> {
+    const remoteData = await readFromGist(token, gistId)
+    return validateDataBeforePush(localData, remoteData)
+}
+
+// How long the close-push safety check is allowed to take before pushOnClose
+// gives up waiting on it and writes unvalidated. Keeps app-quit from hanging
+// on a slow/stalled network call - see writeToGist's 'best-effort' mode.
+const CLOSE_PUSH_VALIDATION_TIMEOUT_MS = 4000
+
 // Write data to Gist
-export async function writeToGist(token: string, gistId: string, skipValidation: boolean = false): Promise<void> {
+//
+// `validation` controls how checkPushSafety (above) gates the write:
+//   - 'enforce'     refuse to write (throw) if validateDataBeforePush finds a
+//                    critical warning - e.g. local data that looks
+//                    empty/truncated next to a populated remote. Used by the
+//                    normal sync path and by forcePushToGist: "force" means
+//                    "push now without doing the pull-first merge dance that
+//                    syncWithGist does", not "overwrite the Gist even when
+//                    the push itself looks like data loss".
+//   - 'best-effort' runs the same check under a timeout. If the check
+//                    *completes* and finds a critical warning, the write is
+//                    still blocked - this mode is not a way to skip an actual
+//                    bad-push finding. It only changes what happens when the
+//                    check can't be completed at all (timeout, or a
+//                    readFromGist network error): instead of refusing to
+//                    push, it falls back to writing without validation. Used
+//                    exclusively by pushOnClose, which runs during app quit -
+//                    it must never hang shutdown on a network round trip, and
+//                    its purpose is "still try to save the user's work even
+//                    if we can't fully verify it first".
+//   - 'skip'        no check at all.
+export async function writeToGist(
+    token: string,
+    gistId: string,
+    validation: 'enforce' | 'best-effort' | 'skip' = 'enforce'
+): Promise<void> {
     const data = collectAllData()
-    
-    // Validate data before pushing (unless explicitly skipped)
-    if (!skipValidation) {
-        const remoteData = await readFromGist(token, gistId)
-        const validation = validateDataBeforePush(data, remoteData)
-        
-        if (!validation.valid) {
-            logger.warn('[GistSync] Push blocked due to potential data loss:', validation.warnings)
-            throw new Error(`Push blocked: ${validation.warnings.join('; ')}`)
+
+    if (validation !== 'skip') {
+        let safety: { valid: boolean; warnings: string[] } | null = null
+        try {
+            safety = validation === 'best-effort'
+                ? await withTimeout(
+                    checkPushSafety(token, gistId, data),
+                    CLOSE_PUSH_VALIDATION_TIMEOUT_MS,
+                    'Push validation timed out'
+                )
+                : await checkPushSafety(token, gistId, data)
+        } catch (error) {
+            if (validation === 'enforce') {
+                // No fallback in 'enforce' mode: a failed safety check must
+                // never silently turn into an unvalidated push.
+                throw error
+            }
+            // 'best-effort': couldn't determine safety in time (timeout or a
+            // readFromGist network error). Push anyway rather than dropping
+            // the user's work at quit - see the mode doc comment above.
+            logger.warn('[GistSync] Could not validate close push in time, pushing without validation:', error)
         }
-        
-        if (validation.warnings.length > 0) {
-            logger.warn('[GistSync] Push warnings:', validation.warnings)
+
+        if (safety && !safety.valid) {
+            logger.warn('[GistSync] Push blocked due to potential data loss:', safety.warnings)
+            throw new Error(`Push blocked: ${safety.warnings.join('; ')}`)
+        }
+
+        if (safety && safety.warnings.length > 0) {
+            logger.warn('[GistSync] Push warnings:', safety.warnings)
         }
     }
 
@@ -700,8 +795,9 @@ export async function forcePushToGist(): Promise<{ success: boolean; message: st
     setGistSync({ lastSyncStatus: 'pending' })
 
     try {
-        // Skip validation for force push - user explicitly wants to overwrite remote
-        await writeToGist(gistSync.githubToken, gistSync.gistId, true)
+        // 'enforce': force push only skips syncWithGist's pull-first merge
+        // dance, not the data-loss safety check - see writeToGist's mode doc.
+        await writeToGist(gistSync.githubToken, gistSync.gistId, 'enforce')
 
         setGistSync({
             lastSyncAt: new Date().toISOString(),
@@ -760,7 +856,59 @@ export async function forcePullFromGist(): Promise<{ success: boolean; message: 
 
 // Simple sync: Pull on app start, Push on app close
 // No auto-sync intervals, no debounced sync
-const INITIAL_SYNC_DELAY_MS = 3000 // Wait 3 seconds for stores to hydrate
+
+// ---------------------------------------------------------------------------
+// Startup hydration wait
+//
+// initializeSync() used to wait a fixed delay (previously 3s) before pulling,
+// guessing that every store would have finished rehydrating from
+// localStorage by then. zustand's persist middleware always finishes
+// hydration asynchronously - even for a synchronous storage like localStorage,
+// it goes through a Promise chain (see `toThenable`/`hydrate` in
+// zustand/middleware) - but every persisted store here exposes
+// `persist.hasHydrated()` / `persist.onFinishHydration()`, so there is no
+// need to guess how long that takes. Waiting on those directly means the pull
+// fires as soon as every store involved in sync is actually ready (typically
+// within a tick, not seconds), while a bounded timeout still protects against
+// a store whose storage layer never resolves (e.g. corrupted localStorage).
+// ---------------------------------------------------------------------------
+const STORE_HYDRATION_TIMEOUT_MS = 5000
+
+// Every store collectAllData()/applyData() read from or write to - keep this
+// list in sync with those two functions.
+const SYNCED_STORES = [
+    useNoteStore,
+    useTaskStore,
+    useHabitStore,
+    useJournalStore,
+    useBookmarkStore,
+    useDailyNotesStore,
+    useIdeaStore,
+    useFocusStore,
+    useGamificationStore,
+] as const
+
+function waitForStoreHydration(): Promise<void> {
+    const pending = SYNCED_STORES.filter((store) => !store.persist.hasHydrated())
+    if (pending.length === 0) return Promise.resolve()
+
+    const hydrated = Promise.all(
+        pending.map(
+            (store) =>
+                new Promise<void>((resolve) => {
+                    const unsubscribe = store.persist.onFinishHydration(() => {
+                        unsubscribe()
+                        resolve()
+                    })
+                })
+        )
+    ).then(() => undefined)
+
+    // Best-effort: if a store's storage layer never resolves, don't block the
+    // startup pull forever - fall through and let pullOnStartup run against
+    // whatever did hydrate in time.
+    return withTimeout(hydrated, STORE_HYDRATION_TIMEOUT_MS, 'Store hydration timed out').catch(() => undefined)
+}
 
 // Pull data from Gist on app startup
 export async function pullOnStartup(): Promise<{ success: boolean; message: string }> {
@@ -813,8 +961,10 @@ export async function pushOnClose(): Promise<{ success: boolean; message: string
     setGistSync({ lastSyncStatus: 'pending' })
 
     try {
-        // Skip validation for close push - we want to save user's work
-        await writeToGist(gistSync.githubToken, gistSync.gistId, true)
+        // 'best-effort': validated like every other push, but bounded so a
+        // slow/stalled validation check can't hang app quit - see
+        // writeToGist's mode doc.
+        await writeToGist(gistSync.githubToken, gistSync.gistId, 'best-effort')
         
         setGistSync({
             lastSyncAt: new Date().toISOString(),
@@ -843,11 +993,11 @@ export function initializeSync(): void {
         return
     }
 
-    // Wait for stores to hydrate, then pull
+    // Wait for stores to actually finish hydrating, then pull
     logger.info('[GistSync] Waiting for stores to hydrate...')
-    setTimeout(() => {
+    waitForStoreHydration().then(() => {
         pullOnStartup()
-    }, INITIAL_SYNC_DELAY_MS)
+    })
 }
 
 // Legacy functions - kept for compatibility but do nothing
