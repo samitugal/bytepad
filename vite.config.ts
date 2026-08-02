@@ -1,8 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+
+// Single source of truth for the app version in this build: package.json.
+// See src/utils/appVersion.ts for how the renderer consumes this constant
+// (web/PWA fallback - Electron overrides it live via app.getVersion()).
+const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8'))
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   build: {
     rollupOptions: {
       output: {

@@ -4,9 +4,9 @@
  */
 
 import { logger } from '../utils/logger';
+import { getKnownVersion, resolveAppVersion } from '../utils/appVersion';
 
 const GITHUB_REPO = 'samitugal/bytepad';
-const CURRENT_VERSION = '0.25.0';
 const CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours
 const CACHE_KEY = 'bytepad-update-check';
 
@@ -29,26 +29,59 @@ interface CachedCheck {
   releaseInfo: ReleaseInfo | null;
 }
 
-/**
- * Parse version string to comparable number
- * "0.23.2" -> 23002
- */
-function parseVersion(version: string): number {
-  const clean = version.replace(/^v/, '');
-  const parts = clean.split('.').map(Number);
-  return (parts[0] || 0) * 10000 + (parts[1] || 0) * 100 + (parts[2] || 0);
+interface ParsedVersion {
+  core: number[]; // [major, minor, patch, ...] - as many components as present
+  prerelease: string | null; // e.g. "beta.1", or null for a plain release
 }
 
 /**
- * Compare two versions
- * Returns: 1 if a > b, -1 if a < b, 0 if equal
+ * Parse a version string into comparable parts.
+ *
+ * Accepts an optional leading "v" (GitHub tags here are "vX.Y.Z") and an
+ * optional "-prerelease" suffix (e.g. "1.2.0-beta.1"). Each dot-separated
+ * numeric component is compared on its own - NOT folded into a single
+ * number, which is what let ordering silently break once any component hit
+ * 100 (e.g. the old `major*10000 + minor*100 + patch` ranked 0.25.150 above
+ * 0.26.0, and tied 0.25.0 with 0.24.100).
+ */
+function parseVersion(version: string): ParsedVersion {
+  const clean = version.trim().replace(/^v/i, '');
+  const [corePart, ...prereleaseParts] = clean.split('-');
+  const core = corePart.split('.').map((part) => {
+    const n = Number(part);
+    return Number.isFinite(n) ? n : 0;
+  });
+  const prerelease = prereleaseParts.length > 0 ? prereleaseParts.join('-') : null;
+  return { core, prerelease };
+}
+
+/**
+ * Compare two version strings component-by-component (proper semver-ish
+ * ordering, not a single encoded number).
+ * Returns: 1 if a > b, -1 if a < b, 0 if equal.
+ *
+ * Pre-release handling follows semver's intent: a pre-release is *lower*
+ * than the same core version without one (e.g. "1.2.0-beta" < "1.2.0"),
+ * since a prerelease build is not yet the release it's tagged for. Beyond
+ * that, pre-release suffixes are compared as plain strings - good enough
+ * for update-availability checks, which only need a stable, correct
+ * ordering, not full semver precedence semantics.
  */
 function compareVersions(a: string, b: string): number {
   const vA = parseVersion(a);
   const vB = parseVersion(b);
-  if (vA > vB) return 1;
-  if (vA < vB) return -1;
-  return 0;
+
+  const len = Math.max(vA.core.length, vB.core.length);
+  for (let i = 0; i < len; i++) {
+    const partA = vA.core[i] ?? 0;
+    const partB = vB.core[i] ?? 0;
+    if (partA !== partB) return partA > partB ? 1 : -1;
+  }
+
+  if (vA.prerelease === vB.prerelease) return 0;
+  if (vA.prerelease === null) return 1; // release > prerelease of the same core version
+  if (vB.prerelease === null) return -1;
+  return vA.prerelease > vB.prerelease ? 1 : -1;
 }
 
 /**
@@ -125,12 +158,17 @@ async function fetchLatestRelease(): Promise<ReleaseInfo | null> {
  * Returns release info if update available, null otherwise
  */
 export async function checkForUpdates(force = false): Promise<ReleaseInfo | null> {
+  // Resolve the live running version first (a no-op after the first call -
+  // see src/utils/appVersion.ts). Every comparison below uses this, not the
+  // build-time fallback, so Electron always compares against app.getVersion().
+  const currentVersion = await resolveAppVersion();
+
   // Check cache first (unless forced)
   if (!force) {
     const cached = getCachedCheck();
     if (cached && Date.now() - cached.lastCheck < CHECK_INTERVAL) {
       // Return cached result
-      if (cached.releaseInfo && compareVersions(cached.latestVersion || '', CURRENT_VERSION) > 0) {
+      if (cached.releaseInfo && compareVersions(cached.latestVersion || '', currentVersion) > 0) {
         return cached.releaseInfo;
       }
       return null;
@@ -148,21 +186,30 @@ export async function checkForUpdates(force = false): Promise<ReleaseInfo | null
   });
 
   // Check if newer version
-  if (release && compareVersions(release.version, CURRENT_VERSION) > 0) {
-    logger.info(`[Update] New version available: ${release.version} (current: ${CURRENT_VERSION})`);
+  if (release && compareVersions(release.version, currentVersion) > 0) {
+    logger.info(`[Update] New version available: ${release.version} (current: ${currentVersion})`);
     return release;
   }
 
-  logger.info(`[Update] No updates available (current: ${CURRENT_VERSION})`);
+  logger.info(`[Update] No updates available (current: ${currentVersion})`);
   return null;
 }
 
 /**
- * Get current app version
+ * Get current app version - best value known synchronously right now (see
+ * src/utils/appVersion.ts). Use `resolveCurrentVersion()` when you need the
+ * guaranteed-live value and can await it.
  */
 export function getCurrentVersion(): string {
-  return CURRENT_VERSION;
+  return getKnownVersion();
 }
+
+/**
+ * Resolves the authoritative current version (live app.getVersion() in
+ * Electron, build-time constant on the web). Re-exported here so consumers
+ * of this service don't need to reach into src/utils/appVersion directly.
+ */
+export const resolveCurrentVersion = resolveAppVersion;
 
 /**
  * Dismiss update notification (for this version)

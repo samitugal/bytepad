@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { exportAllData, downloadAsJson, importData, readFileAsJson, clearAllData, getDataStats } from '../../services/dataService'
 import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider, FONT_SIZES, FontSize, FONT_FAMILIES, FontFamily, ApiKeyType, GistSyncPreferences } from '../../stores/settingsStore'
 import { useI18nStore, useTranslation, LANGUAGES, Language } from '../../i18n'
@@ -20,6 +20,7 @@ import {
     type Keybinding
 } from '../../stores/keybindingsStore'
 import { MCPSettings } from '../settings/MCPSettings'
+import { getKnownVersion, resolveAppVersion } from '../../utils/appVersion'
 
 type SettingsTab = 'general' | 'keyboard' | 'ai' | 'integrations' | 'sync' | 'data'
 
@@ -45,6 +46,11 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     const [isGistSyncing, setIsGistSyncing] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const stats = getDataStats()
+    const [appVersion, setAppVersion] = useState(getKnownVersion())
+
+    useEffect(() => {
+        resolveAppVersion().then(setAppVersion)
+    }, [])
 
     const {
         llmProvider,
@@ -287,7 +293,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
 
                 {/* Footer */}
                 <div className="px-4 py-2 border-t border-np-border text-xs text-np-text-secondary flex justify-between shrink-0">
-                    <span>bytepad v0.25.0</span>
+                    <span>bytepad v{appVersion}</span>
                     <span>Ctrl+, to open settings</span>
                 </div>
             </div>

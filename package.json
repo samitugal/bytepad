@@ -23,7 +23,10 @@
     "package:all": "electron-vite build && electron-builder --win --mac",
     "release": "electron-vite build && electron-builder --win --mac --publish never",
     "lint": "eslint .",
-    "check:i18n": "node scripts/check-i18n-keys.js"
+    "check:i18n": "node scripts/check-i18n-keys.js",
+    "check:version": "node scripts/check-version.js",
+    "version:bump": "node scripts/bump-version.js",
+    "version:bump:mcp": "node scripts/bump-mcp-version.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
