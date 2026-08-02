@@ -22,7 +22,8 @@
     "package:linux": "electron-vite build && electron-builder --linux",
     "package:all": "electron-vite build && electron-builder --win --mac",
     "release": "electron-vite build && electron-builder --win --mac --publish never",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "check:i18n": "node scripts/check-i18n-keys.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
