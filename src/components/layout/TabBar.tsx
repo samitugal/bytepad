@@ -3,6 +3,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { useTabStore, Tab } from '../../stores/tabStore'
 import { useNoteStore } from '../../stores/noteStore'
 import { useTranslation } from '../../i18n'
+import { getModuleLabel } from '../../i18n/moduleLabels'
 
 const TAB_ICONS: Record<string, string> = {
   note: '📝',
@@ -76,7 +77,7 @@ export function TabBar() {
       <div className="h-8 bg-np-bg-tertiary border-b border-np-border flex items-center px-1">
         <div className="flex items-center">
           <div className="px-3 py-1 bg-np-bg-primary border-t border-l border-r border-np-border text-np-text-primary text-sm flex items-center gap-2">
-            <span>{t(`nav.${activeModule}`) || activeModule}</span>
+            <span>{getModuleLabel(t, activeModule)}</span>
             <span className="text-np-text-secondary text-xs">×</span>
           </div>
           <button 
