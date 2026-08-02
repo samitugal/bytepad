@@ -12,6 +12,7 @@ import { useDailyNotesStore } from '../stores/dailyNotesStore'
 import { useFocusStore } from '../stores/focusStore'
 import { useGamificationStore, deriveLevelAndXP } from '../stores/gamificationStore'
 import { useIdeaStore } from '../stores/ideaStore'
+import { logger } from '../utils/logger'
 
 const GIST_FILENAME = 'bytepad-data.json'
 
@@ -393,7 +394,7 @@ function parseSyncData(raw: unknown): SyncData {
         if (value === undefined || value === null) return undefined
         const parsed = syncCollectionSchema.safeParse(value)
         if (!parsed.success) {
-            console.warn(`[GistSync] Dropping corrupt "${key}" collection from remote data:`, parsed.error.issues)
+            logger.warn(`[GistSync] Dropping corrupt "${key}" collection from remote data:`, parsed.error.issues)
             return undefined
         }
         return parsed.data
@@ -405,7 +406,7 @@ function parseSyncData(raw: unknown): SyncData {
         if (parsedGamification.success) {
             gamification = parsedGamification.data
         } else {
-            console.warn('[GistSync] Dropping corrupt gamification data from remote (missing/invalid totalXP):', parsedGamification.error.issues)
+            logger.warn('[GistSync] Dropping corrupt gamification data from remote (missing/invalid totalXP):', parsedGamification.error.issues)
         }
     }
 
@@ -415,7 +416,7 @@ function parseSyncData(raw: unknown): SyncData {
         if (parsedFocusStats.success) {
             focusStats = parsedFocusStats.data
         } else {
-            console.warn('[GistSync] Dropping corrupt focusStats data from remote:', parsedFocusStats.error.issues)
+            logger.warn('[GistSync] Dropping corrupt focusStats data from remote:', parsedFocusStats.error.issues)
         }
     }
 
@@ -575,12 +576,12 @@ export async function writeToGist(token: string, gistId: string, skipValidation:
         const validation = validateDataBeforePush(data, remoteData)
         
         if (!validation.valid) {
-            console.warn('[GistSync] Push blocked due to potential data loss:', validation.warnings)
+            logger.warn('[GistSync] Push blocked due to potential data loss:', validation.warnings)
             throw new Error(`Push blocked: ${validation.warnings.join('; ')}`)
         }
         
         if (validation.warnings.length > 0) {
-            console.warn('[GistSync] Push warnings:', validation.warnings)
+            logger.warn('[GistSync] Push warnings:', validation.warnings)
         }
     }
 
@@ -641,7 +642,7 @@ export async function syncWithGist(): Promise<{ success: boolean; message: strin
             // SAFETY: If remote has more data than local, always pull first
             // This prevents pushing incomplete/corrupted local data
             if (remoteItemCount > localItemCount) {
-                console.log(`[GistSync] Remote has more data (${remoteItemCount} vs ${localItemCount}), pulling...`)
+                logger.info(`[GistSync] Remote has more data (${remoteItemCount} vs ${localItemCount}), pulling...`)
                 applyData(remoteData)
                 setGistSync({
                     lastSyncAt: new Date().toISOString(),
@@ -770,7 +771,7 @@ export async function pullOnStartup(): Promise<{ success: boolean; message: stri
         return { success: false, message: 'Gist sync not configured' }
     }
 
-    console.log('[GistSync] Pulling data on startup...')
+    logger.info('[GistSync] Pulling data on startup...')
     setGistSync({ lastSyncStatus: 'pending' })
 
     try {
@@ -783,14 +784,14 @@ export async function pullOnStartup(): Promise<{ success: boolean; message: stri
                 lastSyncStatus: 'success',
                 lastSyncError: null,
             })
-            console.log('[GistSync] Startup pull completed successfully')
+            logger.info('[GistSync] Startup pull completed successfully')
             return { success: true, message: 'Pulled data from Gist' }
         }
         
         return { success: true, message: 'No remote data found' }
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-        console.error('[GistSync] Startup pull failed:', error)
+        logger.error('[GistSync] Startup pull failed:', error)
         setGistSync({
             lastSyncStatus: 'error',
             lastSyncError: errorMessage,
@@ -808,7 +809,7 @@ export async function pushOnClose(): Promise<{ success: boolean; message: string
         return { success: false, message: 'Gist sync not configured' }
     }
 
-    console.log('[GistSync] Pushing data on close...')
+    logger.info('[GistSync] Pushing data on close...')
     setGistSync({ lastSyncStatus: 'pending' })
 
     try {
@@ -820,11 +821,11 @@ export async function pushOnClose(): Promise<{ success: boolean; message: string
             lastSyncStatus: 'success',
             lastSyncError: null,
         })
-        console.log('[GistSync] Close push completed successfully')
+        logger.info('[GistSync] Close push completed successfully')
         return { success: true, message: 'Pushed data to Gist' }
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-        console.error('[GistSync] Close push failed:', error)
+        logger.error('[GistSync] Close push failed:', error)
         setGistSync({
             lastSyncStatus: 'error',
             lastSyncError: errorMessage,
@@ -843,7 +844,7 @@ export function initializeSync(): void {
     }
 
     // Wait for stores to hydrate, then pull
-    console.log('[GistSync] Waiting for stores to hydrate...')
+    logger.info('[GistSync] Waiting for stores to hydrate...')
     setTimeout(() => {
         pullOnStartup()
     }, INITIAL_SYNC_DELAY_MS)

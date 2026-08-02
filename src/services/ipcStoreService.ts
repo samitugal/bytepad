@@ -13,6 +13,7 @@ import { useDailyNotesStore } from '../stores/dailyNotesStore';
 import { useFocusStore } from '../stores/focusStore';
 import { useGamificationStore } from '../stores/gamificationStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { logger } from '../utils/logger';
 
 type StoreName =
   | 'notes'
@@ -360,17 +361,17 @@ declare global {
 // Initialize IPC listeners
 export function initializeIpcStoreService() {
   if (window.__IPC_STORE_INITIALIZED__) {
-    console.log('[IPC Store] Already initialized, skipping');
+    logger.debug('[IPC Store] Already initialized, skipping');
     return;
   }
 
   if (!window.electronAPI) {
-    console.log('[IPC Store] Not in Electron environment');
+    logger.debug('[IPC Store] Not in Electron environment');
     return;
   }
 
   window.__IPC_STORE_INITIALIZED__ = true;
-  console.log('[IPC Store] Initializing...');
+  logger.debug('[IPC Store] Initializing...');
 
   const { storeBridge } = window.electronAPI as { storeBridge?: {
     onStoreRequest: (handler: (channel: string, requestId: string, ...args: unknown[]) => void) => void;
@@ -379,11 +380,11 @@ export function initializeIpcStoreService() {
   }};
 
   if (!storeBridge) {
-    console.log('[IPC Store] Store bridge not available in preload');
+    logger.debug('[IPC Store] Store bridge not available in preload');
     return;
   }
 
-  console.log('[IPC Store] Initializing store bridge via preload...');
+  logger.debug('[IPC Store] Initializing store bridge via preload...');
 
   // Handle all store requests from main process
   storeBridge.onStoreRequest((channel, requestId, ...args) => {
@@ -445,5 +446,5 @@ export function initializeIpcStoreService() {
     }
   });
 
-  console.log('[IPC Store] Store bridge initialized');
+  logger.debug('[IPC Store] Store bridge initialized');
 }

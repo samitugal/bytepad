@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { app, auth, isFirebaseConfigured } from './firebase'
+import { logger } from '../utils/logger'
 
 // Firebase app/auth are initialized once in src/services/firebase.ts;
 // this module only derives Firestore from that shared app instance.
@@ -42,7 +43,7 @@ export async function saveUserData<T>(
       userId: currentUser.uid
     })
   } catch (error) {
-    console.error(`Error saving ${collectionName}:`, error)
+    logger.error(`Error saving ${collectionName}:`, error)
   }
 }
 
@@ -60,7 +61,7 @@ export async function loadUserData<T>(
     }
     return null
   } catch (error) {
-    console.error(`Error loading ${collectionName}:`, error)
+    logger.error(`Error loading ${collectionName}:`, error)
     return null
   }
 }
@@ -81,13 +82,13 @@ export function subscribeToUserData<T>(
         callback(null)
       }
     }, (error) => {
-      console.error(`Error subscribing to ${collectionName}:`, error)
+      logger.error(`Error subscribing to ${collectionName}:`, error)
     })
     
     unsubscribers.push(unsubscribe)
     return unsubscribe
   } catch (error) {
-    console.error(`Error setting up subscription for ${collectionName}:`, error)
+    logger.error(`Error setting up subscription for ${collectionName}:`, error)
     return null
   }
 }

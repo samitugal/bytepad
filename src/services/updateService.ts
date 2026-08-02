@@ -3,6 +3,8 @@
  * Checks GitHub Releases for new versions
  */
 
+import { logger } from '../utils/logger';
+
 const GITHUB_REPO = 'samitugal/bytepad';
 const CURRENT_VERSION = '0.24.3';
 const CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours
@@ -90,7 +92,7 @@ async function fetchLatestRelease(): Promise<ReleaseInfo | null> {
     );
 
     if (!response.ok) {
-      console.warn('[Update] Failed to fetch release:', response.status);
+      logger.warn('[Update] Failed to fetch release:', response.status);
       return null;
     }
 
@@ -113,7 +115,7 @@ async function fetchLatestRelease(): Promise<ReleaseInfo | null> {
       })),
     };
   } catch (error) {
-    console.warn('[Update] Error fetching release:', error);
+    logger.warn('[Update] Error fetching release:', error);
     return null;
   }
 }
@@ -147,11 +149,11 @@ export async function checkForUpdates(force = false): Promise<ReleaseInfo | null
 
   // Check if newer version
   if (release && compareVersions(release.version, CURRENT_VERSION) > 0) {
-    console.log(`[Update] New version available: ${release.version} (current: ${CURRENT_VERSION})`);
+    logger.info(`[Update] New version available: ${release.version} (current: ${CURRENT_VERSION})`);
     return release;
   }
 
-  console.log(`[Update] No updates available (current: ${CURRENT_VERSION})`);
+  logger.info(`[Update] No updates available (current: ${CURRENT_VERSION})`);
   return null;
 }
 

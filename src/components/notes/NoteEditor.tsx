@@ -13,6 +13,7 @@ import { NoteSearch } from './NoteSearch'
 import { ConfirmModal } from '../common'
 import { useTranslation } from '../../i18n'
 import { parseTags } from '../../utils/storage'
+import { logger } from '../../utils/logger'
 import type { Note } from '../../types'
 
 function ImageRenderer({ src, alt }: { src?: string; alt?: string }) {
@@ -202,7 +203,7 @@ export function NoteEditor() {
       await autoSaveNoteLocally(updatedNote)
     } catch (error) {
       // Silently fail - local save is optional
-      console.debug('Local note save skipped:', error)
+      logger.debug('Local note save skipped:', error)
     }
   }, [activeNoteId, title, content, tags, updateNote, tabs, updateTabTitle, activeNote])
 

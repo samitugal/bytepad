@@ -3,6 +3,7 @@ import { exportAllData, downloadAsJson, importData, readFileAsJson, clearAllData
 import { useSettingsStore, LLM_MODELS, PROVIDER_INFO, LLMProvider, FONT_SIZES, FontSize, FONT_FAMILIES, FontFamily, ApiKeyType, GistSyncPreferences } from '../../stores/settingsStore'
 import { useI18nStore, useTranslation, LANGUAGES, Language } from '../../i18n'
 import { isElectron } from '../../utils/storage'
+import { logger } from '../../utils/logger'
 import { useThemeStore, Theme } from '../../stores/themeStore'
 import { useNotificationStore } from '../../stores/notificationStore'
 import { useAuthStore } from '../../stores/authStore'
@@ -1009,16 +1010,13 @@ function DataTab({
     const [isSavingNotes, setIsSavingNotes] = useState(false)
 
     const handleSelectFolder = async () => {
-        console.log('Select Folder clicked')
-
         // Check if File System Access API is supported
         if (!('showDirectoryPicker' in window)) {
             setLocalNotesStatus('Error: Your browser does not support folder selection. Please use Chrome, Edge, or Opera.')
-            console.error('showDirectoryPicker not supported')
+            logger.warn('showDirectoryPicker not supported')
             return
         }
 
-        console.log('showDirectoryPicker is supported, opening dialog...')
         setLocalNotesStatus('Opening folder picker...')
 
         try {
@@ -1027,8 +1025,6 @@ function DataTab({
                 mode: 'readwrite',
             })
 
-            console.log('Folder selected:', dirHandle)
-
             if (dirHandle) {
                 setLocalNotesDirHandle(dirHandle)
                 setLocalNotesPath(dirHandle.name)
@@ -1036,7 +1032,7 @@ function DataTab({
                 setLocalNotesStatus(`✓ Folder selected: ${dirHandle.name}`)
             }
         } catch (error) {
-            console.error('Folder selection error:', error)
+            logger.error('Folder selection error:', error)
             if ((error as Error).name === 'AbortError') {
                 // User cancelled
                 setLocalNotesStatus('Folder selection cancelled')
@@ -1081,7 +1077,7 @@ function DataTab({
             const result = await downloadAllDataAsZip()
             setLocalNotesStatus(`✓ Downloaded ZIP with ${result.notes} notes, ${result.tasks} tasks, ${result.habits} habits, ${result.journal} journal entries`)
         } catch (error) {
-            console.error('ZIP download error:', error)
+            logger.error('ZIP download error:', error)
             setLocalNotesStatus(`Error: ${error instanceof Error ? error.message : 'Failed to create ZIP'}`)
         }
     }
