@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { getHighlightParts } from '../src/components/common/highlightMatch.ts'
+import { getHighlightParts } from '../src/components/common/highlightMatch.mjs'
 
 const highlighted = (text, query) => getHighlightParts(text, query).filter((part) => part.highlighted).map((part) => part.text)
 

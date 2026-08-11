@@ -23,7 +23,7 @@
     "package:all": "electron-vite build && electron-builder --win --mac",
     "release": "electron-vite build && electron-builder --win --mac --publish never",
     "lint": "eslint .",
-    "test:highlight": "node --experimental-strip-types scripts/test-highlight-match.mjs",
+    "test:highlight": "node scripts/test-highlight-match.mjs",
     "check:i18n": "node scripts/check-i18n-keys.js",
     "check:version": "node scripts/check-version.js",
     "version:bump": "node scripts/bump-version.js",
