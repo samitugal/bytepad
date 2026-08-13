@@ -91,6 +91,9 @@ jobs:
       - name: Typecheck
         run: npx tsc -b
 
+      - name: Test search highlighting
+        run: npm run test:highlight
+
       # docker/mcp-server is a separate, independently-versioned package
       # (its own express 4 vs the app's express 5, its own @types/node 20)
       # that only ever builds inside the Docker build context copying just

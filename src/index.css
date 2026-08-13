@@ -27,6 +27,7 @@
   --accent-purple: #C586C0;
   --accent-yellow: #DCDCAA;
   --accent-cyan: #4EC9B0;
+  --highlight-bg: #5C5A00;
 
   /* Status Colors */
   --success: #4EC9B0;
@@ -56,6 +57,7 @@
   --accent-purple: #AF00DB;
   --accent-yellow: #795E26;
   --accent-cyan: #267F99;
+  --highlight-bg: #FFF3A6;
 
   /* Status Colors */
   --success: #008000;
@@ -210,4 +212,8 @@ body {
 }
 .app-no-drag {
   -webkit-app-region: no-drag;
+}
+
+.page-search-highlight {
+  background-color: var(--highlight-bg);
 }

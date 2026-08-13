@@ -88,7 +88,7 @@ export function PageSearch({ isOpen, onClose }: PageSearchProps) {
         // Add highlighted match
         const highlight = document.createElement('mark')
         highlight.textContent = text.slice(matchStart, matchEnd)
-        highlight.className = 'bg-np-yellow/40 text-np-text-primary px-0.5 rounded page-search-highlight'
+        highlight.className = 'text-np-text-primary px-0.5 rounded page-search-highlight'
         highlight.dataset.matchIndex = String(matchCount)
         highlightedElements.current.push(highlight)
         fragment.appendChild(highlight)

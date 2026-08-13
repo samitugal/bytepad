@@ -5,6 +5,7 @@ import { useHabitStore } from '../../stores/habitStore'
 import { useJournalStore } from '../../stores/journalStore'
 import { useBookmarkStore } from '../../stores/bookmarkStore'
 import { useUIStore } from '../../stores/uiStore'
+import { getHighlightParts } from './highlightMatch'
 
 interface SearchResult {
   id: string
@@ -19,6 +20,22 @@ interface SearchResult {
 interface GlobalSearchProps {
   isOpen: boolean
   onClose: () => void
+}
+
+function HighlightMatch({ text, query }: { text: string; query: string }) {
+  return (
+    <>
+      {getHighlightParts(text, query).map((part, index) =>
+        part.highlighted ? (
+          <mark key={`${part.text}-${index}`} className="page-search-highlight text-np-text-primary rounded px-0.5">
+            {part.text}
+          </mark>
+        ) : (
+          <span key={`${part.text}-${index}`}>{part.text}</span>
+        ),
+      )}
+    </>
+  )
 }
 
 export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
@@ -182,6 +199,11 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
     return searchResults
   }, [debouncedQuery, notes, tasks, habits, journalEntries, bookmarks])
 
+  const isTagSearch = debouncedQuery.trim().toLowerCase().startsWith('#')
+  const highlightQuery = isTagSearch
+    ? debouncedQuery.trim().slice(1)
+    : debouncedQuery
+
   // Debounce search query
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -317,19 +339,21 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-np-text-primary truncate">{result.title}</span>
+                    <span className="text-np-text-primary truncate">
+                      <HighlightMatch text={result.title} query={isTagSearch ? '' : highlightQuery} />
+                    </span>
                     <span className={`text-xs px-1.5 py-0.5 ${getTypeColor(result.type)} bg-np-bg-tertiary`}>
                       {result.type}
                     </span>
                   </div>
                   {result.preview && (
                     <div className="text-xs text-np-text-secondary truncate mt-0.5">
-                      {result.preview}
+                      <HighlightMatch text={result.preview} query={isTagSearch ? '' : highlightQuery} />
                     </div>
                   )}
                   <div className="flex items-center gap-2 mt-1">
                     {result.tags?.map((tag) => (
-                      <span key={tag} className="text-xs text-np-purple">#{tag}</span>
+                      <span key={tag} className="text-xs text-np-purple">#{isTagSearch ? <HighlightMatch text={tag} query={highlightQuery} /> : tag}</span>
                     ))}
                     {result.meta && (
                       <span className="text-xs text-np-text-secondary">{result.meta}</span>
