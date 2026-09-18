@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import en from './en.json'
 import tr from './tr.json'
+import { resolveTranslation as lookupTranslation } from './lookup.mjs'
 
 export type Language = 'en' | 'tr'
 
@@ -34,24 +35,6 @@ export const useI18nStore = create<I18nState>()(
     )
 )
 
-// Helper function to get nested value from object using dot notation.
-// Returns undefined when the key is missing so callers (and t()) can tell
-// "not found" apart from a real, non-empty translation string.
-function getNestedValue(obj: unknown, path: string): string | undefined {
-    const keys = path.split('.')
-    let current: unknown = obj
-
-    for (const key of keys) {
-        if (current && typeof current === 'object' && key in current) {
-            current = (current as Record<string, unknown>)[key]
-        } else {
-            return undefined // Not found
-        }
-    }
-
-    return typeof current === 'string' ? current : undefined
-}
-
 // What an unguarded missing key renders as: the key path in development
 // (loud, so it's spotted) and empty string in production (graceful, so a
 // user never sees a raw key like "nav.dailynotes").
@@ -59,12 +42,20 @@ function missingKeyFallback(key: string): string {
     return import.meta.env.DEV ? key : ''
 }
 
+function resolveTranslation(language: Language, key: string): string | undefined {
+    const { value, usedFallback } = lookupTranslation(translations, language, key)
+    if (usedFallback && import.meta.env.DEV) {
+        console.warn(`[i18n] missing "${key}" in "${language}", falling back to English`)
+    }
+    return value
+}
+
 // Hook to get translation function
 export function useTranslation() {
     const { language } = useI18nStore()
 
     const t = (key: string, params?: Record<string, string | number>): string => {
-        let text = getNestedValue(translations[language], key) ?? missingKeyFallback(key)
+        let text = resolveTranslation(language, key) ?? missingKeyFallback(key)
 
         // Replace parameters like {name} with actual values
         if (params) {
@@ -82,5 +73,5 @@ export function useTranslation() {
 // Direct translation function for use outside React components
 export function translate(key: string, language?: Language): string {
     const lang = language || useI18nStore.getState().language
-    return getNestedValue(translations[lang], key) ?? missingKeyFallback(key)
+    return resolveTranslation(lang, key) ?? missingKeyFallback(key)
 }
