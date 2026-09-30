@@ -6,6 +6,7 @@ import { useJournalStore } from '../../stores/journalStore'
 import { useBookmarkStore } from '../../stores/bookmarkStore'
 import { useUIStore } from '../../stores/uiStore'
 import { getHighlightParts } from './highlightMatch'
+import { useTranslation } from '../../i18n'
 
 interface SearchResult {
   id: string
@@ -39,6 +40,7 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
 }
 
 export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
+  const { t } = useTranslation()
   const globalSearchQuery = useUIStore((s) => s.globalSearchQuery)
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -307,7 +309,7 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search notes, tasks, habits, journal..."
+            placeholder={t('globalSearch.placeholder')}
             className="flex-1 bg-transparent text-np-text-primary placeholder-np-text-secondary focus:outline-none font-mono"
             autoFocus
           />
@@ -320,8 +322,8 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
         <div className="max-h-[50vh] overflow-y-auto">
           {query && results.length === 0 && (
             <div className="px-4 py-8 text-center text-np-text-secondary">
-              <div className="text-np-green mb-2">// No results found</div>
-              <div className="text-sm">Try a different search term</div>
+              <div className="text-np-green mb-2">// {t('globalSearch.noResults')}</div>
+              <div className="text-sm">{t('globalSearch.tryDifferentTerm')}</div>
             </div>
           )}
 
@@ -367,11 +369,13 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
 
         {/* Footer */}
         <div className="px-4 py-2 border-t border-np-border text-xs text-np-text-secondary flex items-center gap-4">
-          <span><kbd className="bg-np-bg-tertiary px-1">↑↓</kbd> navigate</span>
-          <span><kbd className="bg-np-bg-tertiary px-1">Enter</kbd> select</span>
-          <span><kbd className="bg-np-bg-tertiary px-1">Esc</kbd> close</span>
+          <span><kbd className="bg-np-bg-tertiary px-1">↑↓</kbd> {t('globalSearch.navigateHint')}</span>
+          <span><kbd className="bg-np-bg-tertiary px-1">Enter</kbd> {t('globalSearch.selectHint')}</span>
+          <span><kbd className="bg-np-bg-tertiary px-1">Esc</kbd> {t('globalSearch.closeHint')}</span>
           {results.length > 0 && (
-            <span className="ml-auto">{results.length} result{results.length !== 1 ? 's' : ''}</span>
+            <span className="ml-auto">
+              {t(results.length === 1 ? 'globalSearch.resultCount' : 'globalSearch.resultCountPlural', { count: results.length })}
+            </span>
           )}
         </div>
       </div>
