@@ -94,6 +94,9 @@ jobs:
       - name: Test search highlighting
         run: npm run test:highlight
 
+      - name: Test i18n English fallback
+        run: npm run test:i18n
+
       # docker/mcp-server is a separate, independently-versioned package
       # (its own express 4 vs the app's express 5, its own @types/node 20)
       # that only ever builds inside the Docker build context copying just
