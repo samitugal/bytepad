@@ -195,7 +195,13 @@
         "days": "gün",
         "today": "Bugün",
         "completed": "Tamamlandı",
-        "category": "Kategori"
+        "category": "Kategori",
+        "heatmap": {
+            "toggle": "Etkinlik",
+            "tooltip": "{date}: {count} tamamlandı",
+            "less": "Az",
+            "more": "Çok"
+        }
     },
     "journal": {
         "newEntry": "Yeni Giriş",
