@@ -394,6 +394,16 @@
         "prevHint": "önceki",
         "closeHint": "kapat"
     },
+    "globalSearch": {
+        "placeholder": "Notlarda, görevlerde, alışkanlıklarda, günlükte ara...",
+        "noResults": "Sonuç bulunamadı",
+        "tryDifferentTerm": "Farklı bir arama terimi deneyin",
+        "navigateHint": "gezin",
+        "selectHint": "seç",
+        "closeHint": "kapat",
+        "resultCount": "{count} sonuç",
+        "resultCountPlural": "{count} sonuç"
+    },
     "graph": {
         "title": "Bilgi Grafiği",
         "nodes": "düğüm",

@@ -394,6 +394,16 @@
         "prevHint": "prev",
         "closeHint": "close"
     },
+    "globalSearch": {
+        "placeholder": "Search notes, tasks, habits, journal...",
+        "noResults": "No results found",
+        "tryDifferentTerm": "Try a different search term",
+        "navigateHint": "navigate",
+        "selectHint": "select",
+        "closeHint": "close",
+        "resultCount": "{count} result",
+        "resultCountPlural": "{count} results"
+    },
     "graph": {
         "title": "Knowledge Graph",
         "nodes": "nodes",
