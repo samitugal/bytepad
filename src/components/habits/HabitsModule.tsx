@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useHabitStore } from '../../stores/habitStore'
 import { DateTimePicker } from '../common'
+import { HabitHeatmap } from './HabitHeatmap'
+import { useTranslation } from '../../i18n'
 
 const CATEGORIES = ['health', 'work', 'personal', 'learning']
 
@@ -17,8 +19,10 @@ interface EditHabitForm {
 
 export function HabitsModule() {
   const { habits, addHabit, deleteHabit, toggleCompletion, updateHabit, getWeeklyStats, recordDailyStats } = useHabitStore()
+  const { t } = useTranslation()
   const [showForm, setShowForm] = useState(false)
   const [showStats, setShowStats] = useState(false)
+  const [showHeatmap, setShowHeatmap] = useState(false)
 
   // Record daily stats at end of day (or when component mounts after midnight)
   useEffect(() => {
@@ -338,6 +342,21 @@ export function HabitsModule() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Activity Heatmap Toggle */}
+      <button
+        onClick={() => setShowHeatmap(!showHeatmap)}
+        className="mt-4 pt-3 border-t border-np-border text-xs text-np-text-secondary w-full text-left hover:text-np-text-primary"
+      >
+        {showHeatmap ? '▼' : '▶'} {t('habits.heatmap.toggle')}
+      </button>
+
+      {/* Activity Heatmap Panel */}
+      {showHeatmap && (
+        <div className="mt-2 p-3 bg-np-bg-secondary border border-np-border">
+          <HabitHeatmap />
+        </div>
       )}
 
       {/* Weekly Stats Toggle */}

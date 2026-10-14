@@ -195,7 +195,13 @@
         "days": "days",
         "today": "Today",
         "completed": "Completed",
-        "category": "Category"
+        "category": "Category",
+        "heatmap": {
+            "toggle": "Activity",
+            "tooltip": "{date}: {count} completed",
+            "less": "Less",
+            "more": "More"
+        }
     },
     "journal": {
         "newEntry": "New Entry",
