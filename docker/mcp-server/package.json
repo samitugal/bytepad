@@ -10,7 +10,7 @@
     "dev": "ts-node src/server.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "cors": "^2.8.5",
     "express": "^4.22.3",
     "helmet": "^8.0.0",
